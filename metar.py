@@ -25,20 +25,33 @@ import string
 
 __author__ = "mlpollard@earthlink.net"
 
-__version__ = "1.0"
+__version__ = "1.0.1"
 
-__doc__ = """metar.py v%s (c) 2004 Tom Pollard
+__doc__ = """metar.py v%s (c) 2004, Walter Thomas Pollard
 
 Metar.py is a python module that interprets METAR and SPECI weather reports
 following US conventions.
 
 Please e-mail bugs to: %s""" % (__version__, __author__)
 
+__LICENSE__ = """
+Copyright (c) 2004, Walter Thomas Pollard
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
 ## regular expressions to decode various groups of the METAR code
 
 TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI|TESTM)\s+")
 MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR)\s+")
-STATION_RE =  re.compile(r"^(?P<station>[A-Z]{4})\s+")
+STATION_RE =  re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
 TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           (?P<hour>\d\d)
                           (?P<min>\d\d)Z\s+""",
@@ -111,11 +124,13 @@ UNPARSED_RE = re.compile(r"(?P<group>\S+)\s+")
 
 LIGHTNING_RE = re.compile(r"""^((?P<freq>OCNL|FRQ|CONS)\s+)?
                              LTG(?P<type>(IC|CC|CG|CA)*)
-                            (\s+(?P<dir>(OHD|VC|(DSNT\s+)?[NS]?[EW]?-[NS]?[EW]?)*))?\s+""",
+                           ( \s+(?P<loc>( OHD | VC | DSNT\s+ | \s+AND\s+ | 
+                                          [NSEW][EW]? (-[NSEW][EW]?)* )+) )?\s+""",
                           re.VERBOSE)
                           
-TS_LOC_RE = re.compile(r"""TS\s(?P<loc>(OHD|[NS]?[EW]?)(\s+AND\s+[NS]?[EW]?(-[NS]?[EW]?)*)?)
-                     (\s+MOV\s+(?P<dir>[NS]?[EW]?))?\s+""",
+TS_LOC_RE = re.compile(r"""TS(\s+(?P<loc>( OHD | VC | DSNT\s+ | \s+AND\s+ | 
+                                          [NSEW][EW]? (-[NSEW][EW]?)* )+))?
+                      ( \s+MOV\s+(?P<dir>[NSEW][EW]?) )?\s+""",
                        re.VERBOSE)
 
 ## translation of weather location codes
@@ -126,6 +141,7 @@ loc_terms = [ ("OHD", "overhead"),
               ("VC", "nearby" ) ]
               
 def xlate_loc( loc ):
+  """Substitute English terms for the location codes in the given string."""
   for code, english in loc_terms:
     loc = loc.replace(code,english)
   return loc
@@ -223,7 +239,15 @@ def ctok( tempc ):
   """Convert temperature from degrees Celsius to Kelvin."""
   return 273.15+float(tempc)
 
-## metar objects
+def intomb( pressi ):
+  """Convert pressure from inches Hg to hectoPascals (aka millibars)."""
+  return 33.8639*float(pressi)
+
+def mbtoin( pressm ):
+  """Convert pressure from hectoPascals (aka millibars) to inches Hg ."""
+  return float(pressm)/33.8639
+
+## METAR report objects
 
 class metar:
   """METAR (aviation meteorology report)"""
@@ -497,7 +521,7 @@ class metar:
     m = PRESS_RE.match(code)
     if not m: 
       return (code,None)
-    self.press = float(m.groupdict()['press'])
+    self.press = float(m.groupdict()['press'])/100
     return PRESS_RE.sub("",code), m.group()
     
   def _parseRemarks( self, code ):
@@ -604,15 +628,16 @@ class metar:
     parts = []
     if d['freq']:
       parts.append(LIGHTNING_FREQUENCY[d['freq']])
-    parts.append("lightning")
-        
-    ltg_types = []
-    group = d['type']
-    while group:
-      ltg_types.append(LIGHTNING_TYPE[group[:2]])
-      group = group[2:]
-    parts.append("("+string.join(ltg_types,",")+")")
-    
+    parts.append("lightning")        
+    if d['type']:
+      ltg_types = []
+      group = d['type']
+      while group:
+        ltg_types.append(LIGHTNING_TYPE[group[:2]])
+        group = group[2:]
+      parts.append("("+string.join(ltg_types,",")+")")
+    if d['loc']:
+      parts.append(xlate_loc(d['loc']))
     self._remarks.append(string.join(parts," "))
       
   def _parseTSLocRemark( self, d ):
@@ -664,7 +689,7 @@ class metar:
     """
     Return a complete decoded report.
     
-    (At this stage, this is more for debugging than for presentation.)
+    (At this stage, this is more for debugging than for any real use.)
     """
     lines = []
     lines.append("station: %s" % self.station_id)
@@ -852,13 +877,14 @@ class metar:
     """
     Return a textual description of the atmospheric pressure.
     
-    Units may be specified as "inches", "mb" or "kPa".
+    Units may be specified as "inches", "mb" or "hPa".
     """
     if not self.press:
       return "missing"
-    inches = self.press / 100
-    frac = self.press - 100*inches
-    return "%d.%d inches" % (inches,frac)
+    if units == "mb" or units == "hPa":
+      return "%.1f mb" % intomb(self.press)
+    else:
+      return "%.2f inches" % self.press
       
   def remarks( self, sep="; "):
     """
