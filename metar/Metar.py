@@ -61,7 +61,7 @@ from Datatypes import temperature, pressure, speed, distance, direction
 ## Exceptions
 
 class ParserError(Exception):
-  """Exception raised when an unparseable group is found in main report."""
+  """Exception raised when an unparseable group is found in body of the report."""
   pass
 
 ## regular expressions to decode various groups of the METAR code
@@ -70,13 +70,13 @@ TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI)\s+")
 STATION_RE =  re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
 TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           (?P<hour>\d\d)
-                          (?P<min>\d\d)Z\s+""",
+                          (?P<min>\d\d)Z?\s+""",
                      re.VERBOSE)
 MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR|RTD|CC[A-G])\s+")
 WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|///|VRB)
                           (?P<speed>P?\d\d\d?|//)
                         (G(?P<gust>P?\d\d\d?))?
-                          (?P<unit>KT|KMH|MPS)?
+                          (?P<unit>KTS?|KMH|MPS)?
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                      re.VERBOSE)
@@ -100,8 +100,8 @@ SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|BKN|SCT|FEW|OVC)
                         (?P<height>\d\d\d|///)?
                         (?P<cloud>[A-Z][A-Z]+)?\s+""",
                    re.VERBOSE)
-TEMP_RE = re.compile(r"""^(?P<temp>M?\d+|//)/
-                          (?P<dewpt>M?\d+|//)?\s+""",
+TEMP_RE = re.compile(r"""^(?P<temp>M?\d+|//|XX)/
+                          (?P<dewpt>M?\d+|//|XX)?\s+""",
                      re.VERBOSE)
 PRESS_RE = re.compile(r"""^(?P<unit>A|Q)
                            (?P<press>\d\d\d\d|////)\s+""",
@@ -267,16 +267,8 @@ LIGHTNING_TYPE = { "IC":"intracloud",
 
 REPORT_TYPE = { "METAR":"routine report",
                 "SPECI":"special report",
-                "AUTO":"automatic",
-                "RTD":"RTD",
-                "CCA":"CCA",
-                "CCB":"CCB",
-                "CCC":"CCC",
-                "CCD":"CCD",
-                "CCE":"CCE",
-                "CCF":"CCF",
-                "CCG":"CCG",
-                "COR":"manually corrected" }
+                "AUTO":"automatic report",
+                "COR":"manually corrected report" }
     
 ## METAR report objects
 
@@ -288,7 +280,7 @@ class Metar:
   def __init__( self, metarcode, month=None, year=None, utcdelta=None):
     """Parse raw METAR code."""
     self.code = metarcode              # original METAR code
-    self.type = None                   # METAR (routine) or SPECI (special)
+    self.type = 'METAR'                # METAR (routine) or SPECI (special)
     self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
     self.station_id = None             # 4-character ICAO station code
     self.time = None                   # observation time [datetime]
@@ -347,7 +339,7 @@ class Metar:
       raise ParserError(parser.__name__+" failed while parsing '"+code+"'\n"+string.join(err.args))
       raise err
     if code and not (code.startswith("RMK") or self.press):
-      raise ParserError("Unparsed groups in main code: "+code)
+      raise ParserError("Unparsed groups in body: "+code)
     self._parseRemarks(code)
           
   def _parseType( self, code ):
@@ -434,16 +426,20 @@ class Metar:
     if wind_dir != "VRB" and wind_dir != "///":
       self.wind_dir = direction(wind_dir)    
     wind_speed = d['speed']
+    if d['unit'] == 'KTS': 
+      units = 'KT'
+    else:
+      units = d['unit']
     if wind_speed.startswith("P"):
-      self.wind_speed = speed(wind_speed[1:], d['unit'], ">")
+      self.wind_speed = speed(wind_speed[1:], units, ">")
     elif wind_speed != "//":
-      self.wind_speed = speed(wind_speed, d['unit'])
+      self.wind_speed = speed(wind_speed, units)
     if d['gust']:
       wind_gust = d['gust']
       if wind_gust.startswith("P"):
-        self.wind_gust = speed(wind_gust[1:], d['unit'], ">")
+        self.wind_gust = speed(wind_gust[1:], units, ">")
       else:
-        self.wind_gust = speed(wind_gust, d['unit'])
+        self.wind_gust = speed(wind_gust, units)
     if d['varfrom']:
       self.wind_dir_from = direction(d['varfrom'])
       self.wind_dir_to = direction(d['varto'])      
@@ -570,9 +566,9 @@ class Metar:
     if not m: 
       return (code,None)
     d = m.groupdict()
-    if not d['temp'] == "//":
+    if not d['temp'] == "//" and not d['temp'] == "XX":
       self.temp = temperature(d['temp'])
-    if d['dewpt'] and not d['dewpt'] == "//":
+    if d['dewpt'] and not d['dewpt'] == "//" and not d['dewpt'] == "XX":
       self.dewpt = temperature(d['dewpt'])
     return TEMP_RE.sub("",code), m.group()
     
@@ -716,7 +712,7 @@ class Metar:
     """
     Parse a temperature & dewpoint remark group.
     
-    These values replace the temp and dewpt from the main body of the report.
+    These values replace the temp and dewpt from the body of the report.
     """
     value = float(d['temp'])/10.0
     if d['tsign'] == "1": value = -value
@@ -891,7 +887,7 @@ class Metar:
     """
     if self.type == None:
       text = "unknown report type"
-    if REPORT_TYPE.has_key(self.type):
+    elif REPORT_TYPE.has_key(self.type):
       text  = REPORT_TYPE[self.type]
     else:
       text = self.type+" report"
