@@ -4,6 +4,7 @@
 #  Copyright 2004  Tom Pollard
 # 
 import re
+from math import sin, cos, atan2, sqrt
 
 ## exceptions
 
@@ -23,13 +24,15 @@ class temperature:
   
   def __init__( self, value, units="C" ):
     if not units.upper() in temperature.legal_units:
-      raise UnitsError("unknown temperature unit: "+units)
+      raise UnitsError("unrecognized temperature unit: '"+units+"'")
     self._units = units.upper()
     try:
       self._value = float(value)
     except ValueError:
       if value.startswith('M'):
         self._value = -float(value[1:])
+      else:
+        raise ValueError("temperature must be integer: '"+str(value)+"'")
     
   def value( self, units=None ):
     """Return the temperature in the specified units."""
@@ -37,7 +40,7 @@ class temperature:
       return self._value
     else:
       if not units.upper() in temperature.legal_units:
-        raise UnitsError("unknown temperature unit: "+units)
+        raise UnitsError("unrecognized temperature unit: '"+units+"'")
       units = units.upper()
     if self._units == "C":
       celsius_value = self._value
@@ -58,7 +61,7 @@ class temperature:
       units = self._units
     else:
       if not units.upper() in temperature.legal_units:
-        raise UnitsError("unknown temperature unit: "+units)
+        raise UnitsError("unrecognized temperature unit: '"+units+"'")
       units = units.upper()
     val = self.value(units)
     if units == "C":
@@ -74,7 +77,7 @@ class pressure:
   
   def __init__( self, value, units="MB" ):
     if not units.upper() in pressure.legal_units:
-      raise UnitsError("unknown pressure unit: "+units)
+      raise UnitsError("unrecognized pressure unit: '"+units+"'")
     self._value = float(value)
     self._units = units.upper()
     
@@ -84,7 +87,7 @@ class pressure:
       return self._value
     else:
       if not units.upper() in pressure.legal_units:
-        raise UnitsError("unknown pressure unit: "+units)
+        raise UnitsError("unrecognized pressure unit: '"+units+"'")
       units = units.upper()
     if units == self._units:
       return self._value
@@ -97,7 +100,7 @@ class pressure:
     elif units == "IN":
         return mb_value/33.86398
     else:
-      raise UnitsError("unknown pressure unit: "+units)
+      raise UnitsError("unrecognized pressure unit: '"+units+"'")
       
   def string( self, units=None ):
     """Return a string representation of the pressure, using the given units."""
@@ -105,7 +108,7 @@ class pressure:
       units = self._units
     else:
       if not units.upper() in pressure.legal_units:
-        raise UnitsError("unknown pressure unit: "+units)
+        raise UnitsError("unrecognized pressure unit: '"+units+"'")
       units = units.upper()
     val = self.value(units)
     if units == "MB":
@@ -125,10 +128,10 @@ class speed:
       self._units = "MPS"
     else:
       if not units.upper() in speed.legal_units:
-        raise UnitsError("unknown speed unit: "+units)
+        raise UnitsError("unrecognized speed unit: '"+units+"'")
       self._units = units.upper()
     if gtlt and not gtlt in speed.legal_gtlt:
-      raise ValueError("unrecognized gtlt value: "+gtlt)
+      raise ValueError("unrecognized greater-than/less-than symbol: '"+gtlt+"'")
     self._gtlt = gtlt
     self._value = float(value)
     
@@ -138,7 +141,7 @@ class speed:
       return self._value
     else:
       if not units.upper() in speed.legal_units:
-        raise UnitsError("unknown speed unit: "+units)
+        raise UnitsError("unrecognized speed unit: '"+units+"'")
       units = units.upper()
     if units == self._units:
       return self._value
@@ -165,7 +168,7 @@ class speed:
       units = self._units
     else:
       if not units.upper() in speed.legal_units:
-        raise UnitsError("unknown speed unit: "+units)
+        raise UnitsError("unrecognized speed unit: '"+units+"'")
       units = units.upper()
     val = self.value(units)
     if units == "KMH":
@@ -192,7 +195,7 @@ class distance:
       self._units = "M"
     else:
       if not units.upper() in distance.legal_units:
-        raise UnitsError("unknown distance unit: "+units)
+        raise UnitsError("unrecognized distance unit: '"+units+"'")
       self._units = units.upper()
     
     try:
@@ -205,7 +208,7 @@ class distance:
     except:
       pass
     if gtlt and not gtlt in distance.legal_gtlt:
-      raise ValueError("unrecognized gtlt value: "+gtlt)
+      raise ValueError("unrecognized greater-than/less-than symbol: '"+gtlt+"'")
     self._gtlt = gtlt
     try:
       self._value = float(value)
@@ -214,7 +217,7 @@ class distance:
     except ValueError:
       mf = FRACTION_RE.match(value)
       if not mf:
-        raise ValueError("not parseable as a number: "+value)
+        raise ValueError("distance is not parseable: '"+str(value)+"'")
       df = mf.groupdict()
       self._num = int(df['num'])
       self._den = int(df['den'])
@@ -228,7 +231,7 @@ class distance:
       return self._value
     else:
       if not units.upper() in distance.legal_units:
-        raise UnitsError("unknown distance unit: "+units)
+        raise UnitsError("unrecognized distance unit: '"+units+"'")
       units = units.upper()
     if units == self._units:
       return self._value
@@ -255,7 +258,7 @@ class distance:
       units = self._units
     else:
       if not units.upper() in distance.legal_units:
-        raise UnitsError("unknown distance unit: "+units)
+        raise UnitsError("unrecognized distance unit: '"+units+"'")
       units = units.upper()
     if self._num and self._den and units == self._units:
       val = int(self._value - self._num/self._den)
@@ -299,7 +302,7 @@ class direction:
       self._compass = None
       value = float(d)
       if value < 0.0 or value > 360.0:
-        raise ValueError
+        raise ValueError("direction must be 0..360: '"+str(value)+"'")
       self._degrees = value
       
   def value( self ):
@@ -323,3 +326,41 @@ class direction:
             break
     return self._compass
 
+class position:
+  """A class representing a location on the earth's surface."""
+   
+  def __init__( self, latitude=None, longitude=None ):
+    self.latitude = latitude
+    self.longitude = longitude
+   
+  def getdistance( self, position2 ):
+    """
+    Calculate the great-circle distance to another location using the Haversine
+    formula.  See <http://www.movable-type.co.uk/scripts/LatLong.html>
+    and <http://mathforum.org/library/drmath/sets/select/dm_lat_long.html>
+    """
+    earth_radius = 637100.0
+    lat1 = self.latitude
+    long1 = self.longitude
+    lat2 = position2.latitude
+    long2 = position2.longitude
+    a = sin(0.5(lat2-lat1)) + cos(lat1)*cos(lat2)*sin(0.5*(long2-long1)**2)
+    c = 2.0*atan(sqrt(a)*sqrt(1.0-a))
+    d = distance(earth_radius*c,"M")
+    return d
+
+  def getdirection( self, position2 ):
+    """
+    Calculate the initial direction to another location.  (The direction
+    typically changes as you trace the great circle path to that location.)
+    See <http://www.movable-type.co.uk/scripts/LatLong.html>.
+    """
+    lat1 = self.latitude
+    long1 = self.longitude
+    lat2 = position2.latitude
+    long2 = position2.longitude
+    s = -sin(long1-long2)*cos(lat2)
+    c = cos(lat1)*sin(lat2) - sin(lat1)*cos(lat2)*cos(long1-long2)
+    d = atan2(s,c)*180.0/math.pi
+    if d < 0.0: d += 360.0
+    return direction(d)
