@@ -85,10 +85,11 @@ VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?(\d\s+)?\d/\d\d?|M?\d+)
                                             (?P<dir>[NSEW][EW]?)? ) |
                                           CAVOK )\s+""",
                              re.VERBOSE)
-RUNWAY_RE = re.compile(r"""^R(?P<name>\d\d(RR?|LL?|C)?)/
+RUNWAY_RE = re.compile(r"""^(RVRNO | 
+                            R(?P<name>\d\d(RR?|LL?|C)?)/
                              (?P<low>(M|P)?\d\d\d\d)
                            (V(?P<high>(M|P)?\d\d\d\d))?
-                            (?P<unit>FT)?[/NDU]*\s+""",
+                            (?P<unit>FT)?[/NDU]*)\s+""",
                        re.VERBOSE)
 WEATHER_RE = re.compile(r"""^(?P<int>(-|\+|VC)*)
                              (?P<desc>(MI|PR|BC|DR|BL|SH|TS|FZ)+)?
@@ -96,15 +97,15 @@ WEATHER_RE = re.compile(r"""^(?P<int>(-|\+|VC)*)
                              (?P<obsc>BR|FG|FU|VA|DU|SA|HZ|PY)?
                              (?P<other>PO|SQ|FC|SS|DS|NSW)?\s+""",
                         re.VERBOSE)
-SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|NCD|BKN|SCT|FEW|OVC|///)
+SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|NCD|BKN|SCT|FEW|[O0]VC|///)
                         (?P<height>[\dO]{2,4}|///)?
                         (?P<cloud>([A-Z][A-Z]+|///))?\s+""",
                    re.VERBOSE)
 TEMP_RE = re.compile(r"""^(?P<temp>(M|-)?\d+|//|XX)/
                           (?P<dewpt>(M|-)?\d+|//|XX)?\s+""",
                      re.VERBOSE)
-PRESS_RE = re.compile(r"""^(?P<unit>A|Q)
-                           (?P<press>\d\d\d\d|////)\s+""",
+PRESS_RE = re.compile(r"""^(?P<unit>A|Q)?
+                           (?P<press>[\dO]{4}|////)\s+""",
                       re.VERBOSE)
 RECENT_RE = re.compile(r"""^RE(?P<desc>MI|PR|BC|DR|BL|SH|TS|FZ)?
                               (?P<prec>(DZ|RA|SN|SG|IC|PL|GR|GS|UP)*)?
@@ -491,13 +492,14 @@ class Metar(object):
       . low   [distance]
       . high  [distance]
     """
-    name = d['name']
-    low = distance(d['low'])
-    if d['high']:
-      high = distance(d['high'])
-    else:
-      high = low
-    self.runway.append((name,low,high))
+    if d['name']:
+      name = d['name']
+      low = distance(d['low'])
+      if d['high']:
+        high = distance(d['high'])
+      else:
+        high = low
+      self.runway.append((name,low,high))
               
   def _parseWeather( self, d ):
     """
@@ -529,13 +531,13 @@ class Metar(object):
       .  cloud   [string]
     """
     height = d['height']
-    if height.find('O') >= 0:
-      height = height.replace('O','0')
     if not height or height == "///":
       height = None
     else:
+      height = height.replace('O','0')
       height = distance(int(height)*100,"FT")
     cover = d['cover']
+    if cover == '0VC': cover = 'OVC'
     cloud = d['cloud']
     if cloud == '///': cloud = ""
     self.sky.append((cover,height,cloud))
@@ -560,11 +562,19 @@ class Metar(object):
     The following attributes are set:
       press    [int]
     """
-    if d['press'] != "////":
-      if d['unit'] == "A":
-        self.press = pressure(float(d['press'])/100,"IN")
+    press = d['press']
+    if press != '////':
+      press = press.replace('O','0')
+      if d['unit']:
+        unit = d['unit']
+      elif float(press)>2500:
+        unit = 'A'
       else:
-        self.press = pressure(d['press'],"MB")
+        unit = 'Q'
+      if unit == 'A':
+        self.press = pressure(float(press)/100,'IN')
+      else:
+        self.press = pressure(press,'MB')
               
   def _parseRecent( self, d ):
     """
