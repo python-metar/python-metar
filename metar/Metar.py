@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
-#  A python module for interpreting METAR and SPECI weather reports.
+#  A python package for interpreting METAR and SPECI weather reports.
 #  
 #  US conventions for METAR/SPECI reports are described in chapter 12 of
 #  the Federal Meteorological Handbook No.1. (FMH-1 1995), issued by NOAA. 
@@ -10,7 +10,8 @@
 #  the WMO Manual on Codes, vol I.1, Part A (WMO-306 I.i.A).  
 #
 #  This module handles a reports that follow the US conventions, as well
-#  the more general encodings in the WMO spec.
+#  the more general encodings in the WMO spec.  Other regional conventions
+#  are not supported at present.
 #
 #  The current METAR report for a given station is available at the URL
 #  http://weather.noaa.gov/pub/data/observations/metar/stations/<station>.TXT
@@ -20,29 +21,23 @@
 #  in the last 24 hours is available in a single file at the URL
 #  http://weather.noaa.gov/pub/data/observations/metar/cycles/<cycle>Z.TXT
 #  where <cycle> is a 2-digit cycle number (e.g., "00", "05" or "23").  
-#
-#  metar.py was inspired by Tobias Klausmann's pymetar.py module, but shares no 
-#  code with it and is more narrowly focussed on parsing the raw METAR code.
 # 
 #  Copyright 2004  Tom Pollard
 # 
-import re
-import datetime
-import string
-from wxdatatypes import *
+__author__ = "Tom Pollard"
 
-__author__ = "mlpollard@earthlink.net"
+__email__ = "pollard@alum.mit.edu"
 
-__version__ = "1.0.1"
+__version__ = "1.1"
 
-__doc__ = """metar.py v%s (c) 2004, Walter Thomas Pollard
+__doc__ = """metar v%s (c) 2004, %s
 
-Metar.py is a python module that interprets METAR and SPECI weather reports.
+Metar is a python package that interprets coded METAR and SPECI weather reports.
 
-Please e-mail bug reports to: %s""" % (__version__, __author__)
+Please e-mail bug reports to: %s""" % (__version__, __author__,__email__)
 
 __LICENSE__ = """
-Copyright (c) 2004, Walter Thomas Pollard
+Copyright (c) 2004, %s
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -52,7 +47,22 @@ Redistributions of source code must retain the above copyright notice, this list
 Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+""" % __author__
+
 """
+This module defines the Metar class.  A Metar object represents 
+the weather report encoded by a single METAR code.
+"""
+import re
+import datetime
+import string
+from Datatypes import temperature, pressure, speed, distance, direction
+
+## Exceptions
+
+class ParserError(Exception):
+  """Exception raised when an unparseable group is found in main report."""
+  pass
 
 ## regular expressions to decode various groups of the METAR code
 
@@ -62,11 +72,11 @@ TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           (?P<hour>\d\d)
                           (?P<min>\d\d)Z\s+""",
                      re.VERBOSE)
-MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR|RTD|CCA)\s+")
+MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR|RTD|CC[A-G])\s+")
 WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|///|VRB)
                           (?P<speed>P?\d\d\d?|//)
                         (G(?P<gust>P?\d\d\d?))?
-                          (?P<unit>KT|KMH|MPS)
+                          (?P<unit>KT|KMH|MPS)?
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                      re.VERBOSE)
@@ -235,7 +245,7 @@ COLOR = { "BLU":"blue",
           "GRN":"green",
           "WHT":"white" }
           
-## translation of various remark codes into english
+## translation of various remark codes into English
         
 PRESSURE_TENDENCY = { "0":"increasing, then decreasing",
                       "1":"increasing more slowly",
@@ -260,26 +270,24 @@ REPORT_TYPE = { "METAR":"routine report",
                 "AUTO":"automatic",
                 "RTD":"RTD",
                 "CCA":"CCA",
+                "CCB":"CCB",
+                "CCC":"CCC",
+                "CCD":"CCD",
+                "CCE":"CCE",
+                "CCF":"CCF",
+                "CCG":"CCG",
                 "COR":"manually corrected" }
-## Exceptions
-
-class MetarError(Exception):
-  """Base class for exceptions raised by the metar class."""
-  pass
-  
-class ParserError(MetarError):
-  """Exception raised when an unparseable group is found in main report."""
-  pass
     
 ## METAR report objects
 
-class metar:
+debug = False
+
+class Metar:
   """METAR (aviation meteorology report)"""
   
-  def __init__( self, metarcode, month=None, year=None, utcdelta=None ):
+  def __init__( self, metarcode, month=None, year=None, utcdelta=None):
     """Parse raw METAR code."""
-    self.code = metarcode
-
+    self.code = metarcode              # original METAR code
     self.type = None                   # METAR (routine) or SPECI (special)
     self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
     self.station_id = None             # 4-character ICAO station code
@@ -325,14 +333,18 @@ class metar:
     else:
       self._year = self._now.year
     
-    code = self.code+" "    # (my regexp's all expect trailing spaces...)
+    code = self.code+" "    # (the regexps all expect trailing spaces...)
     try:
-      for parser in metar.parsers:
+      for parser in Metar.parsers:
         code, match = parser(self,code)
+        if debug and not match:
+          print parser.__name__," didn't match..."
         while match:
+          if debug:
+              print parser.__name__," matched '",match,"'"
           code, match = parser(self,code)
     except Exception, err:
-      print parser.__name__," choked on '"+code+"'"
+      raise ParserError(parser.__name__+" failed while parsing '"+code+"'\n"+string.join(err.args))
       raise err
     if code and not (code.startswith("RMK") or self.press):
       raise ParserError("Unparsed groups in main code: "+code)
@@ -482,8 +494,10 @@ class metar:
     Parse a runway visual range group.
     
     The following attributes are set:
-      range              [list of tuples, each...]
-        (name,low,high)  [string, distance, distance]
+      range   [list of tuples]
+      . name  [string]
+      . low   [distance]
+      . high  [distance]
     """
     m = RUNWAY_RE.match(code)
     if not m: 
@@ -527,7 +541,7 @@ class metar:
     Parse a sky-conditions group.
     
     The following attributes are set:
-      sky                       [list of tuples]
+      sky        [list of tuples]
       .  cover   [string]
       .  height  [distance]
       .  cloud   [string]
@@ -661,7 +675,7 @@ class metar:
       return (code,None)
     code = code[4:].lstrip()
     while code:
-      for pattern, parser in metar.remark_parsers:
+      for pattern, parser in Metar.remark_parsers:
         m = pattern.match(code)
         if m:
           parser(self,m.groupdict())
@@ -760,7 +774,10 @@ class metar:
     """
     Parse a wind shift remark group.
     """
-    wshft_hour = int(d['hour'])
+    if d['hour']:
+      wshft_hour = int(d['hour'])
+    else:
+      wshft_hour = self._hour
     wshft_min = int(d['min'])
     text = "wind shift at %d:%02d" %  (wshft_hour, wshft_min)
     if d['front']:
@@ -838,11 +855,9 @@ class metar:
   
   ## functions that return text representations of conditions for output
 
-  def report( self ):
+  def string( self ):
     """
-    Return a complete decoded report.
-    
-    (At this stage, this is more for debugging than for any real use.)
+    Return a human-readable version of the decoded report.
     """
     lines = []
     lines.append("station: %s" % self.station_id)
@@ -867,6 +882,7 @@ class metar:
     if self._remarks:
       lines.append("remarks:")
       lines.append("- "+self.remarks("\n- "))
+    lines.append("METAR: "+self.code)
     return string.join(lines,"\n")
 
   def report_type( self ):
@@ -1025,29 +1041,3 @@ class metar:
     """
     return string.join(self._remarks,sep)
 
-## simple command-line driver
-
-if __name__ == "__main__":
-  import sys
-  while True:
-    # print "raw METAR report: ",
-    try:
-      raw = sys.stdin.readline()
-      if raw == "":
-        break
-      raw = raw.strip()
-      if len(raw) and raw[0] in string.uppercase:
-        try:
-          obs = metar(raw)
-          print obs.report()
-        except ParserError, err:
-          print "metar.metar: ",raw
-          print string.join(err.args,", ")
-        except Exception, err:
-          print "metar.metar: ",raw
-          raise err
-          
-    except KeyboardInterrupt:
-      break
-      
-      
