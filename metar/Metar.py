@@ -56,7 +56,7 @@ the weather report encoded by a single METAR code.
 import re
 import datetime
 import string
-from Datatypes import temperature, pressure, speed, distance, direction
+from Datatypes import *
 
 ## Exceptions
 
@@ -316,6 +316,17 @@ class Metar(object):
     self.recent = []                   # recent weather (list of tuples)
     self.sky = []                      # sky conditions (list of tuples)
     self.windshear = []                # runways w/ wind shear (list of strings)
+    self.wind_speed_peak = None        # peak wind speed in last hour
+    self.wind_dir_peak = None          # direction of peak wind speed in last hour
+    self.max_temp_6hr = None           # max temp in last 6 hours
+    self.min_temp_6hr = None           # min temp in last 6 hours
+    self.max_temp_24hr = None          # max temp in last 24 hours
+    self.min_temp_24hr = None          # min temp in last 24 hours
+    self.press_sea_level = None        # sea-level pressure
+    self.precip_1hr = None             # precipitation over the last hour
+    self.precip_3hr = None             # precipitation over the last 3 hours
+    self.precip_6hr = None             # precipitation over the last 6 hours
+    self.precip_24hr = None            # precipitation over the last 24 hours
     self._remarks = []                 # remarks (list of strings)
     self._unparsed = []
     
@@ -523,14 +534,14 @@ class Metar(object):
       .  obscuration   [string]
       .  other         [string]
     """
-    intensity = d['int']
-    if not intensity and d['int2']:
-      intensity = d['int2']
-    description = d['desc']
-    precipitation = d['prec']
-    obscuration = d['obsc']
-    other = d['other']
-    self.weather.append((intensity,description,precipitation,obscuration,other))
+    inteni = d['int']
+    if not inteni and d['int2']:
+      inteni = d['int2']
+    desci = d['desc']
+    preci = d['prec']
+    obsci = d['obsc']
+    otheri = d['other']
+    self.weather.append((inteni,desci,preci,obsci,otheri))
               
   def _parseSky( self, d ):
     """
@@ -609,11 +620,11 @@ class Metar(object):
       .  obscuration   [string]
       .  other         [string]
     """
-    description = d['desc']
-    precipitation = d['prec']
-    obscuration = d['obsc']
-    other = d['other']
-    self.recent.append(("",description,precipitation,obscuration,other))
+    desci = d['desc']
+    preci = d['prec']
+    obsci = d['obsc']
+    otheri = d['other']
+    self.recent.append(("",desci,preci,obsci,otheri))
     
   def _parseWindShear( self, d ):
     """
@@ -659,7 +670,8 @@ class Metar(object):
       value += 900
     if not self.press:
       self.press = pressure(value,"MB")
-    self._remarks.append("sea-level pressure %.1fhPa" % value)
+    self.press_sea_level = pressure(value,"MB")
+#    self._remarks.append("sea-level pressure %.1fhPa" % value)
         
   def _parsePrecip24hrRemark( self, d ):
     """
@@ -668,16 +680,20 @@ class Metar(object):
     value = float(d['precip'])/100.0
     if d['type'] == "6":
       if self.cycle == 3 or self.cycle == 9 or self.cycle == 15 or self.cycle == 21:
-        self._remarks.append("3-hour precipitation %.2fin" % value)
+        self.precip_3hr = precipitation(value,"IN")
+#        self._remarks.append("3-hour precipitation %.2fin" % value)
       else:
-        self._remarks.append("6-hr precip %.2fin" % value)  
+        self.precip_6hr = precipitation(value,"IN")
+#        self._remarks.append("6-hr precip %.2fin" % value)  
     else:
-      self._remarks.append("24-hr precip %.2fin" % value)
+      self.precip_24hr = precipitation(value,"IN")
+#      self._remarks.append("24-hr precip %.2fin" % value)
         
   def _parsePrecip1hrRemark( self, d ):
     """Parse an hourly precipitation remark group."""
     value = float(d['precip'])/100.0
-    self._remarks.append("1-hr precip %.2fin" % value)
+    self.precip_1hr = precipitation(value,"IN")
+#    self._remarks.append("1-hr precip %.2fin" % value)
                 
   def _parseTemp1hrRemark( self, d ):
     """
@@ -700,9 +716,11 @@ class Metar(object):
     value = float(d['temp'])/10.0
     if d['sign'] == "1": value = -value
     if d['type'] == "1":
-      self._remarks.append("6-hr max temp %.1fC" % value)
+      self.max_temp_6hr = temperature(value,"C")
+#      self._remarks.append("6-hr max temp %.1fC" % value)
     else:
-      self._remarks.append("6-hr min temp %.1fC" % value)
+      self.min_temp_6hr = temperature(value,"C")
+#      self._remarks.append("6-hr min temp %.1fC" % value)
     
   def _parseTemp24hrRemark( self, d ):
     """
@@ -712,8 +730,10 @@ class Metar(object):
     if d['smaxt'] == "1": value = -value
     value2 = float(d['mint'])/10.0
     if d['smint'] == "1": value2 = -value2
-    self._remarks.append("24-hr max temp %.1fC" % value)
-    self._remarks.append("24-hr min temp %.1fC" % value2)
+    self.max_temp_24hr = temperature(value,"C")
+    self.min_temp_24hr = temperature(value2,"C")
+#    self._remarks.append("24-hr max temp %.1fC" % value)
+#    self._remarks.append("24-hr min temp %.1fC" % value2)
             
   def _parsePress3hrRemark( self, d ):
     """
@@ -729,6 +749,8 @@ class Metar(object):
     """
     peak_dir = int(d['dir'])
     peak_speed = int(d['speed'])
+    self.wind_speed_peak = speed(peak_speed, "KT")
+    self.wind_dir_peak = direction(peak_dir)
     peak_min = int(d['min'])
     if d['hour']:
       peak_hour = int(d['hour'])
@@ -849,6 +871,8 @@ class Metar(object):
       lines.append("dew point: %s" % self.dewpt.string("C"))
     if self.wind_speed:
       lines.append("wind: %s" % self.wind())
+    if self.wind_speed_peak:
+      lines.append("peak wind: %s" % self.peak_wind())
     if self.vis:
       lines.append("visibility: %s" % self.visibility())
     if self.runway:
@@ -859,9 +883,29 @@ class Metar(object):
       lines.append("weather: %s" % self.present_weather())
     if self.sky:
       lines.append("sky: %s" % self.sky_conditions("\n     "))
+    if self.press_sea_level:
+      lines.append("sea-level pressure: %s" % self.press_sea_level.string("mb"))
+    if self.max_temp_6hr:
+      lines.append("6-hour max temp: %s" % self.max_temp_6hr.string())
+    if self.max_temp_6hr:
+      lines.append("6-hour min temp: %s" % self.min_temp_6hr.string())
+    if self.max_temp_24hr:
+      lines.append("24-hour max temp: %s" % self.max_temp_24hr.string())
+    if self.max_temp_24hr:
+      lines.append("24-hour min temp: %s" % self.min_temp_24hr.string())
+    if self.precip_1hr:
+      lines.append("1-hour precipitation: %s" % self.precip_1hr.string())
+    if self.precip_3hr:
+      lines.append("3-hour precipitation: %s" % self.precip_3hr.string())
+    if self.precip_6hr:
+      lines.append("6-hour precipitation: %s" % self.precip_6hr.string())
+    if self.precip_24hr:
+      lines.append("24-hour precipitation: %s" % self.precip_24hr.string())
     if self._remarks:
       lines.append("remarks:")
       lines.append("- "+self.remarks("\n- "))
+    if self._unparsed:
+      lines.append("- "+' '.join(self._unparsed))
     lines.append("METAR: "+self.code)
     return string.join(lines,"\n")
 
@@ -907,6 +951,24 @@ class Metar(object):
         text += ", gusting to %s" % self.wind_gust.string(units)
     return text
 
+  def peak_wind( self, units="KT" ):
+    """
+    Return a textual description of the peak wind conditions.
+    
+    Units may be specified as "MPS", "KT", "KMH", or "MPH".
+    """
+    if self.wind_speed_peak == None:
+      return "missing"
+    elif self.wind_speed_peak.value() == 0.0:
+      text = "calm"
+    else:
+      wind_speed = self.wind_speed_peak.string(units)
+      if not self.wind_dir_peak:
+        text = wind_speed
+      else:
+        text = "%s at %s" % (self.wind_dir_peak.compass(), wind_speed)
+    return text
+
   def visibility( self, units=None ):
     """
     Return a textual description of the visibility.
@@ -944,47 +1006,47 @@ class Metar(object):
     """
     text_list = []
     for weatheri in self.weather:
-      (intensity,description,precipitation,obscuration,other) = weatheri
+      (inteni,desci,preci,obsci,otheri) = weatheri
       text_parts = []
       code_parts = []
       
-      if intensity:
-        code_parts.append(intensity)
-        text_parts.append(WEATHER_INT[intensity])
+      if inteni:
+        code_parts.append(inteni)
+        text_parts.append(WEATHER_INT[inteni])
         
-      if description:
-        code_parts.append(description)
-        if description != "SH" or not precipitation:
-          text_parts.append(WEATHER_DESC[description[0:2]])
-          if len(description) == 4:
-            text_parts.append(WEATHER_DESC[description[2:]])
+      if desci:
+        code_parts.append(desci)
+        if desci != "SH" or not preci:
+          text_parts.append(WEATHER_DESC[desci[0:2]])
+          if len(desci) == 4:
+            text_parts.append(WEATHER_DESC[desci[2:]])
         
-      if precipitation:
-        code_parts.append(precipitation)        
+      if preci:
+        code_parts.append(preci)        
         
-        if len(precipitation) == 2:
-          precip_text = WEATHER_PREC[precipitation]
-        elif len(precipitation) == 4:
-          precip_text = WEATHER_PREC[precipitation[:2]]+" and "
-          precip_text += WEATHER_PREC[precipitation[2:]]
-        elif len(precipitation) == 6:
-          precip_text = WEATHER_PREC[precipitation[:2]]+", "
-          precip_text += WEATHER_PREC[precipitation[2:4]]+" and "
-          precip_text += WEATHER_PREC[precipitation[4:]]
+        if len(preci) == 2:
+          precip_text = WEATHER_PREC[preci]
+        elif len(preci) == 4:
+          precip_text = WEATHER_PREC[preci[:2]]+" and "
+          precip_text += WEATHER_PREC[preci[2:]]
+        elif len(preci) == 6:
+          precip_text = WEATHER_PREC[preci[:2]]+", "
+          precip_text += WEATHER_PREC[preci[2:4]]+" and "
+          precip_text += WEATHER_PREC[preci[4:]]
 
-        if description == "TS":
+        if desci == "TS":
           text_parts.append("with")
         text_parts.append(precip_text)
-        if description == "SH":
-          text_parts.append(WEATHER_DESC[description])
+        if desci == "SH":
+          text_parts.append(WEATHER_DESC[desci])
         
-      if obscuration:
-        code_parts.append(obscuration)
-        text_parts.append(WEATHER_OBSC[obscuration])
+      if obsci:
+        code_parts.append(obsci)
+        text_parts.append(WEATHER_OBSC[obsci])
         
-      if other:
-        code_parts.append(other)
-        text_parts.append(WEATHER_OTHER[other])
+      if otheri:
+        code_parts.append(otheri)
+        text_parts.append(WEATHER_OTHER[otheri])
         
       code = string.join(code_parts)
       if WEATHER_SPECIAL.has_key(code):
