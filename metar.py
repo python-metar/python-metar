@@ -2,17 +2,24 @@
 #
 #  A python module for interpreting METAR and SPECI weather reports.
 #  
-#  Follows US conventions for METAR/SPECI reports, described in chapter 12 of
+#  US conventions for METAR/SPECI reports are described in chapter 12 of
 #  the Federal Meteorological Handbook No.1. (FMH-1 1995), issued by NOAA. 
 #  See <http://metar.noaa.gov/>
 # 
 #  International conventions for the METAR and SPECI codes are specified in 
-#  the WMO Manual on Codes, vol I.1, Part A (WMO-306 I.i.A).  This module
-#  doesn't handle any of the more general encodings in the WMO spec.
+#  the WMO Manual on Codes, vol I.1, Part A (WMO-306 I.i.A).  
+#
+#  This module handles a reports that follow the US conventions, as well
+#  the more general encodings in the WMO spec.
 #
 #  The current METAR report for a given station is available at the URL
 #  http://weather.noaa.gov/pub/data/observations/metar/stations/<station>.TXT
 #  where <station> is the four-letter ICAO station code.  
+#
+#  The METAR reports for all reporting stations for any "cycle" (i.e., hour) 
+#  in the last 24 hours is available in a single file at the URL
+#  http://weather.noaa.gov/pub/data/observations/metar/cycles/<cycle>Z.TXT
+#  where <cycle> is a 2-digit cycle number (e.g., "00", "05" or "23").  
 #
 #  metar.py was inspired by Tobias Klausmann's pymetar.py module, but shares no 
 #  code with it and is more narrowly focussed on parsing the raw METAR code.
@@ -22,6 +29,7 @@
 import re
 import datetime
 import string
+from wxdatatypes import *
 
 __author__ = "mlpollard@earthlink.net"
 
@@ -29,10 +37,9 @@ __version__ = "1.0.1"
 
 __doc__ = """metar.py v%s (c) 2004, Walter Thomas Pollard
 
-Metar.py is a python module that interprets METAR and SPECI weather reports
-following US conventions.
+Metar.py is a python module that interprets METAR and SPECI weather reports.
 
-Please e-mail bugs to: %s""" % (__version__, __author__)
+Please e-mail bug reports to: %s""" % (__version__, __author__)
 
 __LICENSE__ = """
 Copyright (c) 2004, Walter Thomas Pollard
@@ -49,45 +56,56 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ## regular expressions to decode various groups of the METAR code
 
-TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI|TESTM)\s+")
-MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR)\s+")
+TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI)\s+")
 STATION_RE =  re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
 TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           (?P<hour>\d\d)
                           (?P<min>\d\d)Z\s+""",
                      re.VERBOSE)
-WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|VRB)
-                          (?P<speed>P?\d\d\d?)
+MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR|RTD|CCA)\s+")
+WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|///|VRB)
+                          (?P<speed>P?\d\d\d?|//)
                         (G(?P<gust>P?\d\d\d?))?
                           (?P<unit>KT|KMH|MPS)
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                      re.VERBOSE)
-VISIBILITY_RE =   re.compile(r"""^(?P<vis>M?(\d+|(\d\s+)?\d/\d\d?)|CAVOK)?
-                                  (?P<unit>(SM)?)\s+""",
+VISIBILITY_RE =   re.compile(r"""^(?P<vis>M?\d+(SM|KM) | 
+                                          M?(\d\s+)?\d/\d\d?SM |
+                                          \d\d\d\d(?P<dir>[NSEW][EW]?)? |
+                                          CAVOK )\s+""",
                              re.VERBOSE)
-FRACTION_RE = re.compile(r"^((?P<i>\d+)\s+)?(?P<n>\d+)/(?P<d>\d+)$")
-RUNWAY_RE = re.compile(r"""^R(?P<name>\d\d(R|L|C)?)/
+RUNWAY_RE = re.compile(r"""^R(?P<name>\d\d(RR?|LL?|C)?)/
                              (?P<low>(M|P)?\d\d\d\d)
                            (V(?P<high>(M|P)?\d\d\d\d))?
-                            FT\s+""",
+                            (?P<unit>FT)?[/NDU]*\s+""",
                        re.VERBOSE)
-WEATHER_RE = re.compile(r"""^(?P<int>(-|\+|VC)*)?
+WEATHER_RE = re.compile(r"""^(?P<int>(-|\+|VC)*)
                              (?P<desc>MI|PR|BC|DR|BL|SH|TS|FZ)?
-                             (?P<prec>(DZ|RA|SN|SG|IC|PL|GR|GS|UP)*)?
+                             (?P<prec>(DZ|RA|SN|SG|IC|PL|GR|GS|UP|//)*)
                              (?P<obsc>BR|FG|FU|VA|DU|SA|HZ|PY)?
-                             (?P<other>PO|SQ|FC|SS|DS)?\s+""",
+                             (?P<other>PO|SQ|FC|SS|DS|NSW)?\s+""",
                         re.VERBOSE)
-SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|BKN|SCT|FEW|OVC)
+SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|BKN|SCT|FEW|OVC)
                         (?P<height>\d\d\d|///)?
-                        (?P<cloud>CB|TCU)?\s+""",
+                        (?P<cloud>[A-Z][A-Z]+)?\s+""",
                    re.VERBOSE)
-TEMP_RE = re.compile(r"""^(?P<temp>M?\d+)/
-                          (?P<dewpt>M?\d+)?\s+""",
+TEMP_RE = re.compile(r"""^(?P<temp>M?\d+|//)/
+                          (?P<dewpt>M?\d+|//)?\s+""",
                      re.VERBOSE)
 PRESS_RE = re.compile(r"""^(?P<unit>A|Q)
-                           (?P<press>\d\d\d\d)\s+""",
+                           (?P<press>\d\d\d\d|////)\s+""",
                       re.VERBOSE)
+RECENT_RE = re.compile(r"""^RE(?P<desc>MI|PR|BC|DR|BL|SH|TS|FZ)?
+                              (?P<prec>(DZ|RA|SN|SG|IC|PL|GR|GS|UP)*)?
+                              (?P<obsc>BR|FG|FU|VA|DU|SA|HZ|PY)?
+                              (?P<other>PO|SQ|FC|SS|DS)?\s+""",
+                        re.VERBOSE)
+WINDSHEAR_RE = re.compile(r"^(WS\s+)?(ALL\s+RWY|RWY(?P<name>\d\d(RR?|L?|C)?))\s+")
+COLOR_RE = re.compile(r"""^(BLACK)?(BLU|GRN|WHT|RED)\+?
+                        (/?(BLACK)?(BLU|GRN|WHT|RED)\+?)*\s*""",
+                             re.VERBOSE)
+TREND_RE = re.compile(r"^(?P<trend>TEMPO|BECMG|FCST|NOSIG)\s+")
 
 ## regular expressions for remark groups
 
@@ -120,10 +138,10 @@ TEMP_6HR_RE = re.compile(r"""^(?P<type>1|2)
                               (?P<sign>0|1)
                               (?P<temp>\d\d\d)\s+""",
                           re.VERBOSE)
-TEMP_24HR_RE = re.compile(r"""^4(?P<smax>0|1)
-                                (?P<tmax>\d\d\d)
-                                (?P<smin>0|1)
-                                (?P<tmin>\d\d\d)\s+""",
+TEMP_24HR_RE = re.compile(r"""^4(?P<smaxt>0|1)
+                                (?P<maxt>\d\d\d)
+                                (?P<smint>0|1)
+                                (?P<mint>\d\d\d)\s+""",
                           re.VERBOSE)
 UNPARSED_RE = re.compile(r"(?P<group>\S+)\s+")
 
@@ -155,6 +173,7 @@ def xlate_loc( loc ):
 
 SKY_COVER = { "SKC":"clear",
               "CLR":"clear",
+              "NSC":"clear",
               "FEW":"a few ",
               "SCT":"scattered ",
               "BKN":"broken ",
@@ -162,7 +181,9 @@ SKY_COVER = { "SKC":"clear",
               "VV":"indefinite ceiling" }
               
 CLOUD_TYPE = { "TCU":"towering cumulus",
+               "CU":"cumulus",
                "CB":"cumulonimbus",
+               "SC":"stratocumulus",
                "CBMAM":"cumulonimbus mammatus",
                "ACC":"altocumulus castellanus",
                "SCSL":"standing lenticular stratocumulus",
@@ -192,7 +213,8 @@ WEATHER_PREC = { "DZ":"drizzle",
                  "PL":"ice pellets",
                  "GR":"hail",
                  "GS":"snow pellets",
-                 "UP":"unknown precipitation" }
+                 "UP":"unknown precipitation",
+                 "//":"" }
 WEATHER_OBSC = { "BR":"mist",
                  "FG":"fog",
                  "FU":"smoke",
@@ -209,6 +231,10 @@ WEATHER_OTHER = { "PO":"sand whirls",
 
 WEATHER_SPECIAL = { "+FC":"tornado" }
 
+COLOR = { "BLU":"blue",
+          "GRN":"green",
+          "WHT":"white" }
+          
 ## translation of various remark codes into english
         
 PRESSURE_TENDENCY = { "0":"increasing, then decreasing",
@@ -232,224 +258,19 @@ LIGHTNING_TYPE = { "IC":"intracloud",
 REPORT_TYPE = { "METAR":"routine report",
                 "SPECI":"special report",
                 "AUTO":"automatic",
+                "RTD":"RTD",
+                "CCA":"CCA",
                 "COR":"manually corrected" }
-
 ## Exceptions
 
 class MetarError(Exception):
   """Base class for exceptions raised by the metar class."""
   pass
   
-class UnitError(MetarError):
-  """Exception raised when an unrecognized unit is used."""
+class ParserError(MetarError):
+  """Exception raised when an unparseable group is found in main report."""
   pass
-  
-## classes representing dimensioned values
     
-class temperature:
-  """A temperature value."""
-  legal_units = [ "F", "C", "K" ]
-  
-  def __init__( self, value, units="C" ):
-    self._value = float(value)
-    self._units = units.upper()
-    if not units.upper() in temperature.legal_units:
-      raise UnitError("unknown temperature unit: "+units)
-    
-  def value( self, units=None ):
-    """Return the temperature in the specified units."""
-    if units == None:
-      return self._value
-    else:
-      if not units.upper() in temperature.legal_units:
-        raise UnitError("unknown temperature unit: "+units)
-      units = units.upper()
-    if self._units == "C":
-      celsius_value = self._value
-    elif self._units == "F":
-      celsius_value = (self._value-32.0)/1.8
-    elif self._units == "K":
-      celsius_value = 273.15+self._value
-    if units == "C":
-        return celsius_value
-    elif units == "K":
-        return 273.15+celsius_value
-    elif units == "F":
-      return 32.0+self._value*1.8
-      
-  def string( self, units=None ):
-    """Return a string representation of the temperature, using the given units."""
-    if units == None:
-      units = self._units
-    else:
-      if not units.upper() in temperature.legal_units:
-        raise UnitError("unknown temperature unit: "+units)
-      units = units.upper()
-    val = self.value(units)
-    if units == "C":
-      return "%.1f C" % val
-    elif units == "F":
-      return "%.1f F" % val
-    elif units == "K":
-      return "%.1f K" % val
-
-class pressure:
-  """A barometric pressure value."""
-  legal_units = [ "MB", "HPA", "IN" ]
-  
-  def __init__( self, value, units="MB" ):
-    self._value = float(value)
-    self._units = units.upper()
-    if not units.upper() in pressure.legal_units:
-      raise UnitError("unknown pressure unit: "+units)
-    
-  def value( self, units=None ):
-    """Return the pressure in the specified units."""
-    if units == None:
-      return self._value
-    else:
-      if not units.upper() in pressure.legal_units:
-        raise UnitError("unknown pressure unit: "+units)
-      units = units.upper()
-    if units == self._units:
-      return self._value
-    if self._units == "IN":
-      mb_value = self._value*33.86398
-    else:
-      mb_value = self._value
-    if units == "MB" or units == "HPA":
-      return mb_value
-    elif units == "IN":
-        return mb_value/33.86398
-    else:
-      raise UnitError("unknown pressure unit: "+units)
-      
-  def string( self, units=None ):
-    """Return a string representation of the pressure, using the given units."""
-    if units == None:
-      units = self._units
-    else:
-      if not units.upper() in pressure.legal_units:
-        raise UnitError("unknown pressure unit: "+units)
-      units = units.upper()
-    val = self.value(units)
-    if units == "MB":
-      return "%.1f mb" % val
-    elif units == "HPA":
-      return "%.1f hPa" % val
-    elif units == "IN":
-      return "%.2f inches" % val
-
-class speed:
-  """A wind speed value."""
-  legal_units = [ "KT", "MPS", "KMH", "MPH" ]
-  
-  def __init__( self, value, units="MPS" ):
-    self._value = float(value)
-    self._units = units.upper()
-    if not units.upper() in speed.legal_units:
-      raise UnitError("unknown speed unit: "+units)
-    
-  def value( self, units=None ):
-    """Return the pressure in the specified units."""
-    if not units:
-      return self._value
-    else:
-      if not units.upper() in speed.legal_units:
-        raise UnitError("unknown speed unit: "+units)
-      units = units.upper()
-    if units == self._units:
-      return self._value
-    if self._units == "KMH":
-      mps_value = self._units/3.6
-    elif self._units == "KT":
-      mps_value = self._value*0.514444
-    elif self._units == "MPH":
-      mbs_value = self._value*0.447000
-    else:
-      mps_value = self._value
-    if units == "KMH":
-      return mps_value*3.6
-    elif units == "KT":
-      return mps_value/0.514444
-    elif units == "MPH":
-      return mps_value/0.447000
-    elif units == "MPS":
-      return mps_value
-      
-  def string( self, units=None ):
-    """Return a string representation of the speed in the given units."""
-    if not units:
-      units = self._units
-    else:
-      if not units.upper() in speed.legal_units:
-        raise UnitError("unknown speed unit: "+units)
-      units = units.upper()
-    val = self.value(units)
-    if units == "KMH":
-      return "%.0f km/h" % val
-    elif units == "KT":
-      return "%.0f knots" % val
-    elif units == "MPH":
-      return "%.0f mph" % val
-    elif units == "MPS":
-      return "%.1f mps" % val
-
-class distance:
-  """A distance value."""
-  legal_units = [ "SM", "MI", "M", "KM", "FT" ]
-  
-  def __init__( self, value, units="M" ):
-    self._value = float(value)
-    self._units = units.upper()
-    if not units.upper() in distance.legal_units:
-      raise UnitError("unknown distance unit: "+units)
-    
-  def value( self, units=None ):
-    """Return the distance in the specified units."""
-    if not units:
-      return self._value
-    else:
-      if not units.upper() in distance.legal_units:
-        raise UnitError("unknown distance unit: "+units)
-      units = units.upper()
-    if units == self._units:
-      return self._value
-    if self._units == "SM":
-      m_value = self._units*1609.344
-    elif self._units == "FT":
-      m_value = self._value/3.28084
-    elif self._units == "KM":
-      m_value = self._value*1000
-    else:
-      m_value = self._value
-    if units == "SM":
-      return m_value/1609.344
-    elif units == "FT":
-      return m_value*3.28084
-    elif units == "KM":
-      return m_value/0.447000
-    elif units == "M":
-      return m_value
-      
-  def string( self, units=None ):
-    """Return a string representation of the distance in the given units."""
-    if not units:
-      units = self._units
-    else:
-      if not units.upper() in distance.legal_units:
-        raise UnitError("unknown distance unit: "+units)
-      units = units.upper()
-    val = self.value(units)
-    if units == "SM":
-      return "%.0f miles" % val
-    elif units == "M":
-      return "%.0f meters" % val
-    elif units == "KM":
-      return "%.0f km" % val
-    elif units == "FT":
-      return "%.0f feet" % val
-
 ## METAR report objects
 
 class metar:
@@ -464,23 +285,23 @@ class metar:
     self.station_id = None             # 4-character ICAO station code
     self.time = None                   # observation time [datetime]
     self.cycle = None                  # observation cycle (0-23) [int]
-    self.wind_dir = None               # wind direction (degrees) [int]
-    self.wind_variable = None          # wind direction variable? [bool]
+    self.wind_dir = None               # wind direction [direction]
     self.wind_speed = None             # wind speed [speed]
-    self.wind_speed_greater = None     # wind speed is lower limit? [bool]
-    self.wind_gust = None              # wind gust speed (kt) [int]
-    self.wind_gust_greater = None      # wind gust speed is lower limit? [bool]
-    self.wind_dir_from = None          # beginning of range for win dir (degrees) [int]
-    self.wind_dir_to = None            # end of range for win dir (degrees) [int]
-    self.vis = None                    # visibility (stautue miles) [distance]
-    self.vis_less = None               # visibilty is upper limit? [bool]
-    self._vis_frac = None              
+    self.wind_gust = None              # wind gust speed [speed]
+    self.wind_dir_from = None          # beginning of range for win dir [direction]
+    self.wind_dir_to = None            # end of range for wind dir [direction]
+    self.vis = None                    # visibility [distance]
+    self.vis_dir = None                # visibility direction [direction]
+    self.max_vis = None                # visibility [distance]
+    self.max_vis_dir = None            # visibility direction [direction]
     self.temp = None                   # temperature (C) [temperature]
     self.dewpt = None                  # dew point (C) [temperature]
     self.press = None                  # barometric pressure [pressure]
     self.runway = []                   # runway visibility (list of tuples)
     self.weather = []                  # present weather (list of tuples)
+    self.recent = []                   # recent weather (list of tuples)
     self.sky = []                      # sky conditions (list of tuples)
+    self.windshear = []                # runways w/ wind shear (list of strings)
     self._remarks = []                 # remarks (list of strings)
     self._unparsed = []
     
@@ -505,11 +326,17 @@ class metar:
       self._year = self._now.year
     
     code = self.code+" "    # (my regexp's all expect trailing spaces...)
-    for parser in metar.parsers:
-      code, match = parser(self,code)
-      while match:
-         code, match = parser(self,code)
-    
+    try:
+      for parser in metar.parsers:
+        code, match = parser(self,code)
+        while match:
+          code, match = parser(self,code)
+    except Exception, err:
+      print parser.__name__," choked on '"+code+"'"
+      raise err
+    if code and not (code.startswith("RMK") or self.press):
+      raise ParserError("Unparsed groups in main code: "+code)
+    self._parseRemarks(code)
           
   def _parseType( self, code ):
     """
@@ -581,11 +408,9 @@ class metar:
     Parse the wind and variable-wind groups.
     
     The following attributes are set:
-      wind_dir           [int]
-      wind_speed         [int]
-      wind_speed_greater [bool]
-      wind_gust          [int]
-      wind_gust_greater  [bool]
+      wind_dir           [direction]
+      wind_speed         [speed]
+      wind_gust          [speed]
       wind_dir_from      [int]
       wind_dir_to        [int]
     """
@@ -593,58 +418,63 @@ class metar:
     if not m: 
       return (code,None)
     d = m.groupdict()
-    self.wind_dir = d['dir']
-    if self.wind_dir == "VRB":
-      self.wind_variable = True
-    else:
-      self.wind_dir = int(self.wind_dir)    
+    wind_dir = d['dir']
+    if wind_dir != "VRB" and wind_dir != "///":
+      self.wind_dir = direction(wind_dir)    
     wind_speed = d['speed']
     if wind_speed.startswith("P"):
-      self.wind_speed_greater = True
-      wind_speed = wind_speed[1:]
-    self.wind_speed = speed(wind_speed,d['unit'])
+      self.wind_speed = speed(wind_speed[1:], d['unit'], ">")
+    elif wind_speed != "//":
+      self.wind_speed = speed(wind_speed, d['unit'])
     if d['gust']:
-      self.wind_gust = d['gust']
-      if self.wind_gust.startswith("P"):
-        self.wind_gust_greater = True
-        self.wind_gust = self.wind_gust[1:]
-        self.wind_gust = speed(self.wind_gust,d['unit'])
+      wind_gust = d['gust']
+      if wind_gust.startswith("P"):
+        self.wind_gust = speed(wind_gust[1:], d['unit'], ">")
+      else:
+        self.wind_gust = speed(wind_gust, d['unit'])
     if d['varfrom']:
-      self.wind_dir_from = int(d['varfrom'])
-      self.wind_dir_to = int(d['varto'])      
+      self.wind_dir_from = direction(d['varfrom'])
+      self.wind_dir_to = direction(d['varto'])      
     return WIND_RE.sub("",code), m.group()
     
   def _parseVisibility( self, code ):
     """
-    Parse the visibility group.
+    Parse the minimum and maximum visibility groups.
     
     The following attributes are set:
-      vis           [float]
-      vis_less      [bool]
-      _vis_frac     [string]
+      vis          [distance]
+      vis_dir      [direction]
+      max_vis      [distance]
+      max_vis_dir  [direction]
     """
     m = VISIBILITY_RE.match(code)
     if not m: 
       return (code,None)
     d = m.groupdict()
-    self.vis = d['vis']
-    if self.vis.startswith("M"):
-      self.vis_less = True
-      self.vis = self.vis[1:]
-    mf = FRACTION_RE.match(self.vis)
-    if mf:
-      df = mf.groupdict()
-      self._vis_frac = mf.group()
-      vis_num = float(df['n'])
-      vis_den = float(df['d'])
-      value = vis_num/vis_den
-      if df['i']:
-        value += int(df['i'])
-      self.vis = distance(value,d['unit'])
-    elif self.vis == "CAVOK" or self.vis == "9999":
-      self.vis = distance(10000)
+    vis = d['vis']
+    vis_less = None
+    vis_units = "M"
+    vis_dir = None
+    if d['dir']:
+      vis = vis[:4]
+      vis_dir = d['dir']    
+    if vis.endswith("SM"):
+      vis = vis[:-2]
+      vis_units = "SM"
+    elif vis.endswith("KM"):
+      vis = vis[:-2]
+      vis_units = "KM"
+    elif vis == "CAVOK" or vis == "9999":
+      vis = "10000"
+      vis_less = ">"
+    if self.vis:
+      if vis_dir:
+        self.max_vis_dir = direction(vis_dir)
+      self.max_vis = distance(vis, vis_units, vis_less)
     else:
-      self.vis = distance(self.vis,d['unit'])  
+      if vis_dir:
+        self.vis_dir = direction(vis_dir)
+      self.vis = distance(vis, vis_units, vis_less)
     return VISIBILITY_RE.sub("",code), m.group()
               
   def _parseRunway( self, code ):
@@ -653,7 +483,7 @@ class metar:
     
     The following attributes are set:
       range              [list of tuples, each...]
-        (name,low,high) [...string, string, string]
+        (name,low,high)  [string, distance, distance]
     """
     m = RUNWAY_RE.match(code)
     if not m: 
@@ -699,7 +529,7 @@ class metar:
     The following attributes are set:
       sky                       [list of tuples]
       .  cover   [string]
-      .  height  [int]
+      .  height  [distance]
       .  cloud   [string]
     """
     m = SKY_RE.match(code)
@@ -707,10 +537,10 @@ class metar:
       return (code,None)
     d = m.groupdict()
     height = d['height']
-    if height == "///":
+    if not height or height == "///":
       height = None
     else:
-      height = int(height)*100
+      height = distance(int(height)*100,"FT")
     self.sky.append((d['cover'],height,d['cloud']))
     return SKY_RE.sub("",code), m.group()
               
@@ -726,8 +556,9 @@ class metar:
     if not m: 
       return (code,None)
     d = m.groupdict()
-    self.temp = temperature(d['temp'])
-    if d['dewpt']:
+    if not d['temp'] == "//":
+      self.temp = temperature(d['temp'])
+    if d['dewpt'] and not d['dewpt'] == "//":
       self.dewpt = temperature(d['dewpt'])
     return TEMP_RE.sub("",code), m.group()
     
@@ -742,11 +573,82 @@ class metar:
     if not m: 
       return (code,None)
     d = m.groupdict()
-    if d['unit'] == "A":
-      self.press = pressure(float(d['press'])/100,"IN")
-    else:
-      self.press = pressure(d['press'],"MB")
+    if d['press'] != "////":
+      if d['unit'] == "A":
+        self.press = pressure(float(d['press'])/100,"IN")
+      else:
+        self.press = pressure(d['press'],"MB")
     return PRESS_RE.sub("",code), m.group()
+              
+  def _parseRecent( self, code ):
+    """
+    Parse a recent-weather group.
+    
+    The following attributes are set:
+      weather    [list of tuples]
+      .  intensity     [string]
+      .  description   [string]
+      .  precipitation [string]
+      .  obscuration   [string]
+      .  other         [string]
+    """
+    m = RECENT_RE.match(code)
+    if not m: 
+      return (code,None)
+    d = m.groupdict()
+    description = d['desc']
+    precipitation = d['prec']
+    obscuration = d['obsc']
+    other = d['other']
+    self.recent.append(("",description,precipitation,obscuration,other))
+    return RECENT_RE.sub("",code), m.group()
+    
+  def _parseWindShear( self, code ):
+    """
+    Parse wind-shear groups.
+    
+    The following attributes are set:
+      windshear    [list of strings]
+    """
+    m = WINDSHEAR_RE.match(code)
+    if not m: 
+      return (code,None)
+    d = m.groupdict()
+    if d['name']:
+      self.windshear.append(d['name'])
+    else:
+      self.windshear.append("ALL")
+    return WINDSHEAR_RE.sub("",code), m.group()
+    
+  def _parseColor( self, code ):
+    """
+    Parse (and ignore) the color groups.
+    
+    The following attributes are set:
+      trend    [list of strings]
+    """
+    m = COLOR_RE.match(code)
+    if not m: 
+      return (code,None)
+    return COLOR_RE.sub("",code), m.group()
+    
+  def _parseTrend( self, code ):
+    """
+    Parse (and ignore) the trend groups.
+    """
+    m = TREND_RE.match(code)
+    if not m: 
+      return (code,None)
+    code = TREND_RE.sub("",code)
+    d = m.groupdict()
+    trend = d['trend']
+    if not trend == "NOSIG":
+      while code and not code.startswith('RMK'):
+        try:
+          (group, code) = code.split(None,1)
+        except:
+          return("",trend)
+    return (code, trend)
     
   def _parseRemarks( self, code ):
     """
@@ -826,9 +728,9 @@ class metar:
     Parse a 24-hour maximum/minimum temperature remark group.
     """
     value = float(d['maxt'])/10.0
-    if d['maxs'] == "1": value = -value
+    if d['smaxt'] == "1": value = -value
     value2 = float(d['mint'])/10.0
-    if d['mins'] == "1": value2 = -value2
+    if d['smint'] == "1": value2 = -value2
     self._remarks.append("24-hr max temp %.1fC" % value)
     self._remarks.append("24-hr min temp %.1fC" % value2)
             
@@ -910,11 +812,12 @@ class metar:
     """
     self._unparsed.append(d['group'])
     
-  ## the list of parser functions to use (in order) to parse a raw METAR code
+  ## the list of parser functions to use (in order) to parse a METAR report
 
   parsers = [ _parseType, _parseStation, _parseTime, _parseModifier, _parseWind, 
               _parseVisibility, _parseRunway, _parseWeather, _parseSky, 
-              _parseTemp, _parsePressure, _parseRemarks ]
+              _parseTemp, _parsePressure, _parseRecent, _parseWindShear, 
+              _parseColor, _parseTrend ]
   
   ## the list of patterns for the various remark groups, 
   ## paired with the parser functions to use to record the decoded remark.
@@ -951,8 +854,10 @@ class metar:
       lines.append("temperature: %s" % self.temp.string("C"))
     if self.dewpt:
       lines.append("dew point: %s" % self.dewpt.string("C"))
-    lines.append("wind: %s" % self.wind())
-    lines.append("visibility: %s" % self.visibility())
+    if self.wind_speed:
+      lines.append("wind: %s" % self.wind())
+    if self.vis:
+      lines.append("visibility: %s" % self.visibility())
     if self.runway:
       lines.append("visual range: %s" % self.runway_visual_range())
     if self.press:
@@ -987,25 +892,26 @@ class metar:
     """
     Return a textual description of the wind conditions.
     
-    Units may be specified as "KMH", "CMPS" or "KT".
+    Units may be specified as "MPS", "KT", "KMH", or "MPH".
     """
-    if self.wind_speed.value() == 0.0:
+    if self.wind_speed == None:
+      return "missing"
+    elif self.wind_speed.value() == 0.0:
       text = "calm"
     else:
       wind_speed = self.wind_speed.string(units)
-      if self.wind_variable:
+      if not self.wind_dir:
         text = "variable at %s" % wind_speed
       elif self.wind_dir_from:
-        text = "%s, variable from %d to %d degrees" % \
-               (speed, self.wind_dir_from, self.wind_dir_to)
+        text = "%s to %s at %s" % \
+               (self.wind_dir_from.compass(), self.wind_dir_to.compass(), wind_speed)
       else:
-        text = "%s from %d degrees" % (wind_speed, self.wind_dir)
+        text = "%s at %s" % (self.wind_dir.compass(), wind_speed)
       if self.wind_gust:
-        wind_gust = self.wind_gust.string(units)
-        text += ", gusting to %s" % wind_gust
+        text += ", gusting to %s" % self.wind_gust.string(units)
     return text
 
-  def visibility( self, units="SM" ):
+  def visibility( self, units=None ):
     """
     Return a textual description of the visibility.
     
@@ -1013,30 +919,27 @@ class metar:
     """
     if self.vis == None:
       return "missing"
-    if units == "SM" and self._vis_frac:
-        text = "%s miles" % self._vis_frac
+    if self.vis_dir:
+      text = "%s to %s" % (self.vis.string(units), self.vis_dir.compass())
     else:
-      text = self.vis.string()
-    if self.vis_less:
-      text = "less than "+text
+      text = self.vis.string(units)
+    if self.max_vis:
+      if self.max_vis_dir:
+        text += "; %s" % self.max_vis.string()
+      else:
+        text += "; %s to %s" % (self.max_vis.string(units), self.max_vis_dir.compass())
     return text
   
-  def runway_visual_range( self ):
+  def runway_visual_range( self, units=None ):
     """
     Return a textual description of the runway visual range.
     """
     lines = []
     for name,low,high in self.runway:
-      if low.startswith("M"):
-        low = "less than %s" % low[1:]
-      if low.startswith("P"):
-        low = "greater than %s" % low[1:]
-      if high.startswith("P"):
-        high = "greater than %s" % high[1:]
       if low != high:
-        lines.append("runway %s: %s to %s feet" % (name,low,high))
+        lines.append("runway %s: %s to %s feet" % (name, low.string(units), high.string(units)))
       else:
-        lines.append("runway %s: %s feet" % (name,low))
+        lines.append("runway %s: %s feet" % (name, low.string(units)))
     return string.join(lines,"; ")
   
   def present_weather( self ):
@@ -1109,9 +1012,11 @@ class metar:
         else: 
           what = ""
         if cover == "VV":
-          text.list.append("%s%s, visibility to %d ft" % (SKY_COVER[cover],what,height))
+          text.list.append("%s%s, visibility to %s" % 
+                           (SKY_COVER[cover],what,height.string()))
         else:
-          text_list.append("%s%s at %d ft" % (SKY_COVER[cover],what,height))
+          text_list.append("%s%s at %s" % 
+                           (SKY_COVER[cover],what,height.string()))
     return string.join(text_list,sep)
       
   def remarks( self, sep="; "):
@@ -1125,14 +1030,24 @@ class metar:
 if __name__ == "__main__":
   import sys
   while True:
-    print "raw METAR report: ",
+    # print "raw METAR report: ",
     try:
       raw = sys.stdin.readline()
       if raw == "":
         break
       raw = raw.strip()
-      if len(raw):
-        obs = metar(raw)
-        print obs.report()
+      if len(raw) and raw[0] in string.uppercase:
+        try:
+          obs = metar(raw)
+          print obs.report()
+        except ParserError, err:
+          print "metar.metar: ",raw
+          print string.join(err.args,", ")
+        except Exception, err:
+          print "metar.metar: ",raw
+          raise err
+          
     except KeyboardInterrupt:
       break
+      
+      
