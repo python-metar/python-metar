@@ -80,9 +80,9 @@ WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|///|VRB)
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                      re.VERBOSE)
-VISIBILITY_RE =   re.compile(r"""^(?P<vis>M?\d+(SM|KM) | 
-                                          M?(\d\s+)?\d/\d\d?SM |
-                                          \d\d\d\d(?P<dir>[NSEW][EW]?)? |
+VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?\d+|M?(\d\s+)?\d/\d\d?)
+                                          ( (?P<units>SM|KM|M|U)? | 
+                                            (?P<dir>[NSEW][EW]?)? ) |
                                           CAVOK )\s+""",
                              re.VERBOSE)
 RUNWAY_RE = re.compile(r"""^R(?P<name>\d\d(RR?|LL?|C)?)/
@@ -96,12 +96,12 @@ WEATHER_RE = re.compile(r"""^(?P<int>(-|\+|VC)*)
                              (?P<obsc>BR|FG|FU|VA|DU|SA|HZ|PY)?
                              (?P<other>PO|SQ|FC|SS|DS|NSW)?\s+""",
                         re.VERBOSE)
-SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|BKN|SCT|FEW|OVC)
+SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|NCD|BKN|SCT|FEW|OVC|///)
                         (?P<height>\d\d\d|///)?
-                        (?P<cloud>[A-Z][A-Z]+)?\s+""",
+                        (?P<cloud>([A-Z][A-Z]+|///))?\s+""",
                    re.VERBOSE)
-TEMP_RE = re.compile(r"""^(?P<temp>M?\d+|//|XX)/
-                          (?P<dewpt>M?\d+|//|XX)?\s+""",
+TEMP_RE = re.compile(r"""^(?P<temp>(M|-)?\d+|//|XX)/
+                          (?P<dewpt>(M|-)?\d+|//|XX)?\s+""",
                      re.VERBOSE)
 PRESS_RE = re.compile(r"""^(?P<unit>A|Q)
                            (?P<press>\d\d\d\d|////)\s+""",
@@ -184,10 +184,12 @@ def xlate_loc( loc ):
 SKY_COVER = { "SKC":"clear",
               "CLR":"clear",
               "NSC":"clear",
+              "NCD":"clear",
               "FEW":"a few ",
               "SCT":"scattered ",
               "BKN":"broken ",
               "OVC":"overcast",
+              "///":"",
               "VV":"indefinite ceiling" }
               
 CLOUD_TYPE = { "TCU":"towering cumulus",
@@ -454,35 +456,33 @@ class Metar:
       vis_dir      [direction]
       max_vis      [distance]
       max_vis_dir  [direction]
-    """
+    """
     m = VISIBILITY_RE.match(code)
     if not m: 
       return (code,None)
     d = m.groupdict()
     vis = d['vis']
     vis_less = None
-    vis_units = "M"
     vis_dir = None
+    vis_units = "M"
+    vis_dist = "10000"
+    if d['dist']:
+      vis_dist = d['dist']
+    if d['units'] and d['units'] != "U":
+        vis_units = d['units']
     if d['dir']:
-      vis = vis[:4]
       vis_dir = d['dir']    
-    if vis.endswith("SM"):
-      vis = vis[:-2]
-      vis_units = "SM"
-    elif vis.endswith("KM"):
-      vis = vis[:-2]
-      vis_units = "KM"
-    elif vis == "CAVOK" or vis == "9999":
-      vis = "10000"
+    if vis_dist == "9999":
+      vis_dist = "10000"
       vis_less = ">"
     if self.vis:
       if vis_dir:
         self.max_vis_dir = direction(vis_dir)
-      self.max_vis = distance(vis, vis_units, vis_less)
+      self.max_vis = distance(vis_dist, vis_units, vis_less)
     else:
       if vis_dir:
         self.vis_dir = direction(vis_dir)
-      self.vis = distance(vis, vis_units, vis_less)
+      self.vis = distance(vis_dist, vis_units, vis_less)
     return VISIBILITY_RE.sub("",code), m.group()
               
   def _parseRunway( self, code ):
@@ -551,7 +551,10 @@ class Metar:
       height = None
     else:
       height = distance(int(height)*100,"FT")
-    self.sky.append((d['cover'],height,d['cloud']))
+    cover = d['cover']
+    cloud = d['cloud']
+    if cloud == '///': cloud = ""
+    self.sky.append((cover,height,cloud))
     return SKY_RE.sub("",code), m.group()
               
   def _parseTemp( self, code ):
