@@ -28,7 +28,7 @@ __author__ = "Tom Pollard"
 
 __email__ = "pollard@alum.mit.edu"
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 __doc__ = """metar v%s (c) 2004, %s
 
