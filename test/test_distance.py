@@ -1,5 +1,5 @@
 import unittest
-from wxdatatypes import distance, UnitsError
+from metar.Datatypes import distance, UnitsError
 
 class DistanceTest(unittest.TestCase):
   
@@ -25,9 +25,9 @@ class DistanceTest(unittest.TestCase):
     self.assertRaises( ValueError, distance, "M1/2SM" )
     self.assertRaises( ValueError, distance, "1000", "M", "=" )
     self.assertRaises( ValueError, distance, "1000", "M", "gt" )
-    self.assertRaises( UnitsError, metar.distance, "10", "NM" )
-    self.assertRaises( UnitsError, metar.distance("1000").value, "furlongs" )
-    self.assertRaises( UnitsError, metar.distance("500").string, "yards" )
+    self.assertRaises( UnitsError, distance, "10", "NM" )
+    self.assertRaises( UnitsError, distance("1000").value, "furlongs" )
+    self.assertRaises( UnitsError, distance("500").string, "yards" )
   
   def testConversions(self):
     self.assertEqual( distance("5","SM").value("SM"), 5.0 )

@@ -1,5 +1,8 @@
 import unittest
-from wxdatatypes import direction
+from metar.Datatypes import direction
+
+def suite():
+  return unittest.makeSuite(DirectionTest)
 
 class DirectionTest(unittest.TestCase):
   
