@@ -185,6 +185,7 @@ class speed(object):
       text = "less than "+text
     return text
 
+
 class distance(object):
   """A class representing a distance value."""
   legal_units = [ "SM", "MI", "M", "KM", "FT" ]
@@ -326,6 +327,73 @@ class direction(object):
             break
     return self._compass
 
+
+class precipitation(object):
+  """A class representing a precipitation value."""
+  legal_units = [ "IN", "CM" ]
+  legal_gtlt = [ ">", "<" ]
+  
+  def __init__( self, value, units=None, gtlt=None ):
+    if not units:
+      self._units = "IN"
+    else:
+      if not units.upper() in precipitation.legal_units:
+        raise UnitsError("unrecognized precipitation unit: '"+units+"'")
+      self._units = units.upper()
+    
+    try:
+      if value.startswith('M'):
+        value = value[1:]
+        gtlt = "<"
+      elif value.startswith('P'):
+        value = value[1:]
+        gtlt = ">"
+    except:
+      pass
+    if gtlt and not gtlt in precipitation.legal_gtlt:
+      raise ValueError("unrecognized greater-than/less-than symbol: '"+gtlt+"'")
+    self._gtlt = gtlt
+    self._value = float(value)
+    
+  def value( self, units=None ):
+    """Return the precipitation in the specified units."""
+    if not units:
+      return self._value
+    else:
+      if not units.upper() in precipitation.legal_units:
+        raise UnitsError("unrecognized precipitation unit: '"+units+"'")
+      units = units.upper()
+    if units == self._units:
+      return self._value
+    if self._units == "CM":
+      i_value = self._value*2.54
+    else:
+      i_value = self._value
+    if units == "CM":
+      return i_value*2.54
+    else:
+      return i_value
+      
+  def string( self, units=None ):
+    """Return a string representation of the precipitation in the given units."""
+    if not units:
+      units = self._units
+    else:
+      if not units.upper() in precipitation.legal_units:
+        raise UnitsError("unrecognized precipitation unit: '"+units+"'")
+      units = units.upper()
+    text = "%.2f" % self.value(units)
+    if units == "CM":
+      text += "cm"
+    else:
+      text += "in"
+    if self._gtlt == ">":
+      text = "greater than "+text
+    elif self._gtlt == "<":
+      text = "less than "+text
+    return text
+
+
 class position(object):
   """A class representing a location on the earth's surface."""
    
@@ -364,3 +432,4 @@ class position(object):
     d = atan2(s,c)*180.0/math.pi
     if d < 0.0: d += 360.0
     return direction(d)
+
