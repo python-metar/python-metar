@@ -42,9 +42,9 @@ class TemperatureTest(unittest.TestCase):
     self.assertEqual( metar.temperature("263.15","K").value("C"), -10.0 )
     self.assertEqual( metar.temperature("263.15","K").value("F"), 14.0 )
     
-    self.assertEqual( metar.temperature("10", "C").string("C"), "10.0 C")
-    self.assertEqual( metar.temperature("10", "C").string("F"), "50.0 F")
-    self.assertEqual( metar.temperature("10", "C").string("K"), "283.1 K")
+    self.assertEqual( metar.temperature("10", "C").string("C"), "10.0 C" )
+    self.assertEqual( metar.temperature("10", "C").string("F"), "50.0 F" )
+    self.assertEqual( metar.temperature("10", "C").string("K"), "283.1 K" )
     
 if __name__=='__main__':
   unittest.main()
