@@ -1,0 +1,114 @@
+========================================================================
+The metar library
+========================================================================
+
+Metar is a python package for interpreting METAR and SPECI coded
+weather reports.  
+
+METAR and SPECI are coded aviation weather reports.  The official
+coding schemes are specified in the World Meteorological Organization
+(WMO) Manual on Codes, vol I.1, Part A (WMO-306 I.i.A).  US conventions
+for METAR/SPECI reports vary in a number of ways from the international
+standard, and are described in chapter 12 of the Federal Meteorological
+Handbook No.1. (FMH-1 1995), issued by NOAA.  The metar library
+should be able to decode reports that follow either the strict WMO
+spec or the US conventions. 
+
+Current and historical METAR data can be obtained from various places.
+The current METAR report for a given airport is available at the URL
+http://weather.noaa.gov/pub/data/observations/metar/stations/<station>.TXT
+where <station> is the four-letter ICAO airport station code.  The 
+accompanying script get_report.py will download and decode the
+current report for any specified station.  
+
+The METAR reports for all reporting stations for any "cycle" (i.e., hour) 
+in the last 24 hours is available in a single file at the URL
+http://weather.noaa.gov/pub/data/observations/metar/cycles/<cycle>Z.TXT
+where <cycle> is a 2-digit cycle number (e.g., "00", "05" or "23").  
+
+The WMO and US code specifications are available online as PDF
+files, but I don't have URL's for them.  I'll be happy to mail
+copies to anyone who'd like them.
+
+Tom Pollard
+pollard@alum.mit.edu
+January 25, 2005
+
+------------------------------------------------------------------------
+Installation
+------------------------------------------------------------------------
+
+Install this package in the usual way,
+
+    python setup.py install
+
+There's a small, inadequate test suite that can be run by saying
+
+    python test/all_tests.py
+
+There are a couple of sample scripts, described briefly below.
+
+There's no real documentation to speak of, yet, but feel free to
+contact me with any questions you might have about how to use this package.
+
+------------------------------------------------------------------------
+Contents
+------------------------------------------------------------------------
+
+README  ............... this file
+
+parse_metar.py  ....... a simple commandline driver for the METAR parser
+
+get_report.py ......... a script to download and decode the current reports
+                        for one or more stations.
+
+sample.py  ............ a simple script showing how the decoded data 
+                        can be accessed. (see metar/*.py sources and the
+                        test/test_*.py scripts for more examples.)
+
+metar/
+    Metar.py  ......... the implementation of the Metar class.  This class
+                        parses and represents a single METAR report.
+
+    Datatypes.py  ..... a support module that defines classes representing 
+                        different types of meteorological data, including
+                        temperature, pressure, speed, distance, direction 
+                        and position.
+                        
+test/
+    all_tests.py  ..... a master test driver, which invokes all of the unit tests
+
+    test_*.py  ........ individual test modules
+
+setup.py  ............. installation script
+
+
+------------------------------------------------------------------------
+LICENSE
+
+The metar library is
+
+Copyright (c) 2004, Tom Pollard
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+------------------------------------------------------------------------
