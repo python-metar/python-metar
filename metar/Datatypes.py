@@ -18,7 +18,7 @@ FRACTION_RE = re.compile(r"^((?P<int>\d+)\s+)?(?P<num>\d+)/(?P<den>\d+)$")
   
 ## classes representing dimensioned values in METAR reports
     
-class temperature:
+class temperature(object):
   """A class representing a temperature value."""
   legal_units = [ "F", "C", "K" ]
   
@@ -71,7 +71,7 @@ class temperature:
     elif units == "K":
       return "%.1f K" % val
 
-class pressure:
+class pressure(object):
   """A class representing a barometric pressure value."""
   legal_units = [ "MB", "HPA", "IN" ]
   
@@ -118,7 +118,7 @@ class pressure:
     elif units == "IN":
       return "%.2f inches" % val
 
-class speed:
+class speed(object):
   """A class representing a wind speed value."""
   legal_units = [ "KT", "MPS", "KMH", "MPH" ]
   legal_gtlt = [ ">", "<" ]
@@ -185,7 +185,7 @@ class speed:
       text = "less than "+text
     return text
 
-class distance:
+class distance(object):
   """A class representing a distance value."""
   legal_units = [ "SM", "MI", "M", "KM", "FT" ]
   legal_gtlt = [ ">", "<" ]
@@ -286,7 +286,7 @@ class distance:
     return text
 
 
-class direction:
+class direction(object):
   """A class representing a compass direction."""
   
   compass_dirs = { "N":  0.0, "NNE": 22.5, "NE": 45.0, "ENE": 67.5, 
@@ -326,7 +326,7 @@ class direction:
             break
     return self._compass
 
-class position:
+class position(object):
   """A class representing a location on the earth's surface."""
    
   def __init__( self, latitude=None, longitude=None ):
