@@ -72,6 +72,8 @@ sample.py  ............ a simple script showing how the decoded data
                         can be accessed. (see metar/*.py sources and the
                         test/test_*.py scripts for more examples.)
 
+sample.metar  ......... a sample METAR report (longer than most).  Try
+                        feeding this to the parse_metar.py script...
 metar/
     Metar.py  ......... the implementation of the Metar class.  This class
                         parses and represents a single METAR report.
@@ -80,14 +82,12 @@ metar/
                         different types of meteorological data, including
                         temperature, pressure, speed, distance, direction 
                         and position.
-                        
 test/
     all_tests.py  ..... a master test driver, which invokes all of the unit tests
 
     test_*.py  ........ individual test modules
 
 setup.py  ............. installation script
-
 
 ------------------------------------------------------------------------
 Example
