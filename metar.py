@@ -58,11 +58,14 @@ TIME_RE = re.compile(r"""^(?P<day>\d\d)
                      re.VERBOSE)
 WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|VRB)
                           (?P<speed>P?\d\d\d?)
-                        (G(?P<gust>P?\d\d\d?))?KT
+                        (G(?P<gust>P?\d\d\d?))?
+                          (?P<unit>KT|KMH|MPS)
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                      re.VERBOSE)
-VISIBILITY_RE =   re.compile(r"^(?P<vis>M?(\d+|(\d\s+)?\d/\d\d?))?SM\s+")
+VISIBILITY_RE =   re.compile(r"""^(?P<vis>M?(\d+|(\d\s+)?\d/\d\d?)|CAVOK)?
+                                  (?P<unit>(SM)?)\s+""",
+                             re.VERBOSE)
 FRACTION_RE = re.compile(r"^((?P<i>\d+)\s+)?(?P<n>\d+)/(?P<d>\d+)$")
 RUNWAY_RE = re.compile(r"""^R(?P<name>\d\d(R|L|C)?)/
                              (?P<low>(M|P)?\d\d\d\d)
@@ -82,7 +85,9 @@ SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|BKN|SCT|FEW|OVC)
 TEMP_RE = re.compile(r"""^(?P<temp>M?\d+)/
                           (?P<dewpt>M?\d+)?\s+""",
                      re.VERBOSE)
-PRESS_RE = re.compile(r"^A(?P<press>\d\d\d\d)\s+")
+PRESS_RE = re.compile(r"""^(?P<unit>A|Q)
+                           (?P<press>\d\d\d\d)\s+""",
+                      re.VERBOSE)
 
 ## regular expressions for remark groups
 
@@ -228,24 +233,222 @@ REPORT_TYPE = { "METAR":"routine report",
                 "SPECI":"special report",
                 "AUTO":"automatic",
                 "COR":"manually corrected" }
-                                   
-## Unit conversions
 
-def ctof( tempc ):
-  """Convert temperature from degrees Celsius to Fahrenheit."""
-  return 32.0+float(tempc)*9.0/5.0
+## Exceptions
 
-def ctok( tempc ):
-  """Convert temperature from degrees Celsius to Kelvin."""
-  return 273.15+float(tempc)
+class MetarError(Exception):
+  """Base class for exceptions raised by the metar class."""
+  pass
+  
+class UnitError(MetarError):
+  """Exception raised when an unrecognized unit is used."""
+  pass
+  
+## classes representing dimensioned values
+    
+class temperature:
+  """A temperature value."""
+  legal_units = [ "F", "C", "K" ]
+  
+  def __init__( self, value, units="C" ):
+    self._value = float(value)
+    self._units = units.upper()
+    if not units.upper() in temperature.legal_units:
+      raise UnitError("unknown temperature unit: "+units)
+    
+  def value( self, units=None ):
+    """Return the temperature in the specified units."""
+    if units == None:
+      return self._value
+    else:
+      if not units.upper() in temperature.legal_units:
+        raise UnitError("unknown temperature unit: "+units)
+      units = units.upper()
+    if self._units == "C":
+      celsius_value = self._value
+    elif self._units == "F":
+      celsius_value = (self._value-32.0)/1.8
+    elif self._units == "K":
+      celsius_value = 273.15+self._value
+    if units == "C":
+        return celsius_value
+    elif units == "K":
+        return 273.15+celsius_value
+    elif units == "F":
+      return 32.0+self._value*1.8
+      
+  def string( self, units=None ):
+    """Return a string representation of the temperature, using the given units."""
+    if units == None:
+      units = self._units
+    else:
+      if not units.upper() in temperature.legal_units:
+        raise UnitError("unknown temperature unit: "+units)
+      units = units.upper()
+    val = self.value(units)
+    if units == "C":
+      return "%.1f C" % val
+    elif units == "F":
+      return "%.1f F" % val
+    elif units == "K":
+      return "%.1f K" % val
 
-def intomb( pressi ):
-  """Convert pressure from inches Hg to hectoPascals (aka millibars)."""
-  return 33.8639*float(pressi)
+class pressure:
+  """A barometric pressure value."""
+  legal_units = [ "MB", "HPA", "IN" ]
+  
+  def __init__( self, value, units="MB" ):
+    self._value = float(value)
+    self._units = units.upper()
+    if not units.upper() in pressure.legal_units:
+      raise UnitError("unknown pressure unit: "+units)
+    
+  def value( self, units=None ):
+    """Return the pressure in the specified units."""
+    if units == None:
+      return self._value
+    else:
+      if not units.upper() in pressure.legal_units:
+        raise UnitError("unknown pressure unit: "+units)
+      units = units.upper()
+    if units == self._units:
+      return self._value
+    if self._units == "IN":
+      mb_value = self._value*33.86398
+    else:
+      mb_value = self._value
+    if units == "MB" or units == "HPA":
+      return mb_value
+    elif units == "IN":
+        return mb_value/33.86398
+    else:
+      raise UnitError("unknown pressure unit: "+units)
+      
+  def string( self, units=None ):
+    """Return a string representation of the pressure, using the given units."""
+    if units == None:
+      units = self._units
+    else:
+      if not units.upper() in pressure.legal_units:
+        raise UnitError("unknown pressure unit: "+units)
+      units = units.upper()
+    val = self.value(units)
+    if units == "MB":
+      return "%.1f mb" % val
+    elif units == "HPA":
+      return "%.1f hPa" % val
+    elif units == "IN":
+      return "%.2f inches" % val
 
-def mbtoin( pressm ):
-  """Convert pressure from hectoPascals (aka millibars) to inches Hg ."""
-  return float(pressm)/33.8639
+class speed:
+  """A wind speed value."""
+  legal_units = [ "KT", "MPS", "KMH", "MPH" ]
+  
+  def __init__( self, value, units="MPS" ):
+    self._value = float(value)
+    self._units = units.upper()
+    if not units.upper() in speed.legal_units:
+      raise UnitError("unknown speed unit: "+units)
+    
+  def value( self, units=None ):
+    """Return the pressure in the specified units."""
+    if not units:
+      return self._value
+    else:
+      if not units.upper() in speed.legal_units:
+        raise UnitError("unknown speed unit: "+units)
+      units = units.upper()
+    if units == self._units:
+      return self._value
+    if self._units == "KMH":
+      mps_value = self._units/3.6
+    elif self._units == "KT":
+      mps_value = self._value*0.514444
+    elif self._units == "MPH":
+      mbs_value = self._value*0.447000
+    else:
+      mps_value = self._value
+    if units == "KMH":
+      return mps_value*3.6
+    elif units == "KT":
+      return mps_value/0.514444
+    elif units == "MPH":
+      return mps_value/0.447000
+    elif units == "MPS":
+      return mps_value
+      
+  def string( self, units=None ):
+    """Return a string representation of the speed in the given units."""
+    if not units:
+      units = self._units
+    else:
+      if not units.upper() in speed.legal_units:
+        raise UnitError("unknown speed unit: "+units)
+      units = units.upper()
+    val = self.value(units)
+    if units == "KMH":
+      return "%.0f km/h" % val
+    elif units == "KT":
+      return "%.0f knots" % val
+    elif units == "MPH":
+      return "%.0f mph" % val
+    elif units == "MPS":
+      return "%.1f mps" % val
+
+class distance:
+  """A distance value."""
+  legal_units = [ "SM", "MI", "M", "KM", "FT" ]
+  
+  def __init__( self, value, units="M" ):
+    self._value = float(value)
+    self._units = units.upper()
+    if not units.upper() in distance.legal_units:
+      raise UnitError("unknown distance unit: "+units)
+    
+  def value( self, units=None ):
+    """Return the distance in the specified units."""
+    if not units:
+      return self._value
+    else:
+      if not units.upper() in distance.legal_units:
+        raise UnitError("unknown distance unit: "+units)
+      units = units.upper()
+    if units == self._units:
+      return self._value
+    if self._units == "SM":
+      m_value = self._units*1609.344
+    elif self._units == "FT":
+      m_value = self._value/3.28084
+    elif self._units == "KM":
+      m_value = self._value*1000
+    else:
+      m_value = self._value
+    if units == "SM":
+      return m_value/1609.344
+    elif units == "FT":
+      return m_value*3.28084
+    elif units == "KM":
+      return m_value/0.447000
+    elif units == "M":
+      return m_value
+      
+  def string( self, units=None ):
+    """Return a string representation of the distance in the given units."""
+    if not units:
+      units = self._units
+    else:
+      if not units.upper() in distance.legal_units:
+        raise UnitError("unknown distance unit: "+units)
+      units = units.upper()
+    val = self.value(units)
+    if units == "SM":
+      return "%.0f miles" % val
+    elif units == "M":
+      return "%.0f meters" % val
+    elif units == "KM":
+      return "%.0f km" % val
+    elif units == "FT":
+      return "%.0f feet" % val
 
 ## METAR report objects
 
@@ -263,21 +466,21 @@ class metar:
     self.cycle = None                  # observation cycle (0-23) [int]
     self.wind_dir = None               # wind direction (degrees) [int]
     self.wind_variable = None          # wind direction variable? [bool]
-    self.wind_speed = None             # wind speed (kt) [int]
+    self.wind_speed = None             # wind speed [speed]
     self.wind_speed_greater = None     # wind speed is lower limit? [bool]
     self.wind_gust = None              # wind gust speed (kt) [int]
     self.wind_gust_greater = None      # wind gust speed is lower limit? [bool]
     self.wind_dir_from = None          # beginning of range for win dir (degrees) [int]
     self.wind_dir_to = None            # end of range for win dir (degrees) [int]
-    self.vis = None                    # visibility (stautue miles) [float]
+    self.vis = None                    # visibility (stautue miles) [distance]
     self.vis_less = None               # visibilty is upper limit? [bool]
     self._vis_frac = None              
-    self.temp = None                   # temperature (C) [float]
-    self.dewpt = None                  # dew point (C) [float]
-    self.press = None                  # pressure (inches Hg) [float]
+    self.temp = None                   # temperature (C) [temperature]
+    self.dewpt = None                  # dew point (C) [temperature]
+    self.press = None                  # barometric pressure [pressure]
     self.runway = []                   # runway visibility (list of tuples)
     self.weather = []                  # present weather (list of tuples)
-    self.sky = []                      # sky conditons (list of tuples)
+    self.sky = []                      # sky conditions (list of tuples)
     self._remarks = []                 # remarks (list of strings)
     self._unparsed = []
     
@@ -361,9 +564,10 @@ class metar:
     m = TIME_RE.match(code)
     if not m: 
       return (code,None)
-    self._day = int(m.groupdict()['day'])
-    self._hour = int(m.groupdict()['hour'])
-    self._min = int(m.groupdict()['min'])
+    d = m.groupdict()
+    self._day = int(d['day'])
+    self._hour = int(d['hour'])
+    self._min = int(d['min'])
     self.time = datetime.datetime(self._year, self._month, self._day,
                                   self._hour, self._min)
     if self._min < 45:
@@ -388,25 +592,26 @@ class metar:
     m = WIND_RE.match(code)
     if not m: 
       return (code,None)
-    self.wind_dir = m.groupdict()['dir']
+    d = m.groupdict()
+    self.wind_dir = d['dir']
     if self.wind_dir == "VRB":
       self.wind_variable = True
     else:
       self.wind_dir = int(self.wind_dir)    
-    self.wind_speed = m.groupdict()['speed']
-    if self.wind_speed.startswith("P"):
+    wind_speed = d['speed']
+    if wind_speed.startswith("P"):
       self.wind_speed_greater = True
-      self.wind_speed = self.wind_speed[1:]
-    self.wind_speed = int(self.wind_speed)      
-    if m.groupdict()['gust']:
-      self.wind_gust = m.groupdict()['gust']
+      wind_speed = wind_speed[1:]
+    self.wind_speed = speed(wind_speed,d['unit'])
+    if d['gust']:
+      self.wind_gust = d['gust']
       if self.wind_gust.startswith("P"):
         self.wind_gust_greater = True
         self.wind_gust = self.wind_gust[1:]
-      self.wind_gust = int(self.wind_gust)        
-    if m.groupdict()['varfrom']:
-      self.wind_dir_from = int(m.groupdict()['varfrom'])
-      self.wind_dir_to = int(m.groupdict()['varto'])      
+        self.wind_gust = speed(self.wind_gust,d['unit'])
+    if d['varfrom']:
+      self.wind_dir_from = int(d['varfrom'])
+      self.wind_dir_to = int(d['varto'])      
     return WIND_RE.sub("",code), m.group()
     
   def _parseVisibility( self, code ):
@@ -421,20 +626,25 @@ class metar:
     m = VISIBILITY_RE.match(code)
     if not m: 
       return (code,None)
-    self.vis = m.groupdict()['vis']
+    d = m.groupdict()
+    self.vis = d['vis']
     if self.vis.startswith("M"):
       self.vis_less = True
       self.vis = self.vis[1:]
     mf = FRACTION_RE.match(self.vis)
     if mf:
+      df = mf.groupdict()
       self._vis_frac = mf.group()
-      vis_num = int(mf.groupdict()['n'])
-      vis_den = int(mf.groupdict()['d'])
-      self.vis = vis_num/vis_den
-      if mf.groupdict()['i']:
-        self.vis += int(mf.groupdict()['i'])
+      vis_num = float(df['n'])
+      vis_den = float(df['d'])
+      value = vis_num/vis_den
+      if df['i']:
+        value += int(df['i'])
+      self.vis = distance(value,d['unit'])
+    elif self.vis == "CAVOK" or self.vis == "9999":
+      self.vis = distance(10000)
     else:
-      self.vis = int(self.vis)    
+      self.vis = distance(self.vis,d['unit'])  
     return VISIBILITY_RE.sub("",code), m.group()
               
   def _parseRunway( self, code ):
@@ -448,10 +658,11 @@ class metar:
     m = RUNWAY_RE.match(code)
     if not m: 
       return (code,None)
-    name = m.groupdict()['name']
-    low = m.groupdict()['low']
-    if m.groupdict()['high']:
-      high = m.groupdict()['high']
+    d = m.groupdict()
+    name = d['name']
+    low = distance(d['low'])
+    if d['high']:
+      high = distance(d['high'])
     else:
       high = low
     self.runway.append((name,low,high))
@@ -472,11 +683,12 @@ class metar:
     m = WEATHER_RE.match(code)
     if not m: 
       return (code,None)
-    intensity = m.groupdict()['int']
-    description = m.groupdict()['desc']
-    precipitation = m.groupdict()['prec']
-    obscuration = m.groupdict()['obsc']
-    other = m.groupdict()['other']
+    d = m.groupdict()
+    intensity = d['int']
+    description = d['desc']
+    precipitation = d['prec']
+    obscuration = d['obsc']
+    other = d['other']
     self.weather.append((intensity,description,precipitation,obscuration,other))
     return WEATHER_RE.sub("",code), m.group()
               
@@ -493,12 +705,13 @@ class metar:
     m = SKY_RE.match(code)
     if not m: 
       return (code,None)
-    height = m.groupdict()['height']
+    d = m.groupdict()
+    height = d['height']
     if height == "///":
       height = None
     else:
       height = int(height)*100
-    self.sky.append((m.groupdict()['cover'],height,m.groupdict()['cloud']))
+    self.sky.append((d['cover'],height,d['cloud']))
     return SKY_RE.sub("",code), m.group()
               
   def _parseTemp( self, code ):
@@ -512,9 +725,10 @@ class metar:
     m = TEMP_RE.match(code)
     if not m: 
       return (code,None)
-    self.temp = float(m.groupdict()['temp'])
-    if m.groupdict()['dewpt']:
-      self.dewpt = float(m.groupdict()['dewpt'])
+    d = m.groupdict()
+    self.temp = temperature(d['temp'])
+    if d['dewpt']:
+      self.dewpt = temperature(d['dewpt'])
     return TEMP_RE.sub("",code), m.group()
     
   def _parsePressure( self, code ):
@@ -527,7 +741,11 @@ class metar:
     m = PRESS_RE.match(code)
     if not m: 
       return (code,None)
-    self.press = float(m.groupdict()['press'])/100
+    d = m.groupdict()
+    if d['unit'] == "A":
+      self.press = pressure(float(d['press'])/100,"IN")
+    else:
+      self.press = pressure(d['press'],"MB")
     return PRESS_RE.sub("",code), m.group()
     
   def _parseRemarks( self, code ):
@@ -586,11 +804,11 @@ class metar:
     """
     value = float(d['temp'])/10.0
     if d['tsign'] == "1": value = -value
-    self.temp = value
+    self.temp = temperature(value)
     if d['dewpt']:
       value2 = float(d['dewpt'])/10.0
       if d['dsign'] == "1": value2 = -value2
-      self.dewpt = value2
+      self.dewpt = temperature(value2)
                 
   def _parseTemp6hrRemark( self, d ):
     """
@@ -729,13 +947,16 @@ class metar:
       lines.append("type: %s" % self.report_type())
     if self.time:
       lines.append("time: %s" % self.time.ctime())
-    lines.append("temperature: %s" % self.temperature("C"))
-    lines.append("dew point: %s" % self.dewpoint("C"))
+    if self.temp:
+      lines.append("temperature: %s" % self.temp.string("C"))
+    if self.dewpt:
+      lines.append("dew point: %s" % self.dewpt.string("C"))
     lines.append("wind: %s" % self.wind())
     lines.append("visibility: %s" % self.visibility())
     if self.runway:
-      lines.append("visual range: %s" % self.runway_visual_range()) 
-    lines.append("pressure: %s" % self.pressure("mb"))
+      lines.append("visual range: %s" % self.runway_visual_range())
+    if self.press:
+      lines.append("pressure: %s" % self.press.string("mb"))
     lines.append("weather: %s" % self.present_weather())
     lines.append("sky: %s" % self.sky_conditions("\n     "))
     if self._remarks:
@@ -762,36 +983,42 @@ class metar:
         text += " (%s)" % self.mod
     return text
 
-  def wind( self ):
+  def wind( self, units="KT" ):
     """
     Return a textual description of the wind conditions.
+    
+    Units may be specified as "KMH", "CMPS" or "KT".
     """
-    if self.wind_speed == 0:
+    if self.wind_speed.value() == 0.0:
       text = "calm"
     else:
+      wind_speed = self.wind_speed.string(units)
       if self.wind_variable:
-        text = "variable at %d knots" % self.wind_speed
+        text = "variable at %s" % wind_speed
       elif self.wind_dir_from:
-        text = "%d knots, variable from %d to %d degrees" % \
-               (self.wind_speed, self.wind_dir_from, self.wind_dir_to)
+        text = "%s, variable from %d to %d degrees" % \
+               (speed, self.wind_dir_from, self.wind_dir_to)
       else:
-        text = "%d knots from %d degrees" % (self.wind_speed, self.wind_dir)
+        text = "%s from %d degrees" % (wind_speed, self.wind_dir)
       if self.wind_gust:
-        text += ", gusting to %d knots" % self.wind_gust
+        wind_gust = self.wind_gust.string(units)
+        text += ", gusting to %s" % wind_gust
     return text
 
-  def visibility( self ):
+  def visibility( self, units="SM" ):
     """
     Return a textual description of the visibility.
+    
+    Units may be statute miles ("SM") or meters ("M").
     """
     if self.vis == None:
       return "missing"
-    if self._vis_frac:
-      text = "%s miles" % self._vis_frac
-      if self.vis_less:
-        text = "less than "+text
+    if units == "SM" and self._vis_frac:
+        text = "%s miles" % self._vis_frac
     else:
-      text = "%d miles" % self.vis
+      text = self.vis.string()
+    if self.vis_less:
+      text = "less than "+text
     return text
   
   def runway_visual_range( self ):
@@ -886,49 +1113,6 @@ class metar:
         else:
           text_list.append("%s%s at %d ft" % (SKY_COVER[cover],what,height))
     return string.join(text_list,sep)
-
-  def temperature( self, units=None ):
-    """
-    Return a textual description of the temperature.
-    
-    Units may be specified as "F", "C" or "K".
-    """
-    if not self.temp:
-      return "missing"
-    if units == "F":
-      return "%.1f F" % int(ctof(self.temp))
-    elif units == "K":
-      return "%.1f K" % int(ctok(self.dewpt))
-    else:
-      return "%.1f C" % self.temp
-              
-  def dewpoint( self, units=None ):
-    """
-    Return a textual description of the temperature.
-    
-    Units may be specified as "F", "C" or "K".
-    """
-    if not self.dewpt:
-      return "missing"
-    if units == "F":
-      return "%.1f F" % int(ctof(self.dewpt))
-    elif units == "K":
-      return "%.1f K" % int(ctok(self.dewpt))
-    else:
-      return "%.1f C" % self.dewpt
-              
-  def pressure( self, units=None ):
-    """
-    Return a textual description of the atmospheric pressure.
-    
-    Units may be specified as "inches", "mb" or "hPa".
-    """
-    if not self.press:
-      return "missing"
-    if units == "mb" or units == "hPa":
-      return "%.1f mb" % intomb(self.press)
-    else:
-      return "%.2f inches" % self.press
       
   def remarks( self, sep="; "):
     """
