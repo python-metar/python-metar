@@ -1,0 +1,83 @@
+Change Log
+==========
+
+metar 1.2
+---------
+
+*) Save the 1-, 3-, 6- and 24-hr preciptation values as Metar attributes.
+
+*) Save the 6- and 24-hour max and min temperatures as Metar attributes.
+
+*) Save the peak wind speed and direction as Metar attributes.
+
+*) Save the sea-level pressure as a Metar attribute.  The sea-level
+     pressure is treated as the station pressure, as well, if no station
+     pressure is otherwise reported.
+
+*) Added a peak_wind() method, to report peak wind data.
+
+*) 'QNH' and 'SLP' pressure groups are now accepted.  'INS' at the end of
+   a pressure group is recognized, as well.
+
+*) A group of four digits is accepted as a pressure group, now.
+
+*) Present-weather and cloud-cover lines are only written in the textual
+   output if observations of those phenomena were reported.
+
+*) The character 'O' is treated as a zero in the cloud-height, visibility
+   and wind fields.
+
+*) 'CORR' (in the modification field) is interpretted as 'COR'
+
+*) 'NIL' and 'FINO' (in the modification field) are interpretted as 'NO DATA'
+
+*) 'K', 'T' and 'LT' are all interpretted as 'KT'.
+
+*) 'SCK' is interpretted as 'SKC'
+
+*) 'MM' is now accepted as a placeholder in the 'temp' and 'dewpoint' groups.
+
+*) An 'integrity' field ('+' or-) has been created.
+
+*) 'RVRNO' groups are ignored, now.
+
+*) '0VC' is treated as 'OVC'.
+
+*)  A pressure group consisting of just four digits with no leading 'A' or
+    'Q' is accepted now.  The units are assumed to be inches if the value
+    is greater than 2500.
+
+*) An 'O' in a cloud height field is treated as a '0'.
+
+*) Modified to handle "MIFZFG".
+
+*) Moved regexp matching out of the _parse* methods and into the __init__
+   method.  This lets me avoid unnecessary method calls and removes a bunch
+   of previously duplicated code.  It gives a 10-15% speedup.  The ability to 
+   ignore trend groups has been temporarily lost as a result of this change.
+
+*) The date parsing code will assume we're in the previous month if the day
+   is greater than today's date.
+
+*) Rearranged the VISIBILITY_RE regexp to fix a parsing bug,  which had
+   caused "1 1/2SM" to be parsed as two groups.
+
+*) Modified SKY_RE regexp to accept two to four digits in the cloud height,
+   and to treat 'O' as '0', if found in the height.
+
+*) Fixed a bug (a typo) in the vertical visibility handling code.  This was
+   reported by Joseph Sheedy.
+
+*) Fixed a bug in reporting maximum visibility when there was no direction
+   for the maximum visibility.
+
+*) Changed the way the visibility group was parsed to allow better
+   handling of units.  '9999U' and '7000M' are now accepted.
+
+*) Added support for sky group of the form '///030///', indicating cloud
+   height without coverage or type info.
+
+*) Support "KTS" as an alternative to "KT".
+*) Support "XX" as a placeholder for a missing temperature or dewpoint.
+(These are violations of the spec, but are sometimes used, anyway.)
+
