@@ -72,16 +72,16 @@ TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           (?P<hour>\d\d)
                           (?P<min>\d\d)Z?\s+""",
                      re.VERBOSE)
-MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR|RTD|CC[A-G])\s+")
-WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|///|VRB)
-                          (?P<speed>P?\d\d\d?|//)
+MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|FINO|NIL|TEST|CORR?|RTD|CC[A-G])\s+")
+WIND_RE = re.compile(r"""^(?P<dir>[\dO]{3}|[0O]|///|VRB)
+                          (?P<speed>P?[\dO]{2,3}|[0O]+|//)
                         (G(?P<gust>P?\d\d\d?))?
-                          (?P<unit>KTS?|KMH|MPS)?
+                          (?P<units>KTS?|LT|K|T|KMH|MPS)?
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                      re.VERBOSE)
 VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?(\d\s+)?\d/\d\d?|M?\d+)
-                                          ( (?P<units>SM|KM|M|U)? | 
+                                          ( (\s*(?P<units>SM|KM|M|U))? | 
                                             (?P<dir>[NSEW][EW]?)? ) |
                                           CAVOK )\s+""",
                              re.VERBOSE)
@@ -95,17 +95,19 @@ WEATHER_RE = re.compile(r"""^(?P<int>(-|\+|VC)*)
                              (?P<desc>(MI|PR|BC|DR|BL|SH|TS|FZ)+)?
                              (?P<prec>(DZ|RA|SN|SG|IC|PL|GR|GS|UP|//)*)
                              (?P<obsc>BR|FG|FU|VA|DU|SA|HZ|PY)?
-                             (?P<other>PO|SQ|FC|SS|DS|NSW)?\s+""",
+                             (?P<other>PO|SQ|FC|SS|DS|NSW)?
+                             (?P<int2>[-+])?\s+""",
                         re.VERBOSE)
-SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|NCD|BKN|SCT|FEW|[O0]VC|///)
+SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|SCK|NSC|NCD|BKN|SCT|FEW|[O0]VC|///)
                         (?P<height>[\dO]{2,4}|///)?
                         (?P<cloud>([A-Z][A-Z]+|///))?\s+""",
                    re.VERBOSE)
-TEMP_RE = re.compile(r"""^(?P<temp>(M|-)?\d+|//|XX)/
-                          (?P<dewpt>(M|-)?\d+|//|XX)?\s+""",
+TEMP_RE = re.compile(r"""^(?P<temp>(M|-)?\d+|//|XX|MM)/
+                          (?P<dewpt>(M|-)?\d+|//|XX|MM)?\s+""",
                      re.VERBOSE)
-PRESS_RE = re.compile(r"""^(?P<unit>A|Q)?
-                           (?P<press>[\dO]{4}|////)\s+""",
+PRESS_RE = re.compile(r"""^(?P<unit>A|Q|QNH|SLP)?
+                           (?P<press>[\dO]{3,4}|////)
+                           (?P<unit2>INS)?\s+""",
                       re.VERBOSE)
 RECENT_RE = re.compile(r"""^RE(?P<desc>MI|PR|BC|DR|BL|SH|TS|FZ)?
                               (?P<prec>(DZ|RA|SN|SG|IC|PL|GR|GS|UP)*)?
@@ -118,11 +120,13 @@ COLOR_RE = re.compile(r"""^(BLACK)?(BLU|GRN|WHT|RED)\+?
                              re.VERBOSE)
 TREND_RE = re.compile(r"^(?P<trend>TEMPO|BECMG|FCST|NOSIG)\s+")
 
+REMARK_RE = re.compile(r"^(RMKS?|NOSPECI|NOSIG)\s+")
+
 ## regular expressions for remark groups
 
 AUTO_RE = re.compile(r"^AO(?P<type>\d)\s+")
 SEALVL_PRESS_RE = re.compile(r"^SLP(?P<press>\d\d\d)\s+")
-PEAK_WIND_RE = re.compile(r"""^PK\s+WND\s+
+PEAK_WIND_RE = re.compile(r"""^P[A-Z]\s+WND\s+
                              (?P<dir>\d\d\d)
                              (?P<speed>P?\d\d\d?)/
                              (?P<hour>\d\d)?
@@ -351,16 +355,20 @@ class Metar(object):
       raise ParserError(parser.__name__+" failed while parsing '"+code+"'\n"+string.join(err.args))
       raise err
 
-    if code.startswith("RMK "):
-      code = code[4:].lstrip()
+    m = REMARK_RE.match(code)
+    if m:
+      code = code[m.end():]
+    if m or self.press:
       while code:
         for pattern, parser in Metar.remark_parsers:
+          if debug: print parser.__name__,":",code
           m = pattern.match(code)
           if m:
+            if debug: _report_match(parser,m.group())
             parser(self,m.groupdict())
             code = pattern.sub("",code,1)
             break
-    elif code and not self.press:
+    elif code and self.mod != 'NO DATA':
       raise ParserError("Unparsed groups in body: "+code)
           
   def _parseType( self, d ):
@@ -388,7 +396,10 @@ class Metar(object):
     The following attributes are set:
       mod   [string]
     """
-    self.mod = d['mod'] 
+    mod = d['mod'] 
+    if mod == 'CORR': mod = 'COR'
+    if mod == 'NIL' or mod == 'FINO': mod = 'NO DATA'
+    self.mod = mod
               
   def _parseTime( self, d ):
     """
@@ -427,14 +438,13 @@ class Metar(object):
       wind_dir_from      [int]
       wind_dir_to        [int]
     """
-    wind_dir = d['dir']
+    wind_dir = d['dir'].replace('O','0')
     if wind_dir != "VRB" and wind_dir != "///":
       self.wind_dir = direction(wind_dir)    
-    wind_speed = d['speed']
-    if d['unit'] == 'KTS': 
+    wind_speed = d['speed'].replace('O','0')
+    units = d['units']
+    if units == 'KTS' or units == 'K' or units == 'T' or units == 'LT': 
       units = 'KT'
-    else:
-      units = d['unit']
     if wind_speed.startswith("P"):
       self.wind_speed = speed(wind_speed[1:], units, ">")
     elif wind_speed != "//":
@@ -514,6 +524,8 @@ class Metar(object):
       .  other         [string]
     """
     intensity = d['int']
+    if not intensity and d['int2']:
+      intensity = d['int2']
     description = d['desc']
     precipitation = d['prec']
     obscuration = d['obsc']
@@ -537,6 +549,7 @@ class Metar(object):
       height = height.replace('O','0')
       height = distance(int(height)*100,"FT")
     cover = d['cover']
+    if cover == 'SCK' or cover == 'SKC' or cover == 'CL': cover = 'CLR'
     if cover == '0VC': cover = 'OVC'
     cloud = d['cloud']
     if cloud == '///': cloud = ""
@@ -550,10 +563,12 @@ class Metar(object):
       temp    temperature (Celsius) [float]
       dewpt   dew point (Celsius) [float]
     """
-    if not d['temp'] == "//" and not d['temp'] == "XX":
-      self.temp = temperature(d['temp'])
-    if d['dewpt'] and not d['dewpt'] == "//" and not d['dewpt'] == "XX":
-      self.dewpt = temperature(d['dewpt'])
+    temp = d['temp']
+    dewpt = d['dewpt']
+    if  temp and temp != "//" and temp != "XX" and temp != "MM" :
+      self.temp = temperature(temp)
+    if dewpt and dewpt != "//" and dewpt != "XX" and dewpt != "MM" :
+      self.dewpt = temperature(dewpt)
     
   def _parsePressure( self, d ):
     """
@@ -564,15 +579,21 @@ class Metar(object):
     """
     press = d['press']
     if press != '////':
-      press = press.replace('O','0')
+      press = float(press.replace('O','0'))
       if d['unit']:
-        unit = d['unit']
-      elif float(press)>2500:
-        unit = 'A'
-      else:
-        unit = 'Q'
-      if unit == 'A':
-        self.press = pressure(float(press)/100,'IN')
+        if d['unit'] == 'A' or (d['unit2'] and d['unit2'] == 'INS'):
+          self.press = pressure(press/100,'IN')
+        elif d['unit'] == 'SLP':
+          if press < 500:
+            press = press/10 + 1000
+          else:
+            press = press/10 + 900
+          self.press = pressure(press,'MB')
+          self._remarks.append("sea-level pressure %.1fhPa" % press)
+        else:
+          self.press = pressure(press,'MB')
+      elif press > 2500:
+        self.press = pressure(press/100,'IN')
       else:
         self.press = pressure(press,'MB')
               
@@ -636,6 +657,8 @@ class Metar(object):
       value += 1000
     else: 
       value += 900
+    if not self.press:
+      self.press = pressure(value,"MB")
     self._remarks.append("sea-level pressure %.1fhPa" % value)
         
   def _parsePrecip24hrRemark( self, d ):
@@ -832,8 +855,10 @@ class Metar(object):
       lines.append("visual range: %s" % self.runway_visual_range())
     if self.press:
       lines.append("pressure: %s" % self.press.string("mb"))
-    lines.append("weather: %s" % self.present_weather())
-    lines.append("sky: %s" % self.sky_conditions("\n     "))
+    if self.weather:
+      lines.append("weather: %s" % self.present_weather())
+    if self.sky:
+      lines.append("sky: %s" % self.sky_conditions("\n     "))
     if self._remarks:
       lines.append("remarks:")
       lines.append("- "+self.remarks("\n- "))
