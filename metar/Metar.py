@@ -260,6 +260,7 @@ class metar:
     self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
     self.station_id = None             # 4-character ICAO station code
     self.time = None                   # observation time [datetime]
+    self.cycle = None                  # observation cycle (0-23) [int]
     self.wind_dir = None               # wind direction (degrees) [int]
     self.wind_variable = None          # wind direction variable? [bool]
     self.wind_speed = None             # wind speed (kt) [int]
@@ -271,8 +272,8 @@ class metar:
     self.vis = None                    # visibility (stautue miles) [float]
     self.vis_less = None               # visibilty is upper limit? [bool]
     self._vis_frac = None              
-    self.temp = None                   # temperature (C) [int]
-    self.dewpt = None                  # dew point (C) [int]
+    self.temp = None                   # temperature (C) [float]
+    self.dewpt = None                  # dew point (C) [float]
     self.press = None                  # pressure (inches Hg) [float]
     self.runway = []                   # runway vivibility (list of tuples)
     self.weather = []                  # present weather (list of tuples)
@@ -352,6 +353,7 @@ class metar:
     
     The following attributes are set:
       time   [datetime]
+      cycle  [int]
       _day   [int]
       _hour  [int]
       _min   [int]
@@ -364,6 +366,10 @@ class metar:
     self._min = int(m.groupdict()['min'])
     self.time = datetime.datetime(self._year, self._month, self._day,
                                   self._hour, self._min)
+    if self._min < 45:
+      self.cycle = self._hour
+    else:
+      self.cycle = self._hour+1
     return TIME_RE.sub("",code), m.group()
               
   def _parseWind( self, code ):
@@ -544,7 +550,9 @@ class metar:
     return ("", "RMK")
           
   def _parseSealvlPressRemark( self, d ):
-    """Parse the sea-level pressure remark group."""
+    """
+    Parse the sea-level pressure remark group.
+    """
     value = float(d['press'])/10.0
     if value < 50: 
       value += 1000
@@ -553,10 +561,12 @@ class metar:
     self._remarks.append("sea-level pressure %.1fhPa" % value)
         
   def _parsePrecip24hrRemark( self, d ):
-    """Parse a 3-, 6- or 24-hour cumulative preciptation remark group."""
+    """
+    Parse a 3-, 6- or 24-hour cumulative preciptation remark group.
+    """
     value = float(d['precip'])/100.0
     if d['type'] == "6":
-      if self._hour == 3 or self._hour == 9 or self._hour == 15 or self._hour == 21:
+      if self.cycle == 3 or self.cycle == 9 or self.cycle == 15 or self.cycle == 21:
         self._remarks.append("3-hour precipitation %.2fin" % value)
       else:
         self._remarks.append("6-hr precip %.2fin" % value)  
@@ -569,17 +579,23 @@ class metar:
     self._remarks.append("1-hr precip %.2fin" % value)
                 
   def _parseTemp1hrRemark( self, d ):
-    """Parse a temperature & dewpoint remark group."""
+    """
+    Parse a temperature & dewpoint remark group.
+    
+    These values replace the temp and dewpt from the main body of the report.
+    """
     value = float(d['temp'])/10.0
     if d['tsign'] == "1": value = -value
-    self._remarks.append("temp %.1fC" % value)
+    self.temp = value
     if d['dewpt']:
       value2 = float(d['dewpt'])/10.0
       if d['dsign'] == "1": value2 = -value2
-      self._remarks.append("dewpt %.1fC" % value2)
+      self.dewpt = value2
                 
   def _parseTemp6hrRemark( self, d ):
-    """Parse a 6-hour maximum or minimum temperature remark group."""
+    """
+    Parse a 6-hour maximum or minimum temperature remark group.
+    """
     value = float(d['temp'])/10.0
     if d['sign'] == "1": value = -value
     if d['type'] == "1":
@@ -588,7 +604,9 @@ class metar:
       self._remarks.append("6-hr min temp %.1fC" % value)
     
   def _parseTemp24hrRemark( self, d ):
-    """Parse a 24-hour maximum/minimum temerature remark group."""
+    """
+    Parse a 24-hour maximum/minimum temerature remark group.
+    """
     value = float(d['maxt'])/10.0
     if d['maxs'] == "1": value = -value
     value2 = float(d['mint'])/10.0
@@ -597,13 +615,17 @@ class metar:
     self._remarks.append("24-hr min temp %.1fC" % value2)
             
   def _parsePress3hrRemark( self, d ):
-    """Parse a pressure-tendency remark group."""
+    """
+    Parse a pressure-tendency remark group.
+    """
     value = float(d['press'])/10.0
     descrip = PRESSURE_TENDENCY[d['tend']]
     self._remarks.append("3-hr pressure change %.1fhPa, %s" % (value,descrip))
       
   def _parsePeakWindRemark( self, d ):
-    """Parse a peak wind remark group."""
+    """
+    Parse a peak wind remark group.
+    """
     peak_dir = int(d['dir'])
     peak_speed = int(d['speed'])
     peak_min = int(d['min'])
@@ -615,7 +637,9 @@ class metar:
                         (peak_speed, peak_dir, peak_hour, peak_min))
       
   def _parseWindShiftRemark( self, d ):
-    """Parse a wind shift remark group."""
+    """
+    Parse a wind shift remark group.
+    """
     wshft_hour = int(d['hour'])
     wshft_min = int(d['min'])
     text = "wind shift at %d:%02d" %  (wshft_hour, wshft_min)
@@ -624,7 +648,9 @@ class metar:
     self._remarks.append(text)
       
   def _parseLightningRemark( self, d ):
-    """Parse a lightning observation remark group."""
+    """
+    Parse a lightning observation remark group.
+    """
     parts = []
     if d['freq']:
       parts.append(LIGHTNING_FREQUENCY[d['freq']])
@@ -641,7 +667,9 @@ class metar:
     self._remarks.append(string.join(parts," "))
       
   def _parseTSLocRemark( self, d ):
-    """Parse a thunderstorm location remark group."""
+    """
+    Parse a thunderstorm location remark group.
+    """
     text = "thunderstorm"
     if d['loc']:
       text += " "+xlate_loc(d['loc'])
@@ -650,14 +678,18 @@ class metar:
     self._remarks.append(text)
     
   def _parseAutoRemark( self, d ):
-    """Parse an automatic station remark group."""
+    """
+    Parse an automatic station remark group.
+    """
     if d['type'] == "1":
       self._remarks.append("Automated station")
     elif d['type'] == "2":
       self._remarks.append("Automated station (type 2)")
     
   def _unparsedRemark( self, d ):
-    """Handle otherwise unparseable remark groups."""
+    """
+    Handle otherwise unparseable remark groups.
+    """
     self._unparsed.append(d['group'])
     
   ## the list of parser functions to use (in order) to parse a raw METAR code
@@ -697,13 +729,13 @@ class metar:
       lines.append("type: %s" % self.report_type())
     if self.time:
       lines.append("time: %s" % self.time.ctime())
-    lines.append("temperature: %s" % self.temperature("F"))
-    lines.append("dew point: %s" % self.dewpoint("F"))
+    lines.append("temperature: %s" % self.temperature("C"))
+    lines.append("dew point: %s" % self.dewpoint("C"))
     lines.append("wind: %s" % self.wind())
     lines.append("visibility: %s" % self.visibility())
     if self.runway:
       lines.append("visual range: %s" % self.runway_visual_range()) 
-    lines.append("pressure: %s" % self.pressure())
+    lines.append("pressure: %s" % self.pressure("mb"))
     lines.append("weather: %s" % self.present_weather())
     lines.append("sky: %s" % self.sky_conditions("\n     "))
     if self._remarks:
@@ -712,13 +744,17 @@ class metar:
     return string.join(lines,"\n")
 
   def report_type( self ):
-    """Return a textual description of the report type."""
+    """
+    Return a textual description of the report type.
+    """
     if self.type == None:
       text = "unknown report type"
     if REPORT_TYPE.has_key(self.type):
       text  = REPORT_TYPE[self.type]
     else:
       text = self.type+" report"
+    if self.cycle:
+      text += ", cycle %d" % self.cycle
     if self.mod:
       if REPORT_TYPE.has_key(self.mod):
         text += " (%s)" % REPORT_TYPE[self.mod]
@@ -727,7 +763,9 @@ class metar:
     return text
 
   def wind( self ):
-    """Return a textual description of the wind conditions."""
+    """
+    Return a textual description of the wind conditions.
+    """
     if self.wind_speed == 0:
       text = "calm"
     else:
@@ -743,7 +781,9 @@ class metar:
     return text
 
   def visibility( self ):
-    """Return a textual description of the visibility."""
+    """
+    Return a textual description of the visibility.
+    """
     if self.vis == None:
       return "missing"
     if self._vis_frac:
@@ -755,7 +795,9 @@ class metar:
     return text
   
   def runway_visual_range( self ):
-    """Return a textual description of the runway visual range."""
+    """
+    Return a textual description of the runway visual range.
+    """
     lines = []
     for name,low,high in self.runway:
       if low.startswith("M"):
@@ -771,7 +813,9 @@ class metar:
     return string.join(lines,"; ")
   
   def present_weather( self ):
-    """Return a textual description of the present weather."""
+    """
+    Return a textual description of the present weather.
+    """
     text_list = []
     for weatheri in self.weather:
       (intensity,description,precipitation,obscuration,other) = weatheri
@@ -852,11 +896,11 @@ class metar:
     if not self.temp:
       return "missing"
     if units == "F":
-      return "%d F" % int(ctof(self.temp))
+      return "%.1f F" % int(ctof(self.temp))
     elif units == "K":
-      return "%d K" % int(ctok(self.dewpt))
+      return "%.1f K" % int(ctok(self.dewpt))
     else:
-      return "%d C" % self.temp
+      return "%.1f C" % self.temp
               
   def dewpoint( self, units=None ):
     """
@@ -867,11 +911,11 @@ class metar:
     if not self.dewpt:
       return "missing"
     if units == "F":
-      return "%d F" % int(ctof(self.dewpt))
+      return "%.1f F" % int(ctof(self.dewpt))
     elif units == "K":
-      return "%d K" % int(ctok(self.dewpt))
+      return "%.1f K" % int(ctok(self.dewpt))
     else:
-      return "%d C" % self.dewpt
+      return "%.1f C" % self.dewpt
               
   def pressure( self, units=None ):
     """
