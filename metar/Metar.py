@@ -80,7 +80,7 @@ WIND_RE = re.compile(r"""^(?P<dir>\d\d\d|///|VRB)
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                      re.VERBOSE)
-VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?\d+|M?(\d\s+)?\d/\d\d?)
+VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?(\d\s+)?\d/\d\d?|M?\d+)
                                           ( (?P<units>SM|KM|M|U)? | 
                                             (?P<dir>[NSEW][EW]?)? ) |
                                           CAVOK )\s+""",
@@ -91,13 +91,13 @@ RUNWAY_RE = re.compile(r"""^R(?P<name>\d\d(RR?|LL?|C)?)/
                             (?P<unit>FT)?[/NDU]*\s+""",
                        re.VERBOSE)
 WEATHER_RE = re.compile(r"""^(?P<int>(-|\+|VC)*)
-                             (?P<desc>MI|PR|BC|DR|BL|SH|TS|FZ)?
+                             (?P<desc>(MI|PR|BC|DR|BL|SH|TS|FZ)+)?
                              (?P<prec>(DZ|RA|SN|SG|IC|PL|GR|GS|UP|//)*)
                              (?P<obsc>BR|FG|FU|VA|DU|SA|HZ|PY)?
                              (?P<other>PO|SQ|FC|SS|DS|NSW)?\s+""",
                         re.VERBOSE)
 SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|NSC|NCD|BKN|SCT|FEW|OVC|///)
-                        (?P<height>\d\d\d|///)?
+                        (?P<height>[\dO]{2,4}|///)?
                         (?P<cloud>([A-Z][A-Z]+|///))?\s+""",
                    re.VERBOSE)
 TEMP_RE = re.compile(r"""^(?P<temp>(M|-)?\d+|//|XX)/
@@ -276,7 +276,14 @@ REPORT_TYPE = { "METAR":"routine report",
 
 debug = False
 
-class Metar:
+def _report_match(parser,match):
+  """Report success or failure of the given parser function. (DEBUG)"""
+  if match:
+    print parser.__name__," matched '"+match+"'"
+  else:
+    print parser.__name__," didn't match..."
+
+class Metar(object):
   """METAR (aviation meteorology report)"""
   
   def __init__( self, metarcode, month=None, year=None, utcdelta=None):
@@ -329,61 +336,60 @@ class Metar:
     
     code = self.code+" "    # (the regexps all expect trailing spaces...)
     try:
-      for parser in Metar.parsers:
-        code, match = parser(self,code)
-        if debug and not match:
-          print parser.__name__," didn't match..."
-        while match:
-          if debug:
-              print parser.__name__," matched '",match,"'"
-          code, match = parser(self,code)
+      for pattern, parser, repeatable in Metar.parsers:
+        if debug: print parser.__name__,":",code
+        m = pattern.match(code)
+        while m:
+          if debug: _report_match(parser,m.group())
+          parser(self,m.groupdict())
+          code = code[m.end():]
+          if not repeatable: break
+          if debug: print parser.__name__,":",code
+          m = pattern.match(code)
     except Exception, err:
       raise ParserError(parser.__name__+" failed while parsing '"+code+"'\n"+string.join(err.args))
       raise err
-    if code and not (code.startswith("RMK") or self.press):
+
+    if code.startswith("RMK "):
+      code = code[4:].lstrip()
+      while code:
+        for pattern, parser in Metar.remark_parsers:
+          m = pattern.match(code)
+          if m:
+            parser(self,m.groupdict())
+            code = pattern.sub("",code,1)
+            break
+    elif code and not self.press:
       raise ParserError("Unparsed groups in body: "+code)
-    self._parseRemarks(code)
           
-  def _parseType( self, code ):
+  def _parseType( self, d ):
     """
     Parse the code-type group.
     
     The following attributes are set:
       type   [string]
     """
-    m = TYPE_RE.match(code)
-    if not m: 
-      return (code,None)
-    self.type = m.groupdict()['type'] 
-    return TYPE_RE.sub("",code), m.group()
+    self.type = d['type'] 
       
-  def _parseStation( self, code ):
+  def _parseStation( self, d ):
     """
     Parse the station id group.
     
     The following attributes are set:
       station_id   [string]
     """
-    m = STATION_RE.match(code)
-    if not m: 
-      return (code,None)
-    self.station_id = m.groupdict()['station'] 
-    return STATION_RE.sub("",code), m.group()
+    self.station_id = d['station'] 
       
-  def _parseModifier( self, code ):
+  def _parseModifier( self, d ):
     """
     Parse the report-modifier group.
     
     The following attributes are set:
       mod   [string]
     """
-    m = MODIFIER_RE.match(code)
-    if not m: 
-      return (code,None)
-    self.mod = m.groupdict()['mod'] 
-    return MODIFIER_RE.sub("",code), m.group()
+    self.mod = d['mod'] 
               
-  def _parseTime( self, code ):
+  def _parseTime( self, d ):
     """
     Parse the observation-time group.
     
@@ -394,11 +400,12 @@ class Metar:
       _hour  [int]
       _min   [int]
     """
-    m = TIME_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     self._day = int(d['day'])
+    if self._day > self._now.day: 
+      if self._month == 1:
+        self._month = 12
+      else:
+        self._month = self._month - 1
     self._hour = int(d['hour'])
     self._min = int(d['min'])
     self.time = datetime.datetime(self._year, self._month, self._day,
@@ -407,9 +414,8 @@ class Metar:
       self.cycle = self._hour
     else:
       self.cycle = self._hour+1
-    return TIME_RE.sub("",code), m.group()
               
-  def _parseWind( self, code ):
+  def _parseWind( self, d ):
     """
     Parse the wind and variable-wind groups.
     
@@ -420,10 +426,6 @@ class Metar:
       wind_dir_from      [int]
       wind_dir_to        [int]
     """
-    m = WIND_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     wind_dir = d['dir']
     if wind_dir != "VRB" and wind_dir != "///":
       self.wind_dir = direction(wind_dir)    
@@ -445,9 +447,8 @@ class Metar:
     if d['varfrom']:
       self.wind_dir_from = direction(d['varfrom'])
       self.wind_dir_to = direction(d['varto'])      
-    return WIND_RE.sub("",code), m.group()
     
-  def _parseVisibility( self, code ):
+  def _parseVisibility( self, d ):
     """
     Parse the minimum and maximum visibility groups.
     
@@ -457,10 +458,6 @@ class Metar:
       max_vis      [distance]
       max_vis_dir  [direction]
     """
-    m = VISIBILITY_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     vis = d['vis']
     vis_less = None
     vis_dir = None
@@ -483,9 +480,8 @@ class Metar:
       if vis_dir:
         self.vis_dir = direction(vis_dir)
       self.vis = distance(vis_dist, vis_units, vis_less)
-    return VISIBILITY_RE.sub("",code), m.group()
               
-  def _parseRunway( self, code ):
+  def _parseRunway( self, d ):
     """
     Parse a runway visual range group.
     
@@ -495,10 +491,6 @@ class Metar:
       . low   [distance]
       . high  [distance]
     """
-    m = RUNWAY_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     name = d['name']
     low = distance(d['low'])
     if d['high']:
@@ -506,9 +498,8 @@ class Metar:
     else:
       high = low
     self.runway.append((name,low,high))
-    return RUNWAY_RE.sub("",code), m.group()
               
-  def _parseWeather( self, code ):
+  def _parseWeather( self, d ):
     """
     Parse a present-weather group.
     
@@ -520,19 +511,14 @@ class Metar:
       .  obscuration   [string]
       .  other         [string]
     """
-    m = WEATHER_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     intensity = d['int']
     description = d['desc']
     precipitation = d['prec']
     obscuration = d['obsc']
     other = d['other']
     self.weather.append((intensity,description,precipitation,obscuration,other))
-    return WEATHER_RE.sub("",code), m.group()
               
-  def _parseSky( self, code ):
+  def _parseSky( self, d ):
     """
     Parse a sky-conditions group.
     
@@ -542,11 +528,9 @@ class Metar:
       .  height  [distance]
       .  cloud   [string]
     """
-    m = SKY_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     height = d['height']
+    if height.find('O') >= 0:
+      height = height.replace('O','0')
     if not height or height == "///":
       height = None
     else:
@@ -555,9 +539,8 @@ class Metar:
     cloud = d['cloud']
     if cloud == '///': cloud = ""
     self.sky.append((cover,height,cloud))
-    return SKY_RE.sub("",code), m.group()
               
-  def _parseTemp( self, code ):
+  def _parseTemp( self, d ):
     """
     Parse a temperature-dewpoint group.
     
@@ -565,35 +548,25 @@ class Metar:
       temp    temperature (Celsius) [float]
       dewpt   dew point (Celsius) [float]
     """
-    m = TEMP_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     if not d['temp'] == "//" and not d['temp'] == "XX":
       self.temp = temperature(d['temp'])
     if d['dewpt'] and not d['dewpt'] == "//" and not d['dewpt'] == "XX":
       self.dewpt = temperature(d['dewpt'])
-    return TEMP_RE.sub("",code), m.group()
     
-  def _parsePressure( self, code ):
+  def _parsePressure( self, d ):
     """
     Parse an altimeter-pressure group.
     
     The following attributes are set:
       press    [int]
     """
-    m = PRESS_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     if d['press'] != "////":
       if d['unit'] == "A":
         self.press = pressure(float(d['press'])/100,"IN")
       else:
         self.press = pressure(d['press'],"MB")
-    return PRESS_RE.sub("",code), m.group()
               
-  def _parseRecent( self, code ):
+  def _parseRecent( self, d ):
     """
     Parse a recent-weather group.
     
@@ -605,83 +578,45 @@ class Metar:
       .  obscuration   [string]
       .  other         [string]
     """
-    m = RECENT_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     description = d['desc']
     precipitation = d['prec']
     obscuration = d['obsc']
     other = d['other']
     self.recent.append(("",description,precipitation,obscuration,other))
-    return RECENT_RE.sub("",code), m.group()
     
-  def _parseWindShear( self, code ):
+  def _parseWindShear( self, d ):
     """
     Parse wind-shear groups.
     
     The following attributes are set:
       windshear    [list of strings]
     """
-    m = WINDSHEAR_RE.match(code)
-    if not m: 
-      return (code,None)
-    d = m.groupdict()
     if d['name']:
       self.windshear.append(d['name'])
     else:
       self.windshear.append("ALL")
-    return WINDSHEAR_RE.sub("",code), m.group()
     
-  def _parseColor( self, code ):
+  def _parseColor( self, d ):
     """
     Parse (and ignore) the color groups.
     
     The following attributes are set:
       trend    [list of strings]
     """
-    m = COLOR_RE.match(code)
-    if not m: 
-      return (code,None)
-    return COLOR_RE.sub("",code), m.group()
-    
-  def _parseTrend( self, code ):
+    pass
+
+  def _parseTrend( self, d ):
     """
     Parse (and ignore) the trend groups.
     """
-    m = TREND_RE.match(code)
-    if not m: 
-      return (code,None)
-    code = TREND_RE.sub("",code)
-    d = m.groupdict()
-    trend = d['trend']
-    if not trend == "NOSIG":
-      while code and not code.startswith('RMK'):
-        try:
-          (group, code) = code.split(None,1)
-        except:
-          return("",trend)
-    return (code, trend)
+#    if not d['trend'] == "NOSIG":
+#      while code and not code.startswith('RMK'):
+#        try:
+#          (group, code) = code.split(None,1)
+#        except:
+#          return("",trend)
+    pass
     
-  def _parseRemarks( self, code ):
-    """
-    Parse the remarks groups.
-    
-    The following attributes are set:
-      remarks    [list of strings]
-    """
-    if not code.startswith("RMK "):
-      return (code,None)
-    code = code[4:].lstrip()
-    while code:
-      for pattern, parser in Metar.remark_parsers:
-        m = pattern.match(code)
-        if m:
-          parser(self,m.groupdict())
-          code = pattern.sub("",code,1)
-          break
-    return ("", "RMK")
-          
   def _parseSealvlPressRemark( self, d ):
     """
     Parse the sea-level pressure remark group.
@@ -830,10 +765,21 @@ class Metar:
     
   ## the list of parser functions to use (in order) to parse a METAR report
 
-  parsers = [ _parseType, _parseStation, _parseTime, _parseModifier, _parseWind, 
-              _parseVisibility, _parseRunway, _parseWeather, _parseSky, 
-              _parseTemp, _parsePressure, _parseRecent, _parseWindShear, 
-              _parseColor, _parseTrend ]
+  parsers = [ (TYPE_RE, _parseType, False),
+              (STATION_RE, _parseStation, False), 
+              (TIME_RE, _parseTime, False), 
+              (MODIFIER_RE, _parseModifier, False), 
+              (WIND_RE, _parseWind, False), 
+              (VISIBILITY_RE, _parseVisibility, True), 
+              (RUNWAY_RE, _parseRunway, True), 
+              (WEATHER_RE, _parseWeather, True), 
+              (SKY_RE, _parseSky, True), 
+              (TEMP_RE, _parseTemp, False), 
+              (PRESS_RE, _parsePressure, False), 
+              (RECENT_RE,_parseRecent, True), 
+              (WINDSHEAR_RE, _parseWindShear, True), 
+              (COLOR_RE, _parseColor, True), 
+              (TREND_RE, _parseTrend, False) ]
   
   ## the list of patterns for the various remark groups, 
   ## paired with the parser functions to use to record the decoded remark.
@@ -940,9 +886,9 @@ class Metar:
       text = self.vis.string(units)
     if self.max_vis:
       if self.max_vis_dir:
-        text += "; %s" % self.max_vis.string()
-      else:
         text += "; %s to %s" % (self.max_vis.string(units), self.max_vis_dir.compass())
+      else:
+        text += "; %s" % self.max_vis.string()
     return text
   
   def runway_visual_range( self, units=None ):
@@ -1027,7 +973,7 @@ class Metar:
         else: 
           what = ""
         if cover == "VV":
-          text.list.append("%s%s, visibility to %s" % 
+          text_list.append("%s%s, visibility to %s" % 
                            (SKY_COVER[cover],what,height.string()))
         else:
           text_list.append("%s%s at %s" % 
