@@ -275,7 +275,7 @@ class metar:
     self.temp = None                   # temperature (C) [float]
     self.dewpt = None                  # dew point (C) [float]
     self.press = None                  # pressure (inches Hg) [float]
-    self.runway = []                   # runway vivibility (list of tuples)
+    self.runway = []                   # runway visibility (list of tuples)
     self.weather = []                  # present weather (list of tuples)
     self.sky = []                      # sky conditons (list of tuples)
     self._remarks = []                 # remarks (list of strings)
@@ -605,7 +605,7 @@ class metar:
     
   def _parseTemp24hrRemark( self, d ):
     """
-    Parse a 24-hour maximum/minimum temerature remark group.
+    Parse a 24-hour maximum/minimum temperature remark group.
     """
     value = float(d['maxt'])/10.0
     if d['maxs'] == "1": value = -value
