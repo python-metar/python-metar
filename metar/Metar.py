@@ -920,7 +920,9 @@ class Metar(object):
       if description:
         code_parts.append(description)
         if description != "SH" or not precipitation:
-          text_parts.append(WEATHER_DESC[description])
+          text_parts.append(WEATHER_DESC[description[0:2]])
+          if len(description) == 4:
+            text_parts.append(WEATHER_DESC[description[2:]])
         
       if precipitation:
         code_parts.append(precipitation)        
