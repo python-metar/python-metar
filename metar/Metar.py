@@ -995,9 +995,9 @@ class Metar(object):
     lines = []
     for name,low,high in self.runway:
       if low != high:
-        lines.append("runway %s: %s to %s feet" % (name, low.string(units), high.string(units)))
+        lines.append("on runway %s, from %d to %s" % (name, low.value(units), high.string(units)))
       else:
-        lines.append("runway %s: %s feet" % (name, low.string(units)))
+        lines.append("on runway %s, %s" % (name, low.string(units)))
     return string.join(lines,"; ")
   
   def present_weather( self ):
