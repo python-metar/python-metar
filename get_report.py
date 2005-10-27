@@ -1,5 +1,6 @@
 #!/usr/bin/python
 #
+import os
 import sys
 import getopt
 import string
@@ -45,7 +46,7 @@ for name in stations:
         break
     if not report:
       print "No data for ",name,"\n\n"
-  except Metar.ParserError:
+  except Metar.ParserError, err:
     print "METAR code: ",line
     print string.join(err.args,", "),"\n"
   except:
