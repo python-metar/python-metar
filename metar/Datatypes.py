@@ -33,6 +33,9 @@ class temperature(object):
         self._value = -float(value[1:])
       else:
         raise ValueError("temperature must be integer: '"+str(value)+"'")
+
+  def __str__(self):
+    return self.string()
     
   def value( self, units=None ):
     """Return the temperature in the specified units."""
@@ -80,6 +83,9 @@ class pressure(object):
       raise UnitsError("unrecognized pressure unit: '"+units+"'")
     self._value = float(value)
     self._units = units.upper()
+
+  def __str__(self):
+    return self.string()
     
   def value( self, units=None ):
     """Return the pressure in the specified units."""
@@ -134,6 +140,9 @@ class speed(object):
       raise ValueError("unrecognized greater-than/less-than symbol: '"+gtlt+"'")
     self._gtlt = gtlt
     self._value = float(value)
+
+  def __str__(self):
+    return self.string()
     
   def value( self, units=None ):
     """Return the pressure in the specified units."""
@@ -146,11 +155,11 @@ class speed(object):
     if units == self._units:
       return self._value
     if self._units == "KMH":
-      mps_value = self._units/3.6
+      mps_value = self._value/3.6
     elif self._units == "KT":
       mps_value = self._value*0.514444
     elif self._units == "MPH":
-      mbs_value = self._value*0.447000
+      mps_value = self._value*0.447000
     else:
       mps_value = self._value
     if units == "KMH":
@@ -178,7 +187,7 @@ class speed(object):
     elif units == "MPH":
       text = "%.0f mph" % val
     elif units == "MPS":
-      text = "%.1f mps" % val
+      text = "%.0f mps" % val
     if self._gtlt == ">":
       text = "greater than "+text
     elif self._gtlt == "<":
@@ -225,6 +234,9 @@ class distance(object):
       self._value = float(self._num)/float(self._den)
       if df['int']:
         self._value += float(df['int'])
+
+  def __str__(self):
+    return self.string()
     
   def value( self, units=None ):
     """Return the distance in the specified units."""
@@ -305,6 +317,9 @@ class direction(object):
       if value < 0.0 or value > 360.0:
         raise ValueError("direction must be 0..360: '"+str(value)+"'")
       self._degrees = value
+
+  def __str__(self):
+    return self.string()
       
   def value( self ):
     """Return the numerical direction, in degrees."""
@@ -354,6 +369,9 @@ class precipitation(object):
       raise ValueError("unrecognized greater-than/less-than symbol: '"+gtlt+"'")
     self._gtlt = gtlt
     self._value = float(value)
+
+  def __str__(self):
+    return self.string()
     
   def value( self, units=None ):
     """Return the precipitation in the specified units."""
@@ -400,6 +418,9 @@ class position(object):
   def __init__( self, latitude=None, longitude=None ):
     self.latitude = latitude
     self.longitude = longitude
+
+  def __str__(self):
+    return self.string()
    
   def getdistance( self, position2 ):
     """
