@@ -17,6 +17,7 @@ class DistanceTest(unittest.TestCase):
     self.assertEqual( distance(10.0, None).value(), 10.0 )
     self.assertEqual( distance("1/2").value(), 0.5 )
     self.assertEqual( distance("1 1/2").value(), 1.5 )
+    self.assertEqual( distance("11/2").value(), 1.5 )
     self.assertEqual( distance("10", gtlt=">").value(), 10.0 )
     self.assertEqual( distance("10", None, "<").value(), 10.0 )
   
