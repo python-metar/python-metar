@@ -5,10 +5,12 @@ class SpeedTest(unittest.TestCase):
   
   def testDefaults(self):
     self.assertEqual( speed("10").value(), 10.0 )
-    self.assertEqual( speed("5").string(), "5.0 mps" )
+    self.assertEqual( speed("5").string(), "5 mps" )
     self.assertEqual( speed("10", "KT").value(), 10.0 )
     self.assertEqual( speed("5", "KT").string(), "5 knots" )
-    self.assertEqual( speed("5",None).string(), "5.0 mps" )
+    self.assertEqual( speed("5", "KMH").string(), "5 km/h" )
+    self.assertEqual( speed("5", "MPH").string(), "5 mph" )
+    self.assertEqual( speed("5",None).string(), "5 mps" )
   
   def testInputs(self):
     self.assertEqual( speed("10").value(), 10.0 )
@@ -36,6 +38,16 @@ class SpeedTest(unittest.TestCase):
     self.assertAlmostEqual( speed("10", "KT").value("MPH"), 11.5, 1 )
     self.assertAlmostEqual( speed("10", "KT").value("MPS"), 5.1, 1 )
     self.assertAlmostEqual( speed("10", "KT").value("KMH"), 18.5, 1 )
+    
+    self.assertEqual( speed("10", "MPH").value("MPH"), 10.0 )
+    self.assertAlmostEqual( speed("10", "MPH").value("KT"), 8.7, 1 )
+    self.assertAlmostEqual( speed("10", "MPH").value("MPS"), 4.5, 1 )
+    self.assertAlmostEqual( speed("10", "MPH").value("KMH"), 16.1, 1 )
+    
+    self.assertEqual( speed("10", "KMH").value("KMH"), 10.0 )
+    self.assertAlmostEqual( speed("10", "KMH").value("KT"), 5.4, 1 )
+    self.assertAlmostEqual( speed("10", "KMH").value("MPS"), 2.8, 1 )
+    self.assertAlmostEqual( speed("10", "KMH").value("MPH"), 6.2, 1 )
     
 if __name__=='__main__':
   unittest.main()
