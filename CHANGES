@@ -1,6 +1,29 @@
 Change Log
 ==========
 
+metar 1.3
+---------
+
+*) The datatype classes now have __str__ methods, so you can user the 
+   generic str() function to get their string representation.
+
+*) 'MMM' is now accepted to represent missing data in the wind group.
+
+*) Fixed bugs in the handling of wind observations reported in KMH and MPH.
+   (Thanks to Erik Bryer for reporting the MPH problem.)
+
+*) '/' placeholders for missing data in the weather group are handled better now.
+
+*) Added tests for KMH and MPH conversions to the test_speed.py script.
+
+*) Added tests for wind-group parsing to the test_metar.py script.
+
+*) Accept "11/2" as equivalent to "1 1/2" in the visibility group.
+
+*) Fixed a bug that prevented the error handler in get_report.py from reporting
+   the error message :-)  (Thanks to Erik Bryer for reporting this.)
+
+
 metar 1.2
 ---------
 
