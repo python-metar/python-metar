@@ -1,15 +1,23 @@
 Current and future projects
 ---------------------------
+(In rough order of priority.) 
 
-1. Create unit tests for the individual group parsers in Metar.py
+1. Create more unit tests for the individual group parsers in Metar.py
 
-2. Provide better documentation.
+2. Provide a station class that knows how to interpret and handle station
+   codes.  It should translate station codes to their common names and 
+   provide their position (lon-lat).  It should also make it easy to 
+  calculate distances between stations and to identify nearby stations.
 
-3. Consider changing the API for the metar.Datatypes classes to be more
-   Pythonic, e.g., provide them with __str__ and __float__ methods.
+3. Provide more sample scripts. 
 
-4. Make the metar.Datatypes classes immutable, so that objects can be reused.
+4. Provide better documentation.
+
+5. Make the metar.Datatypes classes immutable, so that objects can be reused.
    A large fraction of the time it takes to initialize a Metar object is in
    the instantiation of the metar.Datatypes objects. 
 
+Suggestions are always welcome.
 
+Tom Pollard
+pollard@alum.mit.edu
