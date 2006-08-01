@@ -1,5 +1,5 @@
 # Setup script for the metar package
-# $Id: setup.py,v 1.2 2005/02/05 20:37:28 pollard Exp $
+# $Id: setup.py,v 1.3 2006/08/01 16:10:29 pollard Exp $
 #
 # Usage: python setup.py install
 #
@@ -35,7 +35,7 @@ in international reports are accepted."""
 
 setup(
     name="metar",
-    version="1.2.0",
+    version="1.3.0",
     author="Tom Pollard",
     author_email="pollard@alum.mit.edu",
     url="http://homepage.mac.com/wtpollard/Software/FileSharing4.html",
