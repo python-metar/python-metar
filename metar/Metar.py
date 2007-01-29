@@ -322,6 +322,8 @@ class Metar(object):
       self.windshear = []                # runways w/ wind shear (list of strings)
       self.wind_speed_peak = None        # peak wind speed in last hour
       self.wind_dir_peak = None          # direction of peak wind speed in last hour
+      self.peak_wind_time = None         # time of peak wind observation [datetime]
+      self.wind_shift_time = None        # time of wind shift [datetime]
       self.max_temp_6hr = None           # max temp in last 6 hours
       self.min_temp_6hr = None           # min temp in last 6 hours
       self.max_temp_24hr = None          # max temp in last 24 hours
@@ -775,6 +777,8 @@ class Metar(object):
           peak_hour = int(d['hour'])
       else:
           peak_hour = self._hour
+      self.peak_wind_time = datetime.datetime(self._year, self._month, self._day,
+                                                                  peak_hour, peak_min)
       self._remarks.append("peak wind %dkt from %d degrees at %d:%02d" % \
                                               (peak_speed, peak_dir, peak_hour, peak_min))
           
@@ -787,6 +791,8 @@ class Metar(object):
       else:
           wshft_hour = self._hour
       wshft_min = int(d['min'])
+      self.wind_shift_time = datetime.datetime(self._year, self._month, self._day,
+                                                                  wshft_hour, wshft_min)
       text = "wind shift at %d:%02d" %  (wshft_hour, wshft_min)
       if d['front']:
           text += " (front)"
@@ -893,6 +899,8 @@ class Metar(object):
           lines.append("wind: %s" % self.wind())
       if self.wind_speed_peak:
           lines.append("peak wind: %s" % self.peak_wind())
+      if self.wind_shift_time:
+          lines.append("wind shift: %s" % self.wind_shift())
       if self.vis:
           lines.append("visibility: %s" % self.visibility())
       if self.runway:
@@ -987,7 +995,20 @@ class Metar(object):
               text = wind_speed
           else:
               text = "%s at %s" % (self.wind_dir_peak.compass(), wind_speed)
+              if not self.peak_wind_time == None:
+                  text += " at %s" % self.peak_wind_time.strftime('%H:%M')
       return text
+
+  def wind_shift( self, units="KT" ):
+      """
+      Return a textual description of the wind shift time
+      
+      Units may be specified as "MPS", "KT", "KMH", or "MPH".
+      """
+      if self.wind_shift_time == None:
+          return "missing"
+      else:
+          return self.wind_shift_time.strftime('%H:%M')
 
   def visibility( self, units=None ):
       """
