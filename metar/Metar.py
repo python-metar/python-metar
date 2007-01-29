@@ -779,6 +779,11 @@ class Metar(object):
           peak_hour = self._hour
       self.peak_wind_time = datetime.datetime(self._year, self._month, self._day,
                                                                   peak_hour, peak_min)
+      if self.peak_wind_time > self.time:
+          if peak_hour > self._hour:
+              self.peak_wind_time -= datetime.timedelta(hours=24)
+          else:
+              self.peak_wind_time -= datetime.timedelta(hours=1)
       self._remarks.append("peak wind %dkt from %d degrees at %d:%02d" % \
                                               (peak_speed, peak_dir, peak_hour, peak_min))
           
@@ -793,6 +798,11 @@ class Metar(object):
       wshft_min = int(d['min'])
       self.wind_shift_time = datetime.datetime(self._year, self._month, self._day,
                                                                   wshft_hour, wshft_min)
+      if self.wind_shift_time > self.time:
+          if wshft_hour > self._hour:
+              self.wind_shift_time -= datetime.timedelta(hours=24)
+          else:
+              self.wind_shift_time -= datetime.timedelta(hours=1)
       text = "wind shift at %d:%02d" %  (wshft_hour, wshft_min)
       if d['front']:
           text += " (front)"
