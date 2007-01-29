@@ -53,7 +53,7 @@ def process_line(line):
       obs = Metar.Metar(line)
       if report:
         print "--------------------"
-        print obs.str()
+        print obs.string()
     except Metar.ParserError, err:
       if not silent:
         print "--------------------"
