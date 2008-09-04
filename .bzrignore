@@ -1,0 +1,7 @@
+prof.*
+./wx-0.*
+CVS
+.DS_Store
+*.py[co]
+
+*
