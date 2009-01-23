@@ -337,22 +337,14 @@ class Metar(object):
       self._unparsed_groups = []
       self._unparsed_remarks = []
       
-      # Assume report is for the current month, unless otherwise specified.
-      # (the year and month are implicit in METAR reports)    
-      
       self._now = datetime.datetime.utcnow()
       if utcdelta:
           self._utcdelta = utcdelta
       else:
           self._utcdelta = datetime.datetime.now() - self._now
-      if month:
-          self._month = month
-      else:
-          self._month = self._now.month
-      if year:
-          self._year = year
-      else:
-          self._year = self._now.year
+
+      self._month = month
+      self._year = year
       
       code = self.code+" "    # (the regexps all expect trailing spaces...)
       try:
@@ -448,11 +440,19 @@ class Metar(object):
           _min   [int]
       """
       self._day = int(d['day'])
-      if self._day > self._now.day: 
-          if self._month == 1:
-              self._month = 12
-          else:
-              self._month = self._month - 1
+      if not self._month: 
+          self._month = self._now.month
+          if self._day > self._now.day: 
+              if self._month == 1:
+                  self._month = 12
+              else:
+                  self._month = self._month - 1
+      if not self._year:
+          self._year = self._now.year
+          if self._month > self._now.month:
+              self._year = self._year - 1
+          elif self._month == self._now.month and self._day > self._now.day:
+              self._year = self._year - 1
       self._hour = int(d['hour'])
       self._min = int(d['min'])
       self.time = datetime.datetime(self._year, self._month, self._day,
