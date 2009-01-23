@@ -1036,7 +1036,7 @@ class Metar(object):
           if self.max_vis_dir:
               text += "; %s to %s" % (self.max_vis.string(units), self.max_vis_dir.compass())
           else:
-              text += "; %s" % string(self.max_vis)
+              text += "; %s" % self.max_vis.string(units)
       return text
   
   def runway_visual_range( self, units=None ):
