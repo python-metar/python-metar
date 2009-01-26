@@ -296,11 +296,11 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("1000W 3000").max_vis_dir, None )
     self.assertEqual( report("1000W 3000").visibility(), "1000 meters to W; 3000 meters" )
 
-    self.assertEqual( report("1000 3000E").vis.value(), 1000 )
-    self.assertEqual( report("1000 3000E").vis_dir, None )
-    self.assertEqual( report("1000 3000E").max_vis.value(), 3000 )
-    self.assertEqual( report("1000 3000E").max_vis_dir.value(), 90 )
-    self.assertEqual( report("1000 3000E").visibility(), "1000 meters; 3000 meters to E" )
+    self.assertEqual( report("1000 3000NE").vis.value(), 1000 )
+    self.assertEqual( report("1000 3000NE").vis_dir, None )
+    self.assertEqual( report("1000 3000NE").max_vis.value(), 3000 )
+    self.assertEqual( report("1000 3000NE").max_vis_dir.value(), 45 )
+    self.assertEqual( report("1000 3000NE").visibility(), "1000 meters; 3000 meters to NE" )
 
     self.assertEqual( report("5KM").vis.value(), 5 )
     self.assertEqual( report("5KM").vis_dir, None )
@@ -308,6 +308,17 @@ class MetarTest(unittest.TestCase):
 
     self.assertEqual( report("5000E").vis.value(), 5000 )
     self.assertEqual( report("5000E").visibility(), "5000 meters to E" )
+
+    self.assertEqual( report("7000NDV").vis.value(), 7000 )
+    self.assertEqual( report("7000NDV").vis_dir, None )
+    self.assertEqual( report("7000NDV").visibility(), "7000 meters" )
+      
+  def test_151_parseVisibility_direction(self):
+    """Check parsing of compass headings visibility groups."""
+
+    def report(vis_group):
+      """(Macro) Return Metar object for a report containing the given visibility group."""
+      return Metar.Metar(sta_time+"09010KT "+vis_group)
 
     self.assertEqual( report("5000N").vis_dir.compass(), "N" )
     self.assertEqual( report("5000N").vis_dir.value(), 0 )
@@ -325,12 +336,8 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("5000W").vis_dir.value(), 270 )
     self.assertEqual( report("5000NW").vis_dir.compass(), "NW" )
     self.assertEqual( report("5000NW").vis_dir.value(), 315 )
-
-    self.assertEqual( report("7000NDV").vis.value(), 7000 )
-    self.assertEqual( report("7000NDV").vis_dir, None )
-    self.assertEqual( report("7000NDV").visibility(), "7000 meters" )
       
-  def test_151_parseVisibility_with_following_temperature(self):
+  def test_152_parseVisibility_with_following_temperature(self):
     """Check parsing of visibility groups followed immediately by a temperature group."""
 
     def report(vis_group):
