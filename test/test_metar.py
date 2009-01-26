@@ -253,6 +253,101 @@ class MetarTest(unittest.TestCase):
     self.raisesParserError( sta_time+"VAR10KT" )
     self.raisesParserError( sta_time+"21010KT 180-240" )
     self.raisesParserError( sta_time+"123UnME" )
+      
+  def test_150_parseVisibility(self):
+    """Check parsing of visibility groups."""
+
+    def report(vis_group):
+      """(Macro) Return Metar object for a report containing the given visibility group."""
+      return Metar.Metar(sta_time+"09010KT "+vis_group)
+
+    self.assertEqual( report("10SM").vis.value(), 10 )
+    self.assertEqual( report("10SM").vis_dir, None )
+    self.assertEqual( report("10SM").max_vis, None )
+    self.assertEqual( report("10SM").max_vis_dir, None )
+    self.assertEqual( report("10SM").visibility(), "10 miles" )
+
+    self.assertEqual( report("3/8SM").vis.value(), 0.375 )
+    self.assertEqual( report("3/8SM").vis_dir, None )
+    self.assertEqual( report("3/8SM").max_vis, None )
+    self.assertEqual( report("3/8SM").max_vis_dir, None )
+    self.assertEqual( report("3/8SM").visibility(), "3/8 miles" )
+
+    self.assertEqual( report("1 3/4SM").vis.value(), 1.75 )
+    self.assertEqual( report("1 3/4SM").vis_dir, None )
+    self.assertEqual( report("1 3/4SM").max_vis, None )
+    self.assertEqual( report("1 3/4SM").max_vis_dir, None )
+    self.assertEqual( report("1 3/4SM").visibility(), "1 3/4 miles" )
+
+    self.assertEqual( report("5000").vis.value(), 5000 )
+    self.assertEqual( report("5000").vis_dir, None )
+    self.assertEqual( report("5000").visibility(), "5000 meters" )
+    self.assertEqual( report("5000M").visibility(), "5000 meters" )
+
+    self.assertEqual( report("CAVOK").vis.value(), 10000 )
+    self.assertEqual( report("CAVOK").vis_dir, None )
+    self.assertEqual( report("CAVOK").max_vis, None )
+    self.assertEqual( report("CAVOK").max_vis_dir, None )
+    self.assertEqual( report("CAVOK").visibility(), "10000 meters" )
+
+    self.assertEqual( report("1000W 3000").vis.value(), 1000 )
+    self.assertEqual( report("1000W 3000").vis_dir.value(), 270 )
+    self.assertEqual( report("1000W 3000").max_vis.value(), 3000 )
+    self.assertEqual( report("1000W 3000").max_vis_dir, None )
+    self.assertEqual( report("1000W 3000").visibility(), "1000 meters to W; 3000 meters" )
+
+    self.assertEqual( report("1000 3000E").vis.value(), 1000 )
+    self.assertEqual( report("1000 3000E").vis_dir, None )
+    self.assertEqual( report("1000 3000E").max_vis.value(), 3000 )
+    self.assertEqual( report("1000 3000E").max_vis_dir.value(), 90 )
+    self.assertEqual( report("1000 3000E").visibility(), "1000 meters; 3000 meters to E" )
+
+    self.assertEqual( report("5KM").vis.value(), 5 )
+    self.assertEqual( report("5KM").vis_dir, None )
+    self.assertEqual( report("5KM").visibility(), "5.0 km" )
+
+    self.assertEqual( report("5000E").vis.value(), 5000 )
+    self.assertEqual( report("5000E").visibility(), "5000 meters to E" )
+
+    self.assertEqual( report("5000N").vis_dir.compass(), "N" )
+    self.assertEqual( report("5000N").vis_dir.value(), 0 )
+    self.assertEqual( report("5000NE").vis_dir.compass(), "NE" )
+    self.assertEqual( report("5000NE").vis_dir.value(), 45 )
+    self.assertEqual( report("5000E").vis_dir.compass(), "E" )
+    self.assertEqual( report("5000E").vis_dir.value(), 90 )
+    self.assertEqual( report("5000SE").vis_dir.compass(), "SE" )
+    self.assertEqual( report("5000SE").vis_dir.value(), 135 )
+    self.assertEqual( report("5000S").vis_dir.compass(), "S" )
+    self.assertEqual( report("5000S").vis_dir.value(), 180 )
+    self.assertEqual( report("5000SW").vis_dir.compass(), "SW" )
+    self.assertEqual( report("5000SW").vis_dir.value(), 225 )
+    self.assertEqual( report("5000W").vis_dir.compass(), "W" )
+    self.assertEqual( report("5000W").vis_dir.value(), 270 )
+    self.assertEqual( report("5000NW").vis_dir.compass(), "NW" )
+    self.assertEqual( report("5000NW").vis_dir.value(), 315 )
+
+    self.assertEqual( report("7000NDV").vis.value(), 7000 )
+    self.assertEqual( report("7000NDV").vis_dir, None )
+    self.assertEqual( report("7000NDV").visibility(), "7000 meters" )
+      
+  def test_151_parseVisibility_with_following_temperature(self):
+    """Check parsing of visibility groups followed immediately by a temperature group."""
+
+    def report(vis_group):
+      """(Macro) Return Metar object for a report containing the given visibility group."""
+      return Metar.Metar(sta_time+"09010KT "+vis_group)
+
+    self.assertEqual( report("CAVOK 02/01").vis.value(), 10000 )
+    self.assertEqual( report("CAVOK 02/01").vis_dir, None )
+    self.assertEqual( report("CAVOK 02/01").max_vis, None )
+    self.assertEqual( report("CAVOK 02/01").temp.value(), 2.0 )
+    self.assertEqual( report("CAVOK 02/01").dewpt.value(), 1.0 )
+
+    self.assertEqual( report("5000 02/01").vis.value(), 5000 )
+    self.assertEqual( report("5000 02/01").vis_dir, None )
+    self.assertEqual( report("5000 02/01").max_vis, None )
+    self.assertEqual( report("5000 02/01").temp.value(), 2.0 )
+    self.assertEqual( report("5000 02/01").dewpt.value(), 1.0 )
 
 if __name__=='__main__':
   unittest.main( )

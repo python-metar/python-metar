@@ -76,11 +76,19 @@ WIND_RE = re.compile(r"""^(?P<dir>[\dO]{3}|[0O]|///|MMM|VRB)
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                           re.VERBOSE)
-VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?(\d\s+)?\d/\d\d?|M?\d+)
-                                    ( \s*(?P<units>SM|KM|M|U) | 
-                                         (?P<dir>[NSEW][EW]?) )? |
-                                   CAVOK )\s+""",
-                                   re.VERBOSE)
+# VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?(\d\s+)?\d/\d\d?|M?\d+)
+#                                     ( \s*(?P<units>SM|KM|M|U) | NDV |
+#                                          (?P<dir>[NSEW][EW]?) )? |
+#                                    CAVOK )\s+""",
+#                                    re.VERBOSE)
+# start patch
+VISIBILITY_RE = re.compile(r"""^(?P<vis>(?P<dist>\d\d\d\d|////)
+                                            (?P<dir>[NSEW][EW]? | NDV)? |
+                                        (?P<distu>M?(\d+|\d\d?/\d\d?|\d+\s+\d/\d))
+                                           (?P<units>SM|KM|M|U) | 
+                                        CAVOK )\s+""",
+                                 re.VERBOSE)
+# end patch
 RUNWAY_RE = re.compile(r"""^(RVRNO | 
                              R(?P<name>\d\d(RR?|LL?|C)?)/
                               (?P<low>(M|P)?\d\d\d\d)
@@ -497,7 +505,7 @@ class Metar(object):
   def _handleVisibility( self, d ):
       """
       Parse the minimum and maximum visibility groups.
-      
+       
       The following attributes are set:
           vis          [distance]
           vis_dir      [direction]
@@ -509,12 +517,14 @@ class Metar(object):
       vis_dir = None
       vis_units = "M"
       vis_dist = "10000"
-      if d['dist']:
+      if d['dist'] and d['dist'] != '////':
           vis_dist = d['dist']
-      if d['units'] and d['units'] != "U":
-              vis_units = d['units']
-      if d['dir']:
-          vis_dir = d['dir']    
+          if d['dir'] and d['dir'] != 'NDV':
+              vis_dir = d['dir']    
+      elif d['distu']:
+          vis_dist = d['distu']
+          if d['units'] and d['units'] != "U":
+                  vis_units = d['units']
       if vis_dist == "9999":
           vis_dist = "10000"
           vis_less = ">"
