@@ -124,6 +124,8 @@ COLOR_RE = re.compile(r"""^(BLACK)?(BLU|GRN|WHT|RED)\+?
                         re.VERBOSE)
 TREND_RE = re.compile(r"^(?P<trend>TEMPO|BECMG|FCST|NOSIG)\s+")
 
+TRENDTIME_RE = re.compile(r"(?P<when>(FM|TL|AT))(?P<hour>\d\d)(?P<min>\d\d)")
+
 REMARK_RE = re.compile(r"^(RMKS?|NOSPECI|NOSIG)\s+")
 
 ## regular expressions for remark groups
@@ -341,6 +343,7 @@ class Metar(object):
       self.precip_3hr = None             # precipitation over the last 3 hours
       self.precip_6hr = None             # precipitation over the last 6 hours
       self.precip_24hr = None            # precipitation over the last 24 hours
+      self._trend = False                # trend groups present (bool)
       self._remarks = None               # remarks (list of strings)
       self._unparsed_groups = []
       self._unparsed_remarks = []
@@ -368,6 +371,8 @@ class Metar(object):
                   if debug: _report_match(handler,m.group())
                   handler(self,m.groupdict())
                   code = code[m.end():]
+                  if self._trend:
+                      code = self._do_trend_handlers(code)
                   if not repeatable: break
                   
                   if debug: print handler.__name__,":",code
@@ -396,12 +401,25 @@ class Metar(object):
                           handler(self,m.groupdict())
                           code = pattern.sub("",code,1)
                           break
+
       except Exception, err:
           raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
           raise err
       if self._unparsed_groups:
           code = ' '.join(self._unparsed_groups)
           raise ParserError("Unparsed groups in body: "+code)
+
+  def _do_trend_handlers(self, code):
+      for pattern, handler, repeatable in Metar.trend_handlers:
+          if debug: print handler.__name__,":",code
+          m = pattern.match(code)
+          while m:
+              if debug: _report_match(handler, m.group())
+              handler(self,m.groupdict())
+              code = code[m.end():]
+              if not repeatable: break
+              m = pattern.match(code)
+      return code
                   
   def __str__(self):
       return self.string()
@@ -691,7 +709,7 @@ class Metar(object):
 #          (group, code) = code.split(None,1)
 #        except:
 #          return("",trend)
-      pass
+      self._trend = True
       
   def _startRemarks( self, d ):
       """
@@ -881,7 +899,14 @@ class Metar(object):
                (COLOR_RE, _handleColor, True), 
                (TREND_RE, _handleTrend, False),
                (REMARK_RE, _startRemarks, False) ]
-  
+
+  trend_handlers = [ (TRENDTIME_RE, _handleTrend, False),
+                     (WIND_RE, _handleTrend, False),
+                     (VISIBILITY_RE, _handleTrend, True),
+                     (WEATHER_RE, _handleTrend, True),
+                     (SKY_RE, _handleTrend, True),
+                     (COLOR_RE, _handleTrend, False)]
+
   ## the list of patterns for the various remark groups, 
   ## paired with the handler functions to use to record the decoded remark.
 
