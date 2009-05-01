@@ -357,6 +357,17 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("5000 02/01").temp.value(), 2.0 )
     self.assertEqual( report("5000 02/01").dewpt.value(), 1.0 )
 
+  def test_290_ranway_state(self):
+    """Check parsing of runway state groups."""
+
+    def report(runway_state):
+      """(Macro) Return Metar object for a report containing the given runway state group"""
+      sample_metar = 'EGNX 191250Z VRB03KT 9999 -RASN FEW008 SCT024 BKN046 M01/M03 Q0989 '
+      return Metar.Metar(sample_metar+' '+runway_state)
+
+    self.assertEqual( report('09690692 27550591').temp.value(), -1.0 )
+    self.assertEqual( report('09690692 27550591').remarks(), "" )
+
   def test_300_parseTrend(self):
     """Check parsing of trend forecasts."""
 
