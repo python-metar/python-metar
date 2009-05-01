@@ -124,7 +124,7 @@ COLOR_RE = re.compile(r"""^(BLACK)?(BLU|GRN|WHT|RED)\+?
                         re.VERBOSE)
 TREND_RE = re.compile(r"^(?P<trend>TEMPO|BECMG|FCST|NOSIG)\s+")
 
-TRENDTIME_RE = re.compile(r"(?P<when>(FM|TL|AT))(?P<hour>\d\d)(?P<min>\d\d)")
+TRENDTIME_RE = re.compile(r"(?P<when>(FM|TL|AT))(?P<hour>\d\d)(?P<min>\d\d)\s+")
 
 REMARK_RE = re.compile(r"^(RMKS?|NOSPECI|NOSIG)\s+")
 
@@ -344,6 +344,7 @@ class Metar(object):
       self.precip_6hr = None             # precipitation over the last 6 hours
       self.precip_24hr = None            # precipitation over the last 24 hours
       self._trend = False                # trend groups present (bool)
+      self._trend_groups = []            # trend forecast groups
       self._remarks = None               # remarks (list of strings)
       self._unparsed_groups = []
       self._unparsed_remarks = []
@@ -415,6 +416,7 @@ class Metar(object):
           m = pattern.match(code)
           while m:
               if debug: _report_match(handler, m.group())
+              self._trend_groups.append(string.strip(m.group()))
               handler(self,m.groupdict())
               code = code[m.end():]
               if not repeatable: break
@@ -703,12 +705,8 @@ class Metar(object):
       """
       Parse (and ignore) the trend groups.
       """
-#    if not d['trend'] == "NOSIG":
-#      while code and not code.startswith('RMK'):
-#        try:
-#          (group, code) = code.split(None,1)
-#        except:
-#          return("",trend)
+      if d.has_key('trend'):
+          self._trend_groups.append(d['trend'])
       self._trend = True
       
   def _startRemarks( self, d ):
@@ -900,12 +898,12 @@ class Metar(object):
                (TREND_RE, _handleTrend, False),
                (REMARK_RE, _startRemarks, False) ]
 
-  trend_handlers = [ (TRENDTIME_RE, _handleTrend, False),
-                     (WIND_RE, _handleTrend, False),
+  trend_handlers = [ (TRENDTIME_RE, _handleTrend, True),
+                     (WIND_RE, _handleTrend, True),
                      (VISIBILITY_RE, _handleTrend, True),
                      (WEATHER_RE, _handleTrend, True),
                      (SKY_RE, _handleTrend, True),
-                     (COLOR_RE, _handleTrend, False)]
+                     (COLOR_RE, _handleTrend, True)]
 
   ## the list of patterns for the various remark groups, 
   ## paired with the handler functions to use to record the decoded remark.
@@ -1158,9 +1156,18 @@ class Metar(object):
                           (SKY_COVER[cover],what,str(height)))
       return string.join(text_list,sep)
           
+  def trend( self ):
+      """
+      Return the trend forecast groups
+      """
+      return " ".join(self._trend_groups)
+
   def remarks( self, sep="; "):
       """
       Return the decoded remarks.
       """
-      return string.join(self._remarks,sep)
+      if self._remarks:
+          return string.join(self._remarks,sep)
+      else:
+          return ""
 
