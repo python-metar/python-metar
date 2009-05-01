@@ -21,13 +21,13 @@ class MetarTest(unittest.TestCase):
   def test_010_parseType_default(self):
     """Check default value of the report type."""
     self.assertEqual( Metar.Metar("KEWR").type, "METAR" )
-  
+
   def test_011_parseType_legal(self):
     """Check parsing of the report type."""
     self.assertEqual( Metar.Metar("METAR").type, "METAR" )
     self.assertEqual( Metar.Metar("SPECI").type, "SPECI" )
     self.raisesParserError("TAF" )
-      
+
   def test_020_parseStation_legal(self):
     """Check parsing of the station code."""
     self.assertEqual( Metar.Metar("KEWR").station_id, "KEWR" )
@@ -42,24 +42,25 @@ class MetarTest(unittest.TestCase):
     self.raisesParserError( "METAR DC" )
     self.raisesParserError( "METAR A" )
     self.raisesParserError( "kewr" )
-      
+
   def test_030_parseTime_legal(self):
     """Check parsing of the time stamp."""
     report =  Metar.Metar("KEWR 101651Z")
     self.assertEqual( report.time.day, 10 )
     self.assertEqual( report.time.hour, 16 )
     self.assertEqual( report.time.minute, 51 )
-    self.assertEqual( report.time.month, today.month )
-    self.assertEqual( report.time.year, today.year )
-      
+    if today.day > 10 or (today.hour > 16 and today.day == 10):
+        self.assertEqual( report.time.month, today.month )
+    if today.month > 1 or today.day > 10:
+        self.assertEqual( report.time.year, today.year )
+
   def test_031_parseTime_specify_year(self):
     """Check that the year can be specified."""
     other_year = 2003
 
     report =  Metar.Metar("KEWR 101651Z", year=other_year)
-    self.assertEqual( report.time.month, today.month )
     self.assertEqual( report.time.year, other_year )
-      
+
   def test_032_parseTime_specify_month(self):
     """Check that the month can be specified."""
     last_month = ((today.month - 2) % 12) + 1
@@ -67,7 +68,7 @@ class MetarTest(unittest.TestCase):
 
     report =  Metar.Metar("KEWR 101651Z", month=last_month)
     self.assertEqual( report.time.month, last_month )
-      
+
   def test_033_parseTime_auto_month(self):
     """Check that we assign report to previous month if it can't be in this month."""
     next_day = tomorrow.day
@@ -83,7 +84,7 @@ class MetarTest(unittest.TestCase):
             self.assertEqual( report.time.year, today.year )
         else:
             self.assertEqual( report.time.year, last_year )
-      
+
   def test_034_parseTime_auto_year(self):
     """Check that year is adjusted correctly if specified month is in the future."""
     next_month = (today.month % 12) + 1
@@ -95,7 +96,7 @@ class MetarTest(unittest.TestCase):
         self.assertEqual( report.time.year, last_year )
     else:
         self.assertEqual( report.time.year, today.year )
-      
+
   def test_035_parseTime_suppress_auto_month(self):
     """Check that explicit month suppresses automatic month rollback."""
     next_day = tomorrow.day
@@ -115,12 +116,12 @@ class MetarTest(unittest.TestCase):
   def test_040_parseModifier_default(self):
     """Check default 'modifier' value."""
     self.assertEqual( Metar.Metar("KEWR").mod, "AUTO" )
-      
+
   def test_041_parseModifier(self):
     """Check parsing of 'modifier' groups."""
     self.assertEqual( Metar.Metar(sta_time+"AUTO").mod, "AUTO" )
     self.assertEqual( Metar.Metar(sta_time+"COR").mod, "COR" )
-      
+
   def test_042_parseModifier_nonstd(self):
     """Check parsing of nonstandard 'modifier' groups."""
 
@@ -140,14 +141,14 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("CORR").mod, "COR" )
     self.assertEqual( report("FINO").mod, "NO DATA" )
     self.assertEqual( report("NIL").mod, "NO DATA" )
-      
+
   def test_043_parseModifier_illegal(self):
     """Check rejection of illegal 'modifier' groups."""
 #    self.raisesParserError( "KEWR AUTO" )
     self.raisesParserError( sta_time+"auto" )
     self.raisesParserError( sta_time+"CCH" )
     self.raisesParserError( sta_time+"MAN" )
-      
+
   def test_140_parseWind(self):
     """Check parsing of wind groups."""
     report = Metar.Metar(sta_time+"09010KT" )
@@ -205,7 +206,7 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report.wind_dir_from.value(), 180 )
     self.assertEqual( report.wind_dir_to.value(), 240 )
     self.assertEqual( report.wind(), "S to WSW at 10 knots" )
-      
+
   def test_141_parseWind_nonstd(self):
     """Check parsing of nonstandard wind groups."""
 
@@ -241,7 +242,7 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("MMMMM").wind(), "missing" )
     self.assertEqual( report("MMMMMGMMKT").wind(), "missing" )
     self.assertEqual( report("MMMMMG01KT").wind(), "missing" )
-      
+
   def test_142_parseWind_illegal(self):
     """Check rejection of illegal wind groups."""
     self.raisesParserError( sta_time+"90010KT" )
@@ -253,7 +254,7 @@ class MetarTest(unittest.TestCase):
     self.raisesParserError( sta_time+"VAR10KT" )
     self.raisesParserError( sta_time+"21010KT 180-240" )
     self.raisesParserError( sta_time+"123UnME" )
-      
+
   def test_150_parseVisibility(self):
     """Check parsing of visibility groups."""
 
@@ -312,7 +313,7 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("7000NDV").vis.value(), 7000 )
     self.assertEqual( report("7000NDV").vis_dir, None )
     self.assertEqual( report("7000NDV").visibility(), "7000 meters" )
-      
+
   def test_151_parseVisibility_direction(self):
     """Check parsing of compass headings visibility groups."""
 
@@ -336,7 +337,7 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("5000W").vis_dir.value(), 270 )
     self.assertEqual( report("5000NW").vis_dir.compass(), "NW" )
     self.assertEqual( report("5000NW").vis_dir.value(), 315 )
-      
+
   def test_152_parseVisibility_with_following_temperature(self):
     """Check parsing of visibility groups followed immediately by a temperature group."""
 
