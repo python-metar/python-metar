@@ -356,6 +356,31 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("5000 02/01").temp.value(), 2.0 )
     self.assertEqual( report("5000 02/01").dewpt.value(), 1.0 )
 
+  def test_300_parseTrend(self):
+    """Check parsing of trend forecasts."""
+
+    def report(trend_group, remarks=""):
+      """(Macro)
+      Return Metar object for a report containing the given trend
+      forecast and remarks.
+      """
+      sample_metar = sta_time+"09010KT 10SM -SN OVC020 23/05 Q1001"
+      return Metar.Metar(sample_metar+' '+trend_group+' '+remarks)
+
+    self.assertEqual( report('TEMPO FM0306 BKN030CU').trend(), 'TEMPO FM0306 BKN030CU' )
+    self.assertEqual( report('TEMPO FM0306 BKN030CU').temp.value(), 23.0 )
+    self.assertEqual( report('TEMPO FM0306 BKN030CU').remarks(), "" )
+
+    self.assertEqual( report('BECMG 0306 VRB06KT').trend(), 'BECMG 0306 VRB06KT' )
+    self.assertEqual( report('FCST AT0327 +FC').trend(), 'FCST AT0327 +FC' )
+
+    self.assertEqual( report('TEMPO 0306 1/2SM').trend(), 'TEMPO 0306 1/2SM' )
+    self.assertEqual( report('TEMPO FM0306 TL0345 01030G50KT').trend(),
+                      'TEMPO FM0306 TL0345 01030G50KT')
+
+    self.assertEqual( report('TEMPO 0306 RMK 402500072').trend(), 'TEMPO 0306' )
+    self.assertEqual( report('TEMPO 0306 RMK 402500072').max_temp_24hr.value(), 25.0 )
+
 if __name__=='__main__':
   unittest.main( )
-  
+
