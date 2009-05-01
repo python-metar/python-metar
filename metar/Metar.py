@@ -352,7 +352,7 @@ class Metar(object):
       self.precip_24hr = None            # precipitation over the last 24 hours
       self._trend = False                # trend groups present (bool)
       self._trend_groups = []            # trend forecast groups
-      self._remarks = None               # remarks (list of strings)
+      self._remarks = []                 # remarks (list of strings)
       self._unparsed_groups = []
       self._unparsed_remarks = []
       
@@ -1182,8 +1182,5 @@ class Metar(object):
       """
       Return the decoded remarks.
       """
-      if self._remarks:
-          return string.join(self._remarks,sep)
-      else:
-          return ""
+      return string.join(self._remarks,sep)
 
