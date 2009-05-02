@@ -47,7 +47,7 @@ setup(
     packages=["metar"],
     platforms="Python 2.5 and later.",
     classifiers=[
-        "Development Status :: 5 - Stable",
+        "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
