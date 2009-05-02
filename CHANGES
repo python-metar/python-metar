@@ -1,6 +1,34 @@
 Change Log
 ==========
 
+metar 1.4
+---------
+
+*) Merged Toby White's changes for parsing (and ignoring) runway state groups
+   and trend forecasts. (Thanks!)
+
+*) Report the peak wind and wind shift times, if included in the remarks.
+   (Requested by Daryl Herzmann.)
+
+*) Changed the date-handling code to avoid automatic month/year adjustment
+   if the month or year are specified explicitly.  
+   (Thanks to Scott McKuen for reporting this.)
+
+*) Only allow single-digit numerator in fractional visibility values, to avoid
+   confusion with following temp/dewpt group.
+   (Reported by Franco Fiorese, Francesco Spada, and David Gregory.)
+
+*) Fixed the misuse of str() function and string() methods in a couple of spots.
+   (Reported by David Gregory and others.)
+
+*) Added tests for the visibility, trend, and runway state parsers.
+
+*) Added tests to verify that automatic month/year adjustment of the observation 
+   date were being done correctly.
+
+*) Updated links to METAR resources in the README
+
+
 metar 1.3
 ---------
 
