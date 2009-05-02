@@ -1,0 +1,23 @@
+Relase Notes - metar-1.4.0
+--------------------------
+
+Python-metar v1.4 incorporates a handful of bug fixes and enhancements
+made over the last couple of years.  Notably, Toby White contributed code to 
+let the parser recognize and ignore trend forecasts and runway-state groups.
+
+Starting with this release, new releases will be made available through my 
+sourceforge project, at http://python-metar.sourceforge.net/.  I've also 
+converted my code repository from CVS to Git, and made public copies of the 
+Git repository available on Sourceforge and on Github. To clone the 
+repository, you can use either
+
+    git clone git://python-metar.git.sourceforge.net/gitroot/python-metar
+or
+    git clone git://github.com/tomp/python-metar.git
+
+The best way to submit bug reports or request assistance is still
+to e-mail me at pollard@alum.mit.edu.
+
+Tom Pollard
+May 2, 2009
+
