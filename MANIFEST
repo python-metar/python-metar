@@ -1,0 +1,16 @@
+README
+CHANGES
+get_report.py
+parse_metar.py
+sample.py
+setup.py
+metar/Datatypes.py
+metar/Metar.py
+metar/__init__.py
+test/all_tests.py
+test/test_direction.py
+test/test_distance.py
+test/test_metar.py
+test/test_pressure.py
+test/test_speed.py
+test/test_temperature.py
