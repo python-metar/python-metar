@@ -22,22 +22,23 @@
 #  http://weather.noaa.gov/pub/data/observations/metar/cycles/<cycle>Z.TXT
 #  where <cycle> is a 2-digit cycle number (e.g., "00", "05" or "23").  
 # 
-#  Copyright 2004  Tom Pollard
+#  Copyright 2004-2009  Tom Pollard
+#  All rights reserved.
 # 
 __author__ = "Tom Pollard"
 
 __email__ = "pollard@alum.mit.edu"
 
-__version__ = "1.3"
+__version__ = "1.4"
 
-__doc__ = """metar v%s (c) 2004, %s
+__doc__ = """metar v%s (c) 2009, %s
 
 Metar is a python package that interprets coded METAR and SPECI weather reports.
 
 Please e-mail bug reports to: %s""" % (__version__, __author__,__email__)
 
 __LICENSE__ = """
-Copyright (c) 2004, %s
+Copyright (c) 2009, %s
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
