@@ -906,7 +906,7 @@ class Metar(object):
                (WEATHER_RE, _handleWeather, True), 
                (SKY_RE, _handleSky, True), 
                (TEMP_RE, _handleTemp, False), 
-               (PRESS_RE, _handlePressure, False), 
+               (PRESS_RE, _handlePressure, True), 
                (RECENT_RE,_handleRecent, True), 
                (WINDSHEAR_RE, _handleWindShear, True), 
                (COLOR_RE, _handleColor, True), 
