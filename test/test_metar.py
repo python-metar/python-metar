@@ -368,6 +368,9 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report('09690692 27550591').temp.value(), -1.0 )
     self.assertEqual( report('09690692 27550591').remarks(), "" )
 
+    self.assertEqual( report('09SNOCLO').remarks(), "" )
+    self.assertEqual( report('09CLRD//').remarks(), "" )
+
   def test_300_parseTrend(self):
     """Check parsing of trend forecasts."""
 

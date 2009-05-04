@@ -122,12 +122,12 @@ WINDSHEAR_RE = re.compile(r"^(WS\s+)?(ALL\s+RWY|RWY(?P<name>\d\d(RR?|L?|C)?))\s+
 COLOR_RE = re.compile(r"""^(BLACK)?(BLU|GRN|WHT|RED)\+?
                         (/?(BLACK)?(BLU|GRN|WHT|RED)\+?)*\s*""",
                         re.VERBOSE)
-RUNWAYSTATE_RE = re.compile(r"""((?P<name>\d\d) |
-                                 R(?P<namenew>\d\d)(RR?|LL?|C)?/?)
-                                (?P<deposit>(\d|/))
-                                (?P<extent>(\d|/))
-                                (?P<depth>(\d\d|//))
-                                (?P<friction>(\d\d|//))\s+""",
+RUNWAYSTATE_RE = re.compile(r"""((?P<name>\d\d) | R(?P<namenew>\d\d)(RR?|LL?|C)?/?)
+                                ((?P<special> SNOCLO|CLRD(\d\d|//)) |
+                                 (?P<deposit>(\d|/))
+                                 (?P<extent>(\d|/))
+                                 (?P<depth>(\d\d|//))
+                                 (?P<friction>(\d\d|//)))\s+""",
                              re.VERBOSE)
 TREND_RE = re.compile(r"^(?P<trend>TEMPO|BECMG|FCST|NOSIG)\s+")
 
