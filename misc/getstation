@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+BASE_URL="http://weather.noaa.gov/pub/data/observations/metar/stations"
+
+usage () {
+  echo "Usage:  $0 [-p] <station> [ <station> ... ]"
+  exit 1
+}
+
+date=`date -u '+%y%m%d'`
+hour=`date -u '+%H'`
+
+stations=""
+pipe=""
+while [ "$#" -gt 0 ]; do
+  case $1 in 
+        -p)  
+             pipe="YES"
+             shift;;
+        -*)  
+             echo "unrecognized option: $1"
+             usage;;
+    [A-Z][A-Z0-9][A-Z0-9][A-Z0-9]) 
+             stations="$stations $1"
+             shift;;
+  esac
+done
+
+if [ -z "$stations" ]; then
+  usage
+fi
+
+for name in $stations; do
+  if [ -z "$pipe" ]; then
+    file="$name-${date}-${hour}Z.metar"
+    echo "Downloading current METAR report for station $name into $file"
+    curl -s -S -R "$BASE_URL/${name}.TXT" -o "$file"
+  else
+    curl -s -S -R "$BASE_URL/${name}.TXT" | grep "^$name "
+  fi
+done
+

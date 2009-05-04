@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+BASE_URL="http://weather.noaa.gov/pub/data/observations/metar/cycles"
+ALL_CYCLES="00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23"
+
+usage () {
+  echo "Usage:  $0 [-a|-all] <cycle> [ <cycle> ... ]"
+  exit 1
+}
+
+date=`date -u '+%y%m%d'`
+hour=`date -u '+%H'`
+
+cycles=""
+while [ "$#" -gt 0 ]; do
+  case $1 in 
+    -a|-all)
+             cycles=$ALL_CYCLES
+             shift;;
+        -*)  
+             echo "unrecognized option: $1"
+             usage;;
+    [0-9]*) 
+             cycles="$cycles $1"
+             shift;;
+  esac
+done
+
+if [ -z "$cycles" ]; then
+  usage
+fi
+
+for name in $cycles; do
+  if [ "$name" -lt "$hour" ]; then
+    file="${date}-${name}Z.TXT"
+  else
+    file="${date}Y-${name}Z.TXT"
+  fi
+  echo "Downloading observations for cycle $name into $file"
+  curl -s -S -R "$BASE_URL/${name}Z.TXT" | grep "^[A-Z]" >  "$file"
+done
+
