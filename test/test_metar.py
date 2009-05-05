@@ -314,6 +314,12 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("7000NDV").vis_dir, None )
     self.assertEqual( report("7000NDV").visibility(), "7000 meters" )
 
+    self.assertEqual( report("M1000").vis.value(), 1000 )
+    self.assertEqual( report("M1000").visibility(), "less than 1000 meters" )
+
+    self.assertEqual( report("P6000").vis.value(), 6000 )
+    self.assertEqual( report("P6000").visibility(), "greater than 6000 meters" )
+
   def test_151_parseVisibility_direction(self):
     """Check parsing of compass headings visibility groups."""
 

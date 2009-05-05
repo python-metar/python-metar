@@ -82,9 +82,9 @@ WIND_RE = re.compile(r"""^(?P<dir>[\dO]{3}|[0O]|///|MMM|VRB)
 #                                    CAVOK )\s+""",
 #                                    re.VERBOSE)
 # start patch
-VISIBILITY_RE = re.compile(r"""^(?P<vis>(?P<dist>\d\d\d\d|////)
+VISIBILITY_RE = re.compile(r"""^(?P<vis>(?P<dist>(M|P)?\d\d\d\d|////)
                                             (?P<dir>[NSEW][EW]? | NDV)? |
-                                        (?P<distu>M?(\d+|\d\d?/\d\d?|\d+\s+\d/\d))
+                                        (?P<distu>(M|P)?(\d+|\d\d?/\d\d?|\d+\s+\d/\d))
                                            (?P<units>SM|KM|M|U) | 
                                         CAVOK )\s+""",
                                  re.VERBOSE)
