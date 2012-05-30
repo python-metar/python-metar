@@ -16,13 +16,13 @@ class UnitsError(Exception):
 ## [Note: numerator of fraction must be single digit.]
 
 FRACTION_RE = re.compile(r"^((?P<int>\d+)\s*)?(?P<num>\d)/(?P<den>\d+)$")
-    
+
 ## classes representing dimensioned values in METAR reports
-        
+
 class temperature(object):
     """A class representing a temperature value."""
     legal_units = [ "F", "C", "K" ]
-    
+
     def __init__( self, value, units="C" ):
         if not units.upper() in temperature.legal_units:
             raise UnitsError("unrecognized temperature unit: '"+units+"'")
@@ -37,7 +37,7 @@ class temperature(object):
 
     def __str__(self):
         return self.string()
-        
+
     def value( self, units=None ):
         """Return the temperature in the specified units."""
         if units == None:
@@ -58,7 +58,7 @@ class temperature(object):
                 return 273.15+celsius_value
         elif units == "F":
             return 32.0+celsius_value*1.8
-            
+
     def string( self, units=None ):
         """Return a string representation of the temperature, using the given units."""
         if units == None:
@@ -78,7 +78,7 @@ class temperature(object):
 class pressure(object):
     """A class representing a barometric pressure value."""
     legal_units = [ "MB", "HPA", "IN" ]
-    
+
     def __init__( self, value, units="MB" ):
         if not units.upper() in pressure.legal_units:
             raise UnitsError("unrecognized pressure unit: '"+units+"'")
@@ -87,7 +87,7 @@ class pressure(object):
 
     def __str__(self):
         return self.string()
-        
+
     def value( self, units=None ):
         """Return the pressure in the specified units."""
         if units == None:
@@ -108,7 +108,7 @@ class pressure(object):
                 return mb_value/33.86398
         else:
             raise UnitsError("unrecognized pressure unit: '"+units+"'")
-            
+
     def string( self, units=None ):
         """Return a string representation of the pressure, using the given units."""
         if not units:
@@ -129,7 +129,7 @@ class speed(object):
     """A class representing a wind speed value."""
     legal_units = [ "KT", "MPS", "KMH", "MPH" ]
     legal_gtlt = [ ">", "<" ]
-    
+
     def __init__( self, value, units=None, gtlt=None ):
         if not units:
             self._units = "MPS"
@@ -144,7 +144,7 @@ class speed(object):
 
     def __str__(self):
         return self.string()
-        
+
     def value( self, units=None ):
         """Return the pressure in the specified units."""
         if not units:
@@ -171,7 +171,7 @@ class speed(object):
             return mps_value/0.447000
         elif units == "MPS":
             return mps_value
-            
+
     def string( self, units=None ):
         """Return a string representation of the speed in the given units."""
         if not units:
@@ -200,7 +200,7 @@ class distance(object):
     """A class representing a distance value."""
     legal_units = [ "SM", "MI", "M", "KM", "FT" ]
     legal_gtlt = [ ">", "<" ]
-    
+
     def __init__( self, value, units=None, gtlt=None ):
         if not units:
             self._units = "M"
@@ -208,7 +208,7 @@ class distance(object):
             if not units.upper() in distance.legal_units:
                 raise UnitsError("unrecognized distance unit: '"+units+"'")
             self._units = units.upper()
-        
+
         try:
             if value.startswith('M'):
                 value = value[1:]
@@ -238,7 +238,7 @@ class distance(object):
 
     def __str__(self):
         return self.string()
-        
+
     def value( self, units=None ):
         """Return the distance in the specified units."""
         if not units:
@@ -265,7 +265,7 @@ class distance(object):
             return m_value/1000
         elif units == "M":
             return m_value
-            
+
     def string( self, units=None ):
         """Return a string representation of the distance in the given units."""
         if not units:
@@ -302,8 +302,8 @@ class distance(object):
 
 class direction(object):
     """A class representing a compass direction."""
-    
-    compass_dirs = { "N":    0.0, "NNE": 22.5, "NE": 45.0, "ENE": 67.5, 
+
+    compass_dirs = { "N":    0.0, "NNE": 22.5, "NE": 45.0, "ENE": 67.5,
                                      "E": 90.0, "ESE":112.5, "SE":135.0, "SSE":157.5,
                                      "S":180.0, "SSW":202.5, "SW":225.0, "WSW":247.5,
                                      "W":270.0, "WNW":292.5, "NW":315.0, "NNW":337.5 }
@@ -321,15 +321,15 @@ class direction(object):
 
     def __str__(self):
         return self.string()
-            
+
     def value( self ):
         """Return the numerical direction, in degrees."""
         return self._degrees
-        
+
     def string( self ):
         """Return a string representation of the numerical direction."""
         return "%.0f degrees" % self._degrees
-        
+
     def compass( self ):
         """Return the compass direction, e.g., "N", "ESE", etc.)."""
         if not self._compass:
@@ -348,7 +348,7 @@ class precipitation(object):
     """A class representing a precipitation value."""
     legal_units = [ "IN", "CM" ]
     legal_gtlt = [ ">", "<" ]
-    
+
     def __init__( self, value, units=None, gtlt=None ):
         if not units:
             self._units = "IN"
@@ -356,7 +356,7 @@ class precipitation(object):
             if not units.upper() in precipitation.legal_units:
                 raise UnitsError("unrecognized precipitation unit: '"+units+"'")
             self._units = units.upper()
-        
+
         try:
             if value.startswith('M'):
                 value = value[1:]
@@ -373,7 +373,7 @@ class precipitation(object):
 
     def __str__(self):
         return self.string()
-        
+
     def value( self, units=None ):
         """Return the precipitation in the specified units."""
         if not units:
@@ -392,7 +392,7 @@ class precipitation(object):
             return i_value*2.54
         else:
             return i_value
-            
+
     def string( self, units=None ):
         """Return a string representation of the precipitation in the given units."""
         if not units:
@@ -415,14 +415,14 @@ class precipitation(object):
 
 class position(object):
     """A class representing a location on the earth's surface."""
-     
+
     def __init__( self, latitude=None, longitude=None ):
         self.latitude = latitude
         self.longitude = longitude
 
     def __str__(self):
         return self.string()
-     
+
     def getdistance( self, position2 ):
         """
         Calculate the great-circle distance to another location using the Haversine

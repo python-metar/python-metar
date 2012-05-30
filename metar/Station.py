@@ -9,8 +9,8 @@ from datatypes import position, distance, direction
 
 class station:
     """An object representing a weather station."""
-  
-    def __init__(self, id, city=None, state=None, 
+
+    def __init__(self, id, city=None, state=None,
                 country=None, latitude=None, longitude=None):
         self.id = id
         self.city = city
@@ -21,7 +21,7 @@ class station:
             self.name = "%s, %s" % (self.city, self.state)
         else:
             self.name = self.city
-    
+
 station_file_name = "nsd_cccc.txt"
 station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
 stations = {}
