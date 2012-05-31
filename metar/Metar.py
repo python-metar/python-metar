@@ -412,7 +412,7 @@ class Metar(object):
                             break
 
         except Exception, err:
-            msg = handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args)
+            #msg = handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args)
             msg = "%s failed while processing '%s' in '%s'" % \
                     (handler.__name__, code, self.code)
             if errorfile is not None:
