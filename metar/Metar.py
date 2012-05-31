@@ -312,7 +312,8 @@ debug = False
 class Metar(object):
     """METAR (aviation meteorology report)"""
 
-    def __init__( self, metarcode, month=None, year=None, utcdelta=None):
+    def __init__(self, metarcode, month=None, year=None,
+                 utcdelta=None, errorfile=None):
         """Parse raw METAR code."""
         self.code = metarcode              # original METAR code
         self.type = 'METAR'                # METAR (routine) or SPECI (special)
@@ -411,11 +412,20 @@ class Metar(object):
                             break
 
         except Exception, err:
-            raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
-            raise err
+            msg = handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args)
+            if errorfile is not None:
+                errorfile.write(msg+'\n')
+            else:
+                print(msg)
+            #raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
+            #raise err
         if self._unparsed_groups:
             code = ' '.join(self._unparsed_groups)
-            raise ParserError("Unparsed groups in body: "+code)
+            msg = "Unparsed groups in body: "+code
+            if errorfile is not None:
+                errorfile.write(msg+'\n')
+            else:
+                print(msg)
 
     def _do_trend_handlers(self, code):
         for pattern, handler, repeatable in Metar.trend_handlers:
