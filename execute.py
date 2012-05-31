@@ -10,11 +10,6 @@ startdate = dt.datetime(1980,1,1)
 enddate = dt.datetime(2012,5,27)
 timestep = dt.timedelta(days=1)
 for station in stations:
-    if station[0] == 'KDLS':
-        startdate = dt.datetime(1992,8,17)
-    else:
-        startdate = dt.datetime(1980,1,1)
-
     outfilename = '%s_raw.csv' % (station[0],)
     procfilename = '%s_processed.csv' % (station[0],)
     errfillename = '%s_errors.log' % (station[0],)
