@@ -2,7 +2,7 @@ import metar
 import matplotlib.dates as mdates
 import datetime as dt
 
-stations = [#('KDLS', 'The Dalles', 'OR'),
+stations = [('KDLS', 'The Dalles', 'OR'),
             ('KHRI', 'Hermiston', 'OR'),
             ('KPSC', 'Pasco', 'WA')]
 
