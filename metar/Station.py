@@ -10,11 +10,10 @@
 #
 #  Copyright 2004  Tom Pollard
 # 
-import datetime, urllib, urllib2, cookielib
-from Metar import Metar
-from math import sin, cos, atan2, sqrt
-from Datatypes import position, distance, direction
-import numpy as np
+import datetime 
+import urllib2 
+import cookielib
+import Datatypes
 import matplotlib
 import matplotlib.dates as mdates
 matplotlib.rcParams['timezone'] = 'UTC'
@@ -29,7 +28,7 @@ class station:
         self.city = city
         self.state = state
         self.country = country
-        self.position = position(latitude,longitude)
+        self.position = Datatypes.position(latitude,longitude)
         if self.state:
             self.name = "%s, %s" % (self.city, self.state)
         else:
