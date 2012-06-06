@@ -100,7 +100,7 @@ def processWundergroundFile(csvin, csvout, errorfile):
                  'FEW' : 0.1875,
                  'VV'  : 0.99}
 
-    headers =['TimeEST',
+    headers =['LocalTime',
               'Temperature C',
               'Dew Point C',
               'Humidity',
