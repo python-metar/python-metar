@@ -35,42 +35,65 @@ class station:
         else:
             self.name = self.city
 
-        self.urlopener = self.__setCookies()
+        self.wundergound = self.__setCookies(src='wunderground')
+        self.asos = self.__setCookies(src='asos')
 
-    def __setCookies(self):
+    def __setCookies(self, src):
         jar = cookielib.CookieJar()
         handler = urllib2.HTTPCookieProcessor(jar)
         opener = urllib2.build_opener(handler)
-        url1 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?' % self.sta_id
-        url2 = 'http://www.wunderground.com/cgi-bin/findweather/getForecast?setpref=SHOWMETAR&value=1'
-        url3 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1' % self.sta_id
+        if src.lower() == 'wunderground':
+            url1 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?' % self.sta_id
+            url2 = 'http://www.wunderground.com/cgi-bin/findweather/getForecast?setpref=SHOWMETAR&value=1'
+            url3 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1' % self.sta_id
 
-        opener.open(url1)
-        opener.open(url2)
-        opener.open(url3)
+            opener.open(url1)
+            opener.open(url2)
+            opener.open(url3)
+        elif src.lower() == 'asos':
+            url = 'ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/'
+            opener.open(url)
+
         return opener
 
-    def urlByDate(self, date):
+    def urlByDate(self, date, src='wunderground'):
         "http://www.wunderground.com/history/airport/KDCA/1950/12/18/DailyHistory.html?format=1"
-        baseurl = 'http://www.wunderground.com/history/airport/%s' % self.sta_id
-        endurl =  'DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1'
-        datestring = date.strftime('%Y/%m/%d')
-        url = '%s/%s/%s' % (baseurl, datestring, endurl)
+        if src.lower() == 'wunderground':
+            baseurl = 'http://www.wunderground.com/history/airport/%s' % self.sta_id
+            endurl =  'DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1'
+            datestring = date.strftime('%Y/%m/%d')
+            url = '%s/%s/%s' % (baseurl, datestring, endurl)
+        elif src.lower() == 'asos':
+            baseurl = 'ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/6401-'
+            url = '%s%s/64010%s%s%02d.dat' % \
+                        (baseurl, date.year, self.sta_id, date.year, date.month)
+        else:
+            raise ValueError, "src must be 'wunderground' or 'asos'"
         return url
 
-    def getHourlyData(self, url, outfile, errorfile, keepheader=False):
+    def getData(self, url, outfile, errorfile, keepheader=False, src='wunderground'):
         observations = []
         if keepheader:
             start = 1
         else:
             start = 2
 
-        try:
-            webdata = self.urlopener.open(url)
-            rawlines = webdata.readlines()
-            outfile.writelines(rawlines[start:])
-        except:
-            errorfile.write('error on: %s\n' % (url,))
+        if src.lower() == 'wunderground':
+            try:
+                webdata = self.wunderground.open(url)
+                rawlines = webdata.readlines()
+                outfile.writelines(rawlines[start:])
+            except:
+                errorfile.write('error on: %s\n' % (url,))
+        elif src.lower() == 'asos':
+            try:
+                webdata = self.asos.open(url)
+                rawlines = webdata.readlines()
+                outfile.writelines(rawlines[start:])
+            except:
+                errorfile.write('error on: %s\n' % (url,))
+
+
 
 
 
@@ -87,9 +110,90 @@ def getAllStations():
 
     return stations
 
+def rainASOS(x):
+    '''get 5-min precip value (cumulative w/i the hour)'''
+    p = 0
+    m = re.search('[ +]P\d\d\d\d\s', x)
+    if m:
+        p = int(m.group(0)[2:-1])
+
+    return p
+
+def dateASOS(x):
+    '''get date/time of asos reading'''
+    yr = int(x[13:17])   # year
+    mo = int(x[17:19])   # month
+    da = int(x[19:21])   # day
+    hr = int(x[37:39])   # hour
+    mi = int(x[40:42])   # minute
+
+    date = dt.datetime(yr,mo,da,hr,mi)
+
+    return date
+
 def getStationByID(sta_id):
     stations = getAllStations()
     return stations[sta_id]
+
+def processASOSFile(csvin, csvout, errorfile):
+    datain = open(csvin, 'r')
+    dataout = open(csvin, 'w')
+    #for h in headers[:-1]:
+    #    dataout.write('%s,' % (h,))
+    #dataout.write('%s\n' % (headers[-1]))
+    dates = []
+    rains = []
+    for metarstring in datain:
+        obs = Metar(metarstring, errorfile=errorfile)
+        dates.append(dateASOS(metarstring))
+        rains.append(rainASOS(metarstring))
+
+    rains = np.array(rains)
+    dates = np.array(dates)
+
+    rt = determineResetTime(dates, rains)
+    final_precip = processPrecip(dates, rains)
+
+    for p1, p2, d in zip(rains, final_precip, dates):
+        dataout.write('%s,%d,%0.2f\n' % (d,p1,p2))
+
+    datain.close()
+    dataout.close()
+
+
+def determineResetTime(date, precip):
+    minutes = np.zeros(12)
+    if len(date) <> len(precip):
+        raise ValueError("date and precip must be same length")
+    else:
+        for n in range(1,len(date)):
+            if precip[n] < precip[n-1]:
+                minuteIndex = date[n].minute/5
+                minutes[minuteIndex] += 1
+
+        resetTime, = np.where(minutes==minutes.max())
+        return resetTime[0]*5
+
+def processPrecip(dateval, p1):
+    '''convert 5-min rainfall data from cumuative w/i an hour to 5-min totals
+    p = precip data (list)
+    dt = list of datetime objects
+    RT = point in the hour when the tip counter resets
+    #if (p1[n-1] <= p1[n]) and (dt[n].minute != RT):'''
+    RT = determineResetTime(dateval, p1)
+    p2 = np.zeros(len(p1))
+    p2[0] = p1[0]
+    for n in range(1, len(p1)):
+
+        tdelta = dateval[n] - dateval[n-1]
+        if p1[n] < p1[n-1] or dateval[n].minute == RT or tdelta.seconds/60 != 5:
+            p2[n] = p1[n]/100.
+
+        #elif tdelta.seconds/60 == 5 and dateval[n].minute != RT:
+        else:
+            p2[n] = (float(p1[n]) - float(p1[n-1]))/100.
+
+    return p2
 
 def processWundergroundFile(csvin, csvout, errorfile):
     coverdict = {'CLR' : 0,
@@ -157,3 +261,4 @@ def processWundergroundFile(csvin, csvout, errorfile):
 
     datain.close()
     dataout.close()
+
