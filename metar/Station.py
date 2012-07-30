@@ -16,6 +16,8 @@ import cookielib
 import Datatypes
 import matplotlib
 import matplotlib.dates as mdates
+import Metar
+import numpy as np
 matplotlib.rcParams['timezone'] = 'UTC'
 
 
@@ -140,8 +142,8 @@ def processWundergroundFile(csvin, csvout, errorfile):
 
         if good:
             metarstring = row[-3]
-            obs = Metar(metarstring, month=date.month, year=date.year,
-                        errorfile=errorfile)
+            obs = Metar.Metar(metarstring, month=date.month, year=date.year,
+                              errorfile=errorfile)
 
             cover = []
             for sky in obs.sky:
