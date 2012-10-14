@@ -77,33 +77,38 @@ class station:
         else:
             start = 2
 
-        outdir = os.path.join('data', self.sta_id)
-        if not os.path.exists(outdir):
+        outdir = os.path.join('data', self.sta_id, src)
+        if not os.path.exists('data'):
+            os.mkdir('data')
+        if not os.path.exists(os.path.join('data', self.sta_id)):
+            os.mkdir(os.path.join('data', self.sta_id))
+        if not  os.path.exists(outdir):
             os.mkdir(outdir)
 
-        outname = os.path.join(outdir, 'raw%s_%s_%s.dat' % \
-                        (self.sta_id, src, date.strftime('%Y%m')))
-        outfile = open(outname, 'w')
-        url = self._urlByDate(date, src=src)
-        if src.lower() == 'wunderground':
-            try:
-                webdata = self.wunderground.open(url)
-                rawlines = webdata.readlines()
-                outfile.writelines(rawlines[start:])
-            except:
-                print('error on: %s\n' % (url,))
-                if errorfile is not None:
-                    errorfile.write('error on: %s\n' % (url,))
-        elif src.lower() == 'asos':
-            try:
-                webdata = self.asos.open(url)
-                rawlines = webdata.readlines()
-                outfile.writelines(rawlines[start:])
-            except:
-                print('error on: %s\n' % (url,))
-                if errorfile is not None:
-                    errorfile.write('error on: %s\n' % (url,))
-        outfile.close()
+        outname = os.path.join(outdir, 'raw%s_%s.dat' % \
+                        (self.sta_id, date.strftime('%Y%m')))
+        if not os.path.exists(outname):
+            outfile = open(outname, 'w')
+            url = self._urlByDate(date, src=src)
+            if src.lower() == 'wunderground':
+                try:
+                    webdata = self.wunderground.open(url)
+                    rawlines = webdata.readlines()
+                    outfile.writelines(rawlines[start:])
+                except:
+                    print('error on: %s\n' % (url,))
+                    if errorfile is not None:
+                        errorfile.write('error on: %s\n' % (url,))
+            elif src.lower() == 'asos':
+                try:
+                    webdata = self.asos.open(url)
+                    rawlines = webdata.readlines()
+                    outfile.writelines(rawlines[start:])
+                except:
+                    print('error on: %s\n' % (url,))
+                    if errorfile is not None:
+                        errorfile.write('error on: %s\n' % (url,))
+            outfile.close()
 
 def getAllStations():
     station_file_name = "nsd_cccc.txt"
