@@ -2,12 +2,14 @@ import metar
 import matplotlib.dates as mdates
 import datetime as dt
 
-stations = [('KDLS', 'The Dalles', 'OR'),
+stations = [('KPDX', 'Portland', 'OR'),
+            ('KDLS', 'The Dalles', 'OR'),
             ('KHRI', 'Hermiston', 'OR'),
-            ('KPSC', 'Pasco', 'WA')]
+            ('KPSC', 'Pasco', 'WA')
+            ]
 
-startdate = dt.datetime(1980,1,1)
-enddate = dt.datetime(2012,5,27)
+startdate = dt.datetime(2007,10,1)
+enddate = dt.datetime(2012,10,1)
 timestep = dt.timedelta(days=1)
 for station in stations:
     outfilename = '%s_raw.csv' % (station[0],)
@@ -24,9 +26,9 @@ for station in stations:
             print('%s - %s' % (station[0], dateobj))
 
         if n == 0:
-            sta.getHourlyData(url, outfile, errorfile, keepheader=True)
+            sta.getData(url, outfile, errorfile, keepheader=True)
         else:
-            sta.getHourlyData(url, outfile, errorfile, keepheader=False)
+            sta.getData(url, outfile, errorfile, keepheader=False)
 
     outfile.close()
 

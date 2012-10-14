@@ -10,9 +10,8 @@
 #
 #  Copyright 2004  Tom Pollard
 # 
-import datetime, urllib, urllib2, cookielib
+import datetime, urllib, urllib2, cookielib, os
 from Metar import Metar
-from math import sin, cos, atan2, sqrt
 from Datatypes import position, distance, direction
 import numpy as np
 import matplotlib
@@ -35,10 +34,10 @@ class station:
         else:
             self.name = self.city
 
-        self.wundergound = self.__setCookies(src='wunderground')
-        self.asos = self.__setCookies(src='asos')
+        self.wundergound = self._setCookies(src='asos')
+        self.asos = self._setCookies(src='asos')
 
-    def __setCookies(self, src):
+    def _setCookies(self, src):
         jar = cookielib.CookieJar()
         handler = urllib2.HTTPCookieProcessor(jar)
         opener = urllib2.build_opener(handler)
@@ -56,7 +55,7 @@ class station:
 
         return opener
 
-    def urlByDate(self, date, src='wunderground'):
+    def _urlByDate(self, date, src='wunderground'):
         "http://www.wunderground.com/history/airport/KDCA/1950/12/18/DailyHistory.html?format=1"
         if src.lower() == 'wunderground':
             baseurl = 'http://www.wunderground.com/history/airport/%s' % self.sta_id
@@ -71,31 +70,40 @@ class station:
             raise ValueError, "src must be 'wunderground' or 'asos'"
         return url
 
-    def getData(self, url, outfile, errorfile, keepheader=False, src='wunderground'):
+    def getData(self, date, errorfile=None, keepheader=False, src='wunderground'):
         observations = []
         if keepheader:
             start = 1
         else:
             start = 2
 
+        outdir = os.path.join('data', self.sta_id)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
+        outname = os.path.join(outdir, 'raw%s_%s_%s.dat' % \
+                        (self.sta_id, src, date.strftime('%Y%m')))
+        outfile = open(outname, 'w')
+        url = self._urlByDate(date, src=src)
         if src.lower() == 'wunderground':
             try:
                 webdata = self.wunderground.open(url)
                 rawlines = webdata.readlines()
                 outfile.writelines(rawlines[start:])
             except:
-                errorfile.write('error on: %s\n' % (url,))
+                print('error on: %s\n' % (url,))
+                if errorfile is not None:
+                    errorfile.write('error on: %s\n' % (url,))
         elif src.lower() == 'asos':
             try:
                 webdata = self.asos.open(url)
                 rawlines = webdata.readlines()
                 outfile.writelines(rawlines[start:])
             except:
-                errorfile.write('error on: %s\n' % (url,))
-
-
-
-
+                print('error on: %s\n' % (url,))
+                if errorfile is not None:
+                    errorfile.write('error on: %s\n' % (url,))
+        outfile.close()
 
 def getAllStations():
     station_file_name = "nsd_cccc.txt"
