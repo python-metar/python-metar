@@ -1,5 +1,8 @@
 Change Log
 ==========
+metar 1.4.1
+*) fixed indent levels to always be 4 spaces
+*) using print() as function instead of command
 
 metar 1.4
 ---------
