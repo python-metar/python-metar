@@ -121,6 +121,7 @@ class station:
                 finalfile.writelines(stepfile.readlines()[1:])
             stepfile.close()
         finalfile.close()
+        return finalfilename
 
     def _get_data(self, date, errorfile=None, keepheader=False, src='wunderground'):
         observations = []
@@ -224,7 +225,8 @@ class station:
             date = ts.to_datetime()
             self._process_ASOS_File(date, errorfile)
 
-        self._stitch_files('asos')
+        filename = self._stitch_files('asos')
+        return filename
 
 
 def _parse_date(datestring):
