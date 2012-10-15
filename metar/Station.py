@@ -214,7 +214,6 @@ class station:
         elif len(failed_timestamps) > 0:
             self._attempt_download(failed_timestamps, errorfile, src)
 
-
     def getASOSdata(self, startdate, enddate, errorfile):
         timestamps = pandas.DatetimeIndex(start=_parse_date(startdate), 
                                           end=_parse_date(enddate),
@@ -328,7 +327,7 @@ def processPrecip(dateval, p1):
 
         #elif tdelta.seconds/60 == 5 and dateval[n].minute != RT:
         else:
-            p2[n] = (float(p1[n]) - float(p1[n-1]))/100.
+            p2[n] = (float(p1[n]) - float(p1[n-1]))
 
     return p2
 
