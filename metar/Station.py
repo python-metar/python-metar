@@ -17,6 +17,7 @@ import numpy as np
 import matplotlib
 import matplotlib.dates as mdates
 matplotlib.rcParams['timezone'] = 'UTC'
+import pandas
 
 
 class station:
@@ -51,12 +52,12 @@ class station:
         else:
             ext = 'csv'
 
-        if src.lower() == 'wunderground':
+        if src.lower() == 'wunderground' or step == 'final':
             datefmtstr = '%Y%m%d'
         else:
             datefmtstr = '%Y%m'
 
-        return '%s_%s.%s' % (self.sta_id, date.strftime('%Y%m%d'), ext)
+        return '%s_%s.%s' % (self.sta_id, date.strftime(datefmtstr), ext)
 
     def _set_cookies(self, src):
         jar = cookielib.CookieJar()
@@ -104,7 +105,24 @@ class station:
         _check_dirs(subdirs)
         return os.path.join(datadir, datafile)
 
-    def getData(self, date, errorfile=None, keepheader=False, src='wunderground'):
+    def _stitch_files(self, src):
+        stepdir = self._find_dir(src, 'flat')
+        stepfilenames = os.listdir(stepdir)
+
+        finalfilename = self._make_data_file(datetime.datetime.today(), src, 'final')
+        print(finalfilename)
+        print(os.getcwd())
+        finalfile = open(finalfilename, 'w')
+        for n, step in enumerate(stepfilenames):
+            stepfile = open(os.path.join(stepdir, step), 'r')
+            if n == 0:
+                finalfile.writelines(stepfile.readlines())
+            else:
+                finalfile.writelines(stepfile.readlines()[1:])
+            stepfile.close()
+        finalfile.close()
+
+    def _get_data(self, date, errorfile=None, keepheader=False, src='wunderground'):
         observations = []
         if keepheader:
             start = 0
@@ -112,6 +130,7 @@ class station:
             start = 1
 
         outname = self._make_data_file(date, src, 'raw')
+        status = 'not downloaded'
         if not os.path.exists(outname):
             outfile = open(outname, 'w')
             url = self._url_by_date(date, src=src)
@@ -120,6 +139,7 @@ class station:
                     webdata = self.wunderground.open(url)
                     rawlines = webdata.readlines()
                     outfile.writelines(rawlines[start:])
+                    status = 'downloaded'
                 except:
                     print('error on: %s\n' % (url,))
                     if errorfile is not None:
@@ -129,13 +149,19 @@ class station:
                     webdata = self.asos.open(url)
                     rawlines = webdata.readlines()
                     outfile.writelines(rawlines[start:])
+                    status = 'downloaded'
                 except:
                     print('error on: %s\n' % (url,))
                     if errorfile is not None:
                         errorfile.write('error on: %s\n' % (url,))
             outfile.close()
+        else:   
+            status = 'already exists'
+            
+        print('%s - %s' % (date.strftime('%Y-%m'), status))
+        return status
 
-    def processASOSFile(self, date, errorfile):
+    def _process_ASOS_File(self, date, errorfile):
         datain = open(self._make_data_file(date, 'asos', 'raw'), 'r')
         dataout = open(self._make_data_file(date, 'asos', 'flat'), 'w')
 
@@ -172,6 +198,39 @@ class station:
 
         datain.close()
         dataout.close()
+
+    def _attempt_download(self, timestamps, errorfile, src, attempt=0):
+        attempt += 1
+        failed_timestamps = []
+        for timestamp in timestamps:
+            date = timestamp.to_datetime()
+            status = self._get_data(date, errorfile=errorfile, src=src)
+            if status == 'not downloaded':
+                failed_timestamps.append(timestamp)
+        
+        if attempt > 10:
+            print('some files failed after 10 attempts. try again later')
+        elif len(failed_timestamps) > 0:
+            self._attempt_download(failed_timestamps, errorfile, src)
+
+
+    def getASOSdata(self, startdate, enddate, errorfile):
+        timestamps = pandas.DatetimeIndex(start=_parse_date(startdate), 
+                                          end=_parse_date(enddate),
+                                          freq='MS')
+        self._attempt_download(timestamps, errorfile, 'asos')
+
+        for ts in timestamps:
+            date = ts.to_datetime()
+            self._process_ASOS_File(date, errorfile)
+
+        self._stitch_files('asos')
+
+
+def _parse_date(datestring):
+    datenum = mdates.datestr2num(datestring)
+    dateval = mdates.num2date(datenum)
+    return dateval           
 
 def _check_src(src):
     if src.lower() not in ('wunderground','asos'):
