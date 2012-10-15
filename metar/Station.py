@@ -10,7 +10,7 @@
 #
 #  Copyright 2004  Tom Pollard
 # 
-import datetime, urllib, urllib2, cookielib, os
+import datetime, urllib, urllib2, cookielib, os, pdb
 from Metar import Metar
 from Datatypes import position, distance, direction
 import numpy as np
@@ -34,29 +34,54 @@ class station:
         else:
             self.name = self.city
 
-        self.wundergound = self._setCookies(src='asos')
-        self.asos = self._setCookies(src='asos')
+        self.wundergound = self._set_cookies(src='wunderground')
+        self.asos = self._set_cookies(src='asos')
 
-    def _setCookies(self, src):
+    def _find_dir(self, src, step):
+        _check_src(src)
+        _check_step(step)
+        return os.path.join('data', self.sta_id, src.lower(), step.lower())
+
+    def _find_file(self, date, src, step):
+        _check_src(src)
+        _check_step(step)
+
+        if step == 'raw':
+            ext = 'dat'
+        else:
+            ext = 'csv'
+
+        if src.lower() == 'wunderground':
+            datefmtstr = '%Y%m%d'
+        else:
+            datefmtstr = '%Y%m'
+
+        return '%s_%s.%s' % (self.sta_id, date.strftime('%Y%m%d'), ext)
+
+    def _set_cookies(self, src):
         jar = cookielib.CookieJar()
         handler = urllib2.HTTPCookieProcessor(jar)
         opener = urllib2.build_opener(handler)
-        if src.lower() == 'wunderground':
-            url1 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?' % self.sta_id
-            url2 = 'http://www.wunderground.com/cgi-bin/findweather/getForecast?setpref=SHOWMETAR&value=1'
-            url3 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1' % self.sta_id
+        try:
+            if src.lower() == 'wunderground':
+                url1 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?' % self.sta_id
+                url2 = 'http://www.wunderground.com/cgi-bin/findweather/getForecast?setpref=SHOWMETAR&value=1'
+                url3 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1' % self.sta_id
 
-            opener.open(url1)
-            opener.open(url2)
-            opener.open(url3)
-        elif src.lower() == 'asos':
-            url = 'ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/'
-            opener.open(url)
+                opener.open(url1)
+                opener.open(url2)
+                opener.open(url3)
+            elif src.lower() == 'asos':
+                url = 'ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/'
+                opener.open(url)
+        except urllib2.URLError:
+            print('connection to %s not available. working locally' % src)
 
         return opener
 
-    def _urlByDate(self, date, src='wunderground'):
+    def _url_by_date(self, date, src='wunderground'):
         "http://www.wunderground.com/history/airport/KDCA/1950/12/18/DailyHistory.html?format=1"
+        _check_src(src)
         if src.lower() == 'wunderground':
             baseurl = 'http://www.wunderground.com/history/airport/%s' % self.sta_id
             endurl =  'DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1'
@@ -70,26 +95,26 @@ class station:
             raise ValueError, "src must be 'wunderground' or 'asos'"
         return url
 
+    def _make_data_file(self, date, src, step):
+        _check_src(src)
+        _check_step(step)
+        datadir = self._find_dir(src, step)
+        datafile = self._find_file(date, src, step)
+        subdirs = datadir.split(os.path.sep)
+        _check_dirs(subdirs)
+        return os.path.join(datadir, datafile)
+
     def getData(self, date, errorfile=None, keepheader=False, src='wunderground'):
         observations = []
         if keepheader:
-            start = 1
+            start = 0
         else:
-            start = 2
+            start = 1
 
-        outdir = os.path.join('data', self.sta_id, src)
-        if not os.path.exists('data'):
-            os.mkdir('data')
-        if not os.path.exists(os.path.join('data', self.sta_id)):
-            os.mkdir(os.path.join('data', self.sta_id))
-        if not  os.path.exists(outdir):
-            os.mkdir(outdir)
-
-        outname = os.path.join(outdir, 'raw%s_%s.dat' % \
-                        (self.sta_id, date.strftime('%Y%m')))
+        outname = self._make_data_file(date, src, 'raw')
         if not os.path.exists(outname):
             outfile = open(outname, 'w')
-            url = self._urlByDate(date, src=src)
+            url = self._url_by_date(date, src=src)
             if src.lower() == 'wunderground':
                 try:
                     webdata = self.wunderground.open(url)
@@ -109,6 +134,63 @@ class station:
                     if errorfile is not None:
                         errorfile.write('error on: %s\n' % (url,))
             outfile.close()
+
+    def processASOSFile(self, date, errorfile):
+        datain = open(self._make_data_file(date, 'asos', 'raw'), 'r')
+        dataout = open(self._make_data_file(date, 'asos', 'flat'), 'w')
+
+        headers = 'Sta,Date,Precip1hr_cum(in),Precip5min(in),Temp(degF),' + \
+                    'DewPnt(defF),WindSpd(mph),WindDir(deg),AtmPress(hPa)\n'
+        dataout.write(headers)
+
+        dates = []
+        rains = []
+        temps = []
+        dewpt = []
+        windspd = []
+        winddir = []
+        press = []
+        for metarstring in datain:
+            obs = Metar(metarstring, errorfile=errorfile)
+            dates.append(dateASOS(metarstring))
+            rains = appendVal(obs.precip_1hr, rains, fillNone=0.0)
+            temps = appendVal(obs.temp, temps)
+            dewpt = appendVal(obs.dewpt, dewpt)
+            windspd = appendVal(obs.wind_speed, windspd)
+            winddir = appendVal(obs.wind_dir, winddir)
+            press = appendVal(obs.press, press)
+
+        rains = np.array(rains)
+        dates = np.array(dates)
+
+        rt = determineResetTime(dates, rains)
+        final_precip = processPrecip(dates, rains)
+
+        for row in zip([self.sta_id]*rains.shape[0], dates, rains, final_precip, \
+                        temps, dewpt, windspd, winddir, press):
+            dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
+
+        datain.close()
+        dataout.close()
+
+def _check_src(src):
+    if src.lower() not in ('wunderground','asos'):
+        raise ValueError('src must be one of "wunderground", or "asos"')
+
+def _check_step(step):
+    if step.lower() not in ('raw','flat','final'):
+        raise ValueError('step must be one of "raw", "flat", or "final"')
+
+def _check_dirs(subdirs):
+    if not os.path.exists(subdirs[0]):
+        print('making '+subdirs[0])
+        os.mkdir(subdirs[0])
+
+    if len(subdirs) > 1:
+        topdir = [os.path.join(subdirs[0],subdirs[1])]
+        for sd in subdirs[2:]:
+            topdir.append(sd)
+        _check_dirs(topdir)
 
 def getAllStations():
     station_file_name = "nsd_cccc.txt"
@@ -140,7 +222,7 @@ def dateASOS(x):
     hr = int(x[37:39])   # hour
     mi = int(x[40:42])   # minute
 
-    date = dt.datetime(yr,mo,da,hr,mi)
+    date = datetime.datetime(yr,mo,da,hr,mi)
 
     return date
 
@@ -148,31 +230,12 @@ def getStationByID(sta_id):
     stations = getAllStations()
     return stations[sta_id]
 
-def processASOSFile(csvin, csvout, errorfile):
-    datain = open(csvin, 'r')
-    dataout = open(csvin, 'w')
-    #for h in headers[:-1]:
-    #    dataout.write('%s,' % (h,))
-    #dataout.write('%s\n' % (headers[-1]))
-    dates = []
-    rains = []
-    for metarstring in datain:
-        obs = Metar(metarstring, errorfile=errorfile)
-        dates.append(dateASOS(metarstring))
-        rains.append(rainASOS(metarstring))
-
-    rains = np.array(rains)
-    dates = np.array(dates)
-
-    rt = determineResetTime(dates, rains)
-    final_precip = processPrecip(dates, rains)
-
-    for p1, p2, d in zip(rains, final_precip, dates):
-        dataout.write('%s,%d,%0.2f\n' % (d,p1,p2))
-
-    datain.close()
-    dataout.close()
-
+def appendVal(obsval, listobj, fillNone='NA'):
+    if obsval is not None and hasattr(obsval, 'value'):
+        listobj.append(obsval.value())
+    else:
+        listobj.append(fillNone)
+    return listobj
 
 def determineResetTime(date, precip):
     minutes = np.zeros(12)
