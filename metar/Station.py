@@ -310,7 +310,7 @@ def rainClock(rainfall):
     for hr in np.arange(24):
         selector = (rainhours == hr)
         total_depth = rainfall[selector].sum()
-        num_obervations = rain[selector].count()
+        num_obervations = rainfall[selector].count()
         rain_by_hour.append(total_depth/num_obervations)
 
     bar_width = 2*np.pi/12 * 0.8
