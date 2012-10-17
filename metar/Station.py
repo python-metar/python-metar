@@ -9,8 +9,9 @@ from Metar import Metar
 from Datatypes import position, distance, direction
 import numpy as np
 import matplotlib
-import matplotlib.dates as mdates
 matplotlib.rcParams['timezone'] = 'UTC'
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import pandas
 
 
