@@ -3,13 +3,7 @@
 #  Python module to provide station information from the ICAO identifiers
 #
 #  Copyright 2004  Tom Pollard
-# 
-#!/usr/bin/python
-#
-#  Python module to provide station information from the ICAO identifiers
-#
-#  Copyright 2004  Tom Pollard
-# 
+#  
 import datetime, urllib, urllib2, cookielib, os, pdb
 from Metar import Metar
 from Datatypes import position, distance, direction
@@ -112,15 +106,16 @@ class station:
         finalfilename = self._make_data_file(datetime.datetime.today(), src, 'final')
         print(finalfilename)
         print(os.getcwd())
-        finalfile = open(finalfilename, 'w')
-        for n, step in enumerate(stepfilenames):
-            stepfile = open(os.path.join(stepdir, step), 'r')
-            if n == 0:
-                finalfile.writelines(stepfile.readlines())
-            else:
-                finalfile.writelines(stepfile.readlines()[1:])
-            stepfile.close()
-        finalfile.close()
+        if not os.path.exists(finalfilename):
+            finalfile = open(finalfilename, 'w')
+            for n, step in enumerate(stepfilenames):
+                stepfile = open(os.path.join(stepdir, step), 'r')
+                if n == 0:
+                    finalfile.writelines(stepfile.readlines())
+                else:
+                    finalfile.writelines(stepfile.readlines()[1:])
+                stepfile.close()
+            finalfile.close()
         return finalfilename
 
     def _get_data(self, date, errorfile=None, keepheader=False, src='wunderground'):
@@ -163,42 +158,45 @@ class station:
         return status
 
     def _process_ASOS_File(self, date, errorfile):
-        datain = open(self._make_data_file(date, 'asos', 'raw'), 'r')
-        dataout = open(self._make_data_file(date, 'asos', 'flat'), 'w')
+        rawfilename = self._make_data_file(date, 'asos', 'raw')
+        flatfilename = self._make_data_file(date, 'asos', 'flat')
+        if not os.path.exists(flatfilename):
+            datain = open(self._make_data_file(date, 'asos', 'raw'), 'r')
+            dataout = open(self._make_data_file(date, 'asos', 'flat'), 'w')
 
-        headers = 'Sta,Date,Precip1hr_cum(in),Precip5min(in),Temp(degF),' + \
-                    'DewPnt(defF),WindSpd(mph),WindDir(deg),AtmPress(hPa)\n'
-        dataout.write(headers)
+            headers = 'Sta,Date,Precip1hr,Precip5min,Temp,' + \
+                        'DewPnt,WindSpd,WindDir,AtmPress\n'
+            dataout.write(headers)
 
-        dates = []
-        rains = []
-        temps = []
-        dewpt = []
-        windspd = []
-        winddir = []
-        press = []
-        for metarstring in datain:
-            obs = Metar(metarstring, errorfile=errorfile)
-            dates.append(dateASOS(metarstring))
-            rains = appendVal(obs.precip_1hr, rains, fillNone=0.0)
-            temps = appendVal(obs.temp, temps)
-            dewpt = appendVal(obs.dewpt, dewpt)
-            windspd = appendVal(obs.wind_speed, windspd)
-            winddir = appendVal(obs.wind_dir, winddir)
-            press = appendVal(obs.press, press)
+            dates = []
+            rains = []
+            temps = []
+            dewpt = []
+            windspd = []
+            winddir = []
+            press = []
+            for metarstring in datain:
+                obs = Metar(metarstring, errorfile=errorfile)
+                dates.append(_date_ASOS(metarstring))
+                rains = _append_val(obs.precip_1hr, rains, fillNone=0.0)
+                temps = _append_val(obs.temp, temps)
+                dewpt = _append_val(obs.dewpt, dewpt)
+                windspd = _append_val(obs.wind_speed, windspd)
+                winddir = _append_val(obs.wind_dir, winddir)
+                press = _append_val(obs.press, press)
 
-        rains = np.array(rains)
-        dates = np.array(dates)
+            rains = np.array(rains)
+            dates = np.array(dates)
 
-        rt = determineResetTime(dates, rains)
-        final_precip = processPrecip(dates, rains)
+            final_precip = _process_precip(dates, rains)
 
-        for row in zip([self.sta_id]*rains.shape[0], dates, rains, final_precip, \
-                        temps, dewpt, windspd, winddir, press):
-            dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
+            for row in zip([self.sta_id]*rains.shape[0], dates, rains, final_precip, \
+                            temps, dewpt, windspd, winddir, press):
+                dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
 
-        datain.close()
-        dataout.close()
+            datain.close()
+            dataout.close()
+        return flatfilename
 
     def _attempt_download(self, timestamps, errorfile, src, attempt=0):
         attempt += 1
@@ -222,11 +220,10 @@ class station:
 
         for ts in timestamps:
             date = ts.to_datetime()
-            self._process_ASOS_File(date, errorfile)
+            flatfilename = self._process_ASOS_File(date, errorfile)
 
         filename = self._stitch_files('asos')
         return filename
-
 
 def _parse_date(datestring):
     datenum = mdates.datestr2num(datestring)
@@ -252,54 +249,28 @@ def _check_dirs(subdirs):
             topdir.append(sd)
         _check_dirs(topdir)
 
-def getAllStations():
-    station_file_name = "nsd_cccc.txt"
-    station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
-    stations = {}
-
-    fh = open(station_file_name,'r')
-    for line in fh:
-        f = line.strip().split(";")
-        stations[f[0]] = station(f[0],f[3],f[4],f[5],f[7],f[8])
-    fh.close()
-
-    return stations
-
-def rainASOS(x):
-    '''get 5-min precip value (cumulative w/i the hour)'''
-    p = 0
-    m = re.search('[ +]P\d\d\d\d\s', x)
-    if m:
-        p = int(m.group(0)[2:-1])
-
-    return p
-
-def dateASOS(x):
+def _date_ASOS(metarstring):
     '''get date/time of asos reading'''
-    yr = int(x[13:17])   # year
-    mo = int(x[17:19])   # month
-    da = int(x[19:21])   # day
-    hr = int(x[37:39])   # hour
-    mi = int(x[40:42])   # minute
+    yr = int(metarstring[13:17])   # year
+    mo = int(metarstring[17:19])   # month
+    da = int(metarstring[19:21])   # day
+    hr = int(metarstring[37:39])   # hour
+    mi = int(metarstring[40:42])   # minute
 
     date = datetime.datetime(yr,mo,da,hr,mi)
 
     return date
 
-def getStationByID(sta_id):
-    stations = getAllStations()
-    return stations[sta_id]
-
-def appendVal(obsval, listobj, fillNone='NA'):
+def _append_val(obsval, listobj, fillNone='NA'):
     if obsval is not None and hasattr(obsval, 'value'):
         listobj.append(obsval.value())
     else:
         listobj.append(fillNone)
     return listobj
 
-def determineResetTime(date, precip):
+def _determine_reset_time(date, precip):
     minutes = np.zeros(12)
-    if len(date) <> len(precip):
+    if len(date) != len(precip):
         raise ValueError("date and precip must be same length")
     else:
         for n in range(1,len(date)):
@@ -310,13 +281,13 @@ def determineResetTime(date, precip):
         resetTime, = np.where(minutes==minutes.max())
         return resetTime[0]*5
 
-def processPrecip(dateval, p1):
+def _process_precip(dateval, p1):
     '''convert 5-min rainfall data from cumuative w/i an hour to 5-min totals
     p = precip data (list)
     dt = list of datetime objects
     RT = point in the hour when the tip counter resets
     #if (p1[n-1] <= p1[n]) and (dt[n].minute != RT):'''
-    RT = determineResetTime(dateval, p1)
+    RT = _determine_reset_time(dateval, p1)
     p2 = np.zeros(len(p1))
     p2[0] = p1[0]
     for n in range(1, len(p1)):
@@ -330,6 +301,23 @@ def processPrecip(dateval, p1):
             p2[n] = (float(p1[n]) - float(p1[n-1]))
 
     return p2
+
+def getAllStations():
+    station_file_name = "nsd_cccc.txt"
+    station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
+    stations = {}
+
+    fh = open(station_file_name,'r')
+    for line in fh:
+        f = line.strip().split(";")
+        stations[f[0]] = station(f[0],f[3],f[4],f[5],f[7],f[8])
+    fh.close()
+
+    return stations
+
+def getStationByID(sta_id):
+    stations = getAllStations()
+    return stations[sta_id]
 
 def processWundergroundFile(csvin, csvout, errorfile):
     coverdict = {'CLR' : 0,
@@ -397,4 +385,3 @@ def processWundergroundFile(csvin, csvout, errorfile):
 
     datain.close()
     dataout.close()
-
