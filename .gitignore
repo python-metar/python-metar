@@ -24,8 +24,10 @@
 # Logs and databases #
 ######################
 *.log
+ipython*log.*
 *.sql
 *.sqlite
+*.err
 
 # OS generated files #
 ######################
@@ -51,3 +53,6 @@ tex/*.tex
 *.out
 *.toc
 
+# data #
+########
+data/*
