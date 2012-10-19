@@ -13,6 +13,7 @@ import datetime
 import urllib2 
 import cookielib
 import pdb
+import os
 
 # math stuff
 import numpy as np
@@ -357,9 +358,9 @@ def _check_file(filename):
     confirms that a raw file isn't empty
     '''
     try:
-        flatfile = open(rawfilename, 'r')
-        lines = rawfile.readlines()
-        flatfile.close()
+        testfile = open(filename, 'r')
+        lines = testfile.readlines()
+        testfile.close()
         if len(lines) > 1:
             status = 'ok'
         else:
@@ -539,13 +540,9 @@ def processWundergroundFile(csvin, csvout, errorfile):
 
         if good:
             metarstring = row[-3]
-            obs = Metar.Metar(metarstring, month=date.month, year=date.year,
-<<<<<<< HEAD
-                        errorfile=errorfile)
-=======
-                              errorfile=errorfile)
->>>>>>> 8e714bf6fb02bca6e594e27c465342a1b0e86c4b
-
+            obs = Metar.Metar(metarstring, errorfile=errorfile,
+                              month=date.month, year=date.year)
+                                    
             cover = []
             for sky in obs.sky:
                 coverval = coverdict[sky[0]]
