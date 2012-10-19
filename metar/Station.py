@@ -139,23 +139,20 @@ class station:
         _check_dirs(subdirs)
         return os.path.join(datadir, datafile)
 
-    def _get_data(self, timestamp, errorfile=None, 
-                  src='asos', force_download=False):
-        '''
-        method that downloads data from a *src* for a *timestamp*
-        returns the status of the download ('downloaded', 
-                'already exists', 'not downloaded')
-
+    def _get_data(self, timestamp, errorfile=None, src='asos', force_download=False):
+        ''' method that downloads data from a *src* for a *timestamp*
+        returns the status of the download 
+            ('ok', 'bad', 'not there')
         input:
-            *timestamp* : pands timestamp object
-            *src* : 'asos' or 'wunderground'
-            *errorfile* : writable buffer to log errors in retrieving data
-            *force_download* : bool; default False
+        *timestamp* : pands timestamp object
+        *src* : 'asos' or 'wunderground'
+        *errorfile* : writable buffer to log errors in retrieving data
+        *force_download* : bool; default False
         '''
         date = timestamp.to_datetime()
         observations = []
         outname = self._make_data_file(timestamp, src, 'raw')
-        status = 'not downloaded'
+        status = 'not there'
         if not os.path.exists(outname) or force_download:
             outfile = open(outname, 'w')
             url = self._url_by_date(timestamp, src=src)
@@ -164,7 +161,6 @@ class station:
                     webdata = self.wunderground.open(url)
                     weblines = webdata.readlines()
                     outfile.writelines(weblines)
-                    status = 'downloaded'
                 except:
                     print('error on: %s\n' % (url,))
                     outfile.close()
@@ -176,7 +172,6 @@ class station:
                     webdata = self.asos.open(url)
                     weblines = webdata.readlines()
                     outfile.writelines(weblines)
-                    status = 'downloaded'
                 except:
                     outfile.close()
                     os.remove(outname)
@@ -184,8 +179,9 @@ class station:
                     if errorfile is not None:
                         errorfile.write('error on: %s\n' % (url,))
             outfile.close()
+            status = _check_file(outname)
         else:   
-            status = 'already exists'
+            status = _check_file(outname)
             
         #print('%s - %s' % (date.strftime('%Y-%m'), status))
         return status
@@ -193,8 +189,8 @@ class station:
     def _attempt_download(self, timestamp, errorfile, src, attempt=0, max_attempts=10):
         '''
         recursively calls _attempt_download at most *max_attempts* times.
-        returns the status of the download ('downloaded', 
-                'already exists', 'not downloaded')
+        returns the status of the download 
+            ('ok', 'bad', 'not there')
         input:
             *timestamp* : a pandas timestamp object
             *errorfile* : writable buffer to log errors
@@ -204,7 +200,7 @@ class station:
         '''
         attempt += 1
         status = self._get_data(timestamp, errorfile=errorfile, src=src)
-        if status == 'not downloaded' and attempt < max_attempts
+        if status == 'not there' and attempt < max_attempts:
             attempt += 1
             self._attempt_download(timestamp, errorfile, 
                                    src, attempt=attempt)
@@ -214,8 +210,8 @@ class station:
     def _process_ASOS_file(self, timestamp, errorfile):
         '''
         processes as raw ASOS data file (*.dat) to a flat file (*csv).
-        returns the filename and status of the download ('downloaded', 
-            'already exists', 'not downloaded')
+        returns the filename and status of the download 
+            ('ok', 'bad', 'not there')
 
         input:
             *timestamp* : a pandas timestamp object
@@ -225,10 +221,12 @@ class station:
         rawfilename = self._make_data_file(timestamp, 'asos', 'raw')
         flatfilename = self._make_data_file(timestamp, 'asos', 'flat')
         if not os.path.exists(rawfilename):
-            status = self._attempt_download(timestamp, errorfile, 
+            rawstatus = self._attempt_download(timestamp, errorfile, 
                                             'asos', attempt=0)
+        else:
+            rawstatus = _check_file(rawfilename)
 
-        if not os.path.exists(flatfilename):
+        if not os.path.exists(flatfilename) and rawstatus == 'ok':
             datain = open(rawfilename, 'r')
             dataout = open(flatfilename, 'w')
 
@@ -264,7 +262,8 @@ class station:
 
             datain.close()
             dataout.close()
-        return flatfilename, status
+        flatstatus = _check_file(flatfilename)
+        return flatfilename, flatstatus
 
     def _read_csv(self, timestamp, errorfile, src):
         '''
@@ -278,12 +277,12 @@ class station:
             *src* : 'asos' or 'wunderground'
         '''
         flatfilename = self._make_data_file(timestamp, src, 'flat')
-        status = 'already exists'
         if not os.path.exists(flatfilename):
             if src.lower() == 'asos':
-                flatfilename, status = self._process_ASOS_file(timestamp, errorfile)
+                flatfilename, flatstatus = self._process_ASOS_file(timestamp, errorfile)
 
-        if status in ['already exists', 'downloaded']:
+        flatstatus = _check_file(flatfilename)
+        if flatstatus == 'ok': 
             data = pandas.read_csv(flatfilename, index_col=[1], parse_dates=True)
         else:
             data = None
@@ -345,6 +344,24 @@ def _check_step(step):
     '''
     if step.lower() not in ('raw','flat'):
         raise ValueError('step must be one of "raw" or "flat"')
+
+def _check_file(filename):
+    '''
+    confirms that a raw file isn't empty
+    '''
+    try:
+        flatfile = open(rawfilename, 'r')
+        lines = rawfile.readlines()
+        flatfile.close()
+        if len(lines) > 1:
+            status = 'ok'
+        else:
+            status = 'bad'
+    
+    except IOError:
+        status = 'not there'
+    
+    return status
 
 def _check_dirs(subdirs):
     '''
