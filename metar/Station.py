@@ -107,8 +107,8 @@ class station:
         stepfilenames = os.listdir(stepdir)
 
         finalfilename = self._make_data_file(datetime.datetime.today(), src, 'final')
-        print(finalfilename)
-        print(os.getcwd())
+        #print(finalfilename)
+        #print(os.getcwd())
         if not os.path.exists(finalfilename) or force_regen:
             finalfile = open(finalfilename, 'w')
             for n, stepname in enumerate(stepfilenames):
@@ -153,7 +153,7 @@ class station:
         else:   
             status = 'already exists'
             
-        print('%s - %s' % (date.strftime('%Y-%m'), status))
+        #print('%s - %s' % (date.strftime('%Y-%m'), status))
         return status
 
     def _attempt_download(self, timestamp, errorfile, src, attempt=0):
@@ -220,7 +220,7 @@ class station:
                 flatfilename, status = self._process_ASOS_file(timestamp, errorfile)
 
         if status in ['already exists', 'downloaded']:
-            data = pandas.read_csv(flatfilename, index_col=[1])
+            data = pandas.read_csv(flatfilename, index_col=[1], parse_dates=True)
         else:
             data = None
 
@@ -255,7 +255,7 @@ def _check_step(step):
 
 def _check_dirs(subdirs):
     if not os.path.exists(subdirs[0]):
-        print('making '+subdirs[0])
+        #print('making '+subdirs[0])
         os.mkdir(subdirs[0])
 
     if len(subdirs) > 1:
