@@ -9,7 +9,7 @@ from Metar import Metar
 from Datatypes import position, distance, direction
 import numpy as np
 import matplotlib
-matplotlib.rcParams['timezone'] = 'UTC'
+#matplotlib.rcParams['timezone'] = 'UTC'
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
@@ -38,7 +38,8 @@ class station:
         _check_step(step)
         return os.path.join('data', self.sta_id, src.lower(), step.lower())
 
-    def _find_file(self, date, src, step):
+    def _find_file(self, timestamp, src, step):
+        date = timestamp.to_datetime()
         _check_src(src)
         _check_step(step)
 
@@ -75,7 +76,8 @@ class station:
 
         return opener
 
-    def _url_by_date(self, date, src='wunderground'):
+    def _url_by_date(self, timestamp, src='wunderground'):
+        date = timestamp.to_datetime()
         "http://www.wunderground.com/history/airport/KDCA/1950/12/18/DailyHistory.html?format=1"
         _check_src(src)
         if src.lower() == 'wunderground':
@@ -91,26 +93,26 @@ class station:
             raise ValueError, "src must be 'wunderground' or 'asos'"
         return url
 
-    def _make_data_file(self, date, src, step):
+    def _make_data_file(self, timestamp, src, step):
         _check_src(src)
         _check_step(step)
         datadir = self._find_dir(src, step)
-        datafile = self._find_file(date, src, step)
+        datafile = self._find_file(timestamp, src, step)
         subdirs = datadir.split(os.path.sep)
         _check_dirs(subdirs)
         return os.path.join(datadir, datafile)
 
-    def _stitch_files(self, src):
+    def _stitch_files(self, src, force_regen=False):
         stepdir = self._find_dir(src, 'flat')
         stepfilenames = os.listdir(stepdir)
 
         finalfilename = self._make_data_file(datetime.datetime.today(), src, 'final')
         print(finalfilename)
         print(os.getcwd())
-        if not os.path.exists(finalfilename):
+        if not os.path.exists(finalfilename) or force_regen:
             finalfile = open(finalfilename, 'w')
-            for n, step in enumerate(stepfilenames):
-                stepfile = open(os.path.join(stepdir, step), 'r')
+            for n, stepname in enumerate(stepfilenames):
+                stepfile = open(os.path.join(stepdir, stepname), 'r')
                 if n == 0:
                     finalfile.writelines(stepfile.readlines())
                 else:
@@ -119,23 +121,19 @@ class station:
             finalfile.close()
         return finalfilename
 
-    def _get_data(self, date, errorfile=None, keepheader=False, src='wunderground'):
+    def _get_data(self, timestamp, errorfile=None, src='wunderground'):
+        date = timestamp.to_datetime()
         observations = []
-        if keepheader:
-            start = 0
-        else:
-            start = 1
-
-        outname = self._make_data_file(date, src, 'raw')
+        outname = self._make_data_file(timestamp, src, 'raw')
         status = 'not downloaded'
         if not os.path.exists(outname):
             outfile = open(outname, 'w')
-            url = self._url_by_date(date, src=src)
+            url = self._url_by_date(timestamp, src=src)
             if src.lower() == 'wunderground':
                 try:
                     webdata = self.wunderground.open(url)
-                    rawlines = webdata.readlines()
-                    outfile.writelines(rawlines[start:])
+                    weblines = webdata.readlines()
+                    outfile.writelines(weblines)
                     status = 'downloaded'
                 except:
                     print('error on: %s\n' % (url,))
@@ -144,8 +142,8 @@ class station:
             elif src.lower() == 'asos':
                 try:
                     webdata = self.asos.open(url)
-                    rawlines = webdata.readlines()
-                    outfile.writelines(rawlines[start:])
+                    weblines = webdata.readlines()
+                    outfile.writelines(weblines)
                     status = 'downloaded'
                 except:
                     print('error on: %s\n' % (url,))
@@ -158,12 +156,27 @@ class station:
         print('%s - %s' % (date.strftime('%Y-%m'), status))
         return status
 
-    def _process_ASOS_File(self, date, errorfile):
-        rawfilename = self._make_data_file(date, 'asos', 'raw')
-        flatfilename = self._make_data_file(date, 'asos', 'flat')
+    def _attempt_download(self, timestamp, errorfile, src, attempt=0):
+        attempt += 1
+        status = self._get_data(timestamp, errorfile=errorfile, src=src)
+        if status == 'not downloaded' and attempt < 10:
+            attempt += 1
+            self._attempt_download(timestamp, errorfile, 
+                                   src, attempt=attempt)
+        
+        return status
+
+    def _process_ASOS_file(self, timestamp, errorfile):
+        date = timestamp.to_datetime()
+        rawfilename = self._make_data_file(timestamp, 'asos', 'raw')
+        flatfilename = self._make_data_file(timestamp, 'asos', 'flat')
+        if not os.path.exists(rawfilename):
+            status = self._attempt_download(timestamp, errorfile, 
+                                            'asos', attempt=0)
+
         if not os.path.exists(flatfilename):
-            datain = open(self._make_data_file(date, 'asos', 'raw'), 'r')
-            dataout = open(self._make_data_file(date, 'asos', 'flat'), 'w')
+            datain = open(rawfilename, 'r')
+            dataout = open(flatfilename, 'w')
 
             headers = 'Sta,Date,Precip1hr,Precip5min,Temp,' + \
                         'DewPnt,WindSpd,WindDir,AtmPress\n'
@@ -197,34 +210,36 @@ class station:
 
             datain.close()
             dataout.close()
-        return flatfilename
+        return flatfilename, status
 
-    def _attempt_download(self, timestamps, errorfile, src, attempt=0):
-        attempt += 1
-        failed_timestamps = []
-        for timestamp in timestamps:
-            date = timestamp.to_datetime()
-            status = self._get_data(date, errorfile=errorfile, src=src)
-            if status == 'not downloaded':
-                failed_timestamps.append(timestamp)
-        
-        if attempt > 10:
-            print('some files failed after 10 attempts. try again later')
-        elif len(failed_timestamps) > 0:
-            self._attempt_download(failed_timestamps, errorfile, src)
+    def _read_csv(self, timestamp, errorfile, src):
+        flatfilename = self._make_data_file(timestamp, src, 'flat')
+        status = 'already exists'
+        if not os.path.exists(flatfilename):
+            if src.lower() == 'asos':
+                flatfilename, status = self._process_ASOS_file(timestamp, errorfile)
+
+        if status in ['already exists', 'downloaded']:
+            data = pandas.read_csv(flatfilename, index_col=[1])
+        else:
+            data = None
+
+        return data
 
     def getASOSdata(self, startdate, enddate, errorfile):
         timestamps = pandas.DatetimeIndex(start=_parse_date(startdate), 
                                           end=_parse_date(enddate),
                                           freq='MS')
-        self._attempt_download(timestamps, errorfile, 'asos')
-
+        pdb.set_trace()
+        data = None
         for ts in timestamps:
-            date = ts.to_datetime()
-            flatfilename = self._process_ASOS_File(date, errorfile)
+            if data is None:
+                data = self._read_csv(ts, errorfile, 'asos')
+            else:
+                data = data.append(self._read_csv(ts, errorfile, 'asos'))
+                
 
-        filename = self._stitch_files('asos')
-        return filename
+        return data
 
 def _parse_date(datestring):
     datenum = mdates.datestr2num(datestring)
