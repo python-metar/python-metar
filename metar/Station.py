@@ -9,10 +9,11 @@ import Metar
 import Datatypes
 
 # std lib stuff
-import datetime 
-import urllib2 
+import datetime
+import urllib2
 import cookielib
 import pdb
+import os
 
 # math stuff
 import numpy as np
@@ -106,7 +107,7 @@ class station:
 
     def _url_by_date(self, timestamp, src='wunderground'):
         '''
-        function that returns a url to retrieve data for a *timestamp* 
+        function that returns a url to retrieve data for a *timestamp*
         from the *src*
 
         input:
@@ -132,7 +133,7 @@ class station:
     def _make_data_file(self, timestamp, src, step):
         '''
         creates a data file for a *timestamp* from a *src* at a *step*
-        
+
         input:
             *timestamp* : pands timestamp object
             *src* : 'asos' or 'wunderground'
@@ -148,7 +149,7 @@ class station:
 
     def _get_data(self, timestamp, errorfile=None, src='asos', force_download=False):
         ''' method that downloads data from a *src* for a *timestamp*
-        returns the status of the download 
+        returns the status of the download
             ('ok', 'bad', 'not there')
         input:
         *timestamp* : pands timestamp object
@@ -187,37 +188,37 @@ class station:
                         errorfile.write('error on: %s\n' % (url,))
             outfile.close()
             status = _check_file(outname)
-        else:   
+        else:
             status = _check_file(outname)
-            
+
         #print('%s - %s' % (date.strftime('%Y-%m'), status))
         return status
 
     def _attempt_download(self, timestamp, errorfile, src, attempt=0, max_attempts=10):
         '''
         recursively calls _attempt_download at most *max_attempts* times.
-        returns the status of the download 
+        returns the status of the download
             ('ok', 'bad', 'not there')
         input:
             *timestamp* : a pandas timestamp object
             *errorfile* : writable buffer to log errors
-            *src* : 'asos' or 'wunderground' 
-            *attempt* : the current attempt number 
+            *src* : 'asos' or 'wunderground'
+            *attempt* : the current attempt number
             *max_attempts* : the max number of tries to download a file (default=10)
         '''
         attempt += 1
         status = self._get_data(timestamp, errorfile=errorfile, src=src)
         if status == 'not there' and attempt < max_attempts:
             attempt += 1
-            self._attempt_download(timestamp, errorfile, 
+            self._attempt_download(timestamp, errorfile,
                                    src, attempt=attempt)
-        
+
         return status
 
     def _process_ASOS_file(self, timestamp, errorfile):
         '''
         processes as raw ASOS data file (*.dat) to a flat file (*csv).
-        returns the filename and status of the download 
+        returns the filename and status of the download
             ('ok', 'bad', 'not there')
 
         input:
@@ -228,8 +229,8 @@ class station:
         rawfilename = self._make_data_file(timestamp, 'asos', 'raw')
         flatfilename = self._make_data_file(timestamp, 'asos', 'flat')
         if not os.path.exists(rawfilename):
-            rawstatus = self._attempt_download(timestamp, errorfile, 
-                                            'asos', attempt=0)
+            rawstatus = self._attempt_download(timestamp, errorfile,
+                                               'asos', attempt=0)
         else:
             rawstatus = _check_file(rawfilename)
 
@@ -275,10 +276,10 @@ class station:
     def _read_csv(self, timestamp, errorfile, src):
         '''
         tries to retrieve data from the web from *src* for a *timestamp*
-        returns a pandas dataframe if the download and prcoessing are 
+        returns a pandas dataframe if the download and prcoessing are
         successful. returns None if they fail.
 
-        input: 
+        input:
             *timestamp* : a pandas timestamp object
             *errorfile* : writable buffer to log errors
             *src* : 'asos' or 'wunderground'
@@ -289,7 +290,7 @@ class station:
                 flatfilename, flatstatus = self._process_ASOS_file(timestamp, errorfile)
 
         flatstatus = _check_file(flatfilename)
-        if flatstatus == 'ok': 
+        if flatstatus == 'ok':
             data = pandas.read_csv(flatfilename, index_col=[1], parse_dates=True)
         else:
             data = None
@@ -299,7 +300,7 @@ class station:
     def getASOSdata(self, startdate, enddate, errorfile):
         '''
         This function will return ASOS data in the form of a pandas dataframe
-        for the station between *startdate* and *enddate*. 
+        for the station between *startdate* and *enddate*.
 
         Input:
             *startdate* : string representing the earliest date for the data
@@ -327,7 +328,7 @@ class station:
                 data = self._read_csv(ts, errorfile, 'asos')
             else:
                 data = data.append(self._read_csv(ts, errorfile, 'asos'))
-                
+
         return data
 
 def _parse_date(datestring):
@@ -336,7 +337,7 @@ def _parse_date(datestring):
     '''
     datenum = mdates.datestr2num(datestring)
     dateval = mdates.num2date(datenum)
-    return dateval           
+    return dateval
 
 def _check_src(src):
     '''
@@ -357,17 +358,17 @@ def _check_file(filename):
     confirms that a raw file isn't empty
     '''
     try:
-        flatfile = open(rawfilename, 'r')
-        lines = rawfile.readlines()
-        flatfile.close()
+        testfile = open(filename, 'r')
+        lines = testfile.readlines()
+        testfile.close()
         if len(lines) > 1:
             status = 'ok'
         else:
             status = 'bad'
-    
+
     except IOError:
         status = 'not there'
-    
+
     return status
 
 def _check_dirs(subdirs):
@@ -409,7 +410,7 @@ def _append_val(obsval, listobj, fillNone='NA'):
 
 def _determine_reset_time(date, precip):
     '''
-    determines the precip gauge reset time for a month's 
+    determines the precip gauge reset time for a month's
     worth of ASOS data.
     '''
     minutes = np.zeros(12)
@@ -539,12 +540,8 @@ def processWundergroundFile(csvin, csvout, errorfile):
 
         if good:
             metarstring = row[-3]
-            obs = Metar.Metar(metarstring, month=date.month, year=date.year,
-<<<<<<< HEAD
-                        errorfile=errorfile)
-=======
-                              errorfile=errorfile)
->>>>>>> 8e714bf6fb02bca6e594e27c465342a1b0e86c4b
+            obs = Metar.Metar(metarstring, errorfile=errorfile,
+                              month=date.month, year=date.year)
 
             cover = []
             for sky in obs.sky:

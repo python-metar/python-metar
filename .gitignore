@@ -24,8 +24,10 @@
 # Logs and databases #
 ######################
 *.log
+ipython*log.*
 *.sql
 *.sqlite
+*.err
 
 # OS generated files #
 ######################
@@ -42,6 +44,7 @@ Thumbs.db
 # big files #
 ############# 
 output
+data
 
 # tex files #
 ############
@@ -50,4 +53,3 @@ tex/*.tex
 *.aux
 *.out
 *.toc
-
