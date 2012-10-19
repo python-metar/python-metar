@@ -22,7 +22,6 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
 
-
 class station:
     """An object representing a weather station."""
 
@@ -541,7 +540,11 @@ def processWundergroundFile(csvin, csvout, errorfile):
         if good:
             metarstring = row[-3]
             obs = Metar.Metar(metarstring, month=date.month, year=date.year,
+<<<<<<< HEAD
                         errorfile=errorfile)
+=======
+                              errorfile=errorfile)
+>>>>>>> 8e714bf6fb02bca6e594e27c465342a1b0e86c4b
 
             cover = []
             for sky in obs.sky:
