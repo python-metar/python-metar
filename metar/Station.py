@@ -230,7 +230,6 @@ class station:
         timestamps = pandas.DatetimeIndex(start=_parse_date(startdate), 
                                           end=_parse_date(enddate),
                                           freq='MS')
-        pdb.set_trace()
         data = None
         for ts in timestamps:
             if data is None:
