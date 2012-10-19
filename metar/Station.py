@@ -3,10 +3,18 @@
 #  Python module to provide station information from the ICAO identifiers
 #
 #  Copyright 2004  Tom Pollard
-#  
-import datetime, urllib, urllib2, cookielib, os, pdb
-from Metar import Metar
-from Datatypes import position, distance, direction
+
+# metar stuff
+import Metar
+import Datatypes
+
+# std lib stuff
+import datetime 
+import urllib2 
+import cookielib
+import pdb
+
+# math stuff
 import numpy as np
 import matplotlib
 #matplotlib.rcParams['timezone'] = 'UTC'
@@ -24,7 +32,7 @@ class station:
         self.city = city
         self.state = state
         self.country = country
-        self.position = position(latitude,longitude)
+        self.position = Datatypes.position(latitude,longitude)
         if self.state:
             self.name = "%s, %s" % (self.city, self.state)
         else:
@@ -242,7 +250,7 @@ class station:
             winddir = []
             press = []
             for metarstring in datain:
-                obs = Metar(metarstring, errorfile=errorfile)
+                obs = Metar.Metar(metarstring, errorfile=errorfile)
                 dates.append(_date_ASOS(metarstring))
                 rains = _append_val(obs.precip_1hr, rains, fillNone=0.0)
                 temps = _append_val(obs.temp, temps)
@@ -491,7 +499,7 @@ def processWundergroundFile(csvin, csvout, errorfile):
                  'FEW' : 0.1875,
                  'VV'  : 0.99}
 
-    headers =['TimeEST',
+    headers =['LocalTime',
               'Temperature C',
               'Dew Point C',
               'Humidity',
@@ -532,7 +540,7 @@ def processWundergroundFile(csvin, csvout, errorfile):
 
         if good:
             metarstring = row[-3]
-            obs = Metar(metarstring, month=date.month, year=date.year,
+            obs = Metar.Metar(metarstring, month=date.month, year=date.year,
                         errorfile=errorfile)
 
             cover = []
