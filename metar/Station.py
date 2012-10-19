@@ -34,11 +34,26 @@ class station:
         self.asos = self._set_cookies(src='asos')
 
     def _find_dir(self, src, step):
+        '''
+        returns a string representing the relative path to the requsted data
+
+        input:
+            *src* : 'asos' or 'wunderground'
+            *step* : 'raw' or 'flat'
+        '''
         _check_src(src)
         _check_step(step)
         return os.path.join('data', self.sta_id, src.lower(), step.lower())
 
     def _find_file(self, timestamp, src, step):
+        '''
+        returns a file name for a data file from the *src* based on the *timestamp*
+
+        input:
+            *timestamp* : pands timestamp object
+            *src* : 'asos' or 'wunderground'
+            *step* : 'raw' or 'flat'
+        '''
         date = timestamp.to_datetime()
         _check_src(src)
         _check_step(step)
@@ -56,6 +71,12 @@ class station:
         return '%s_%s.%s' % (self.sta_id, date.strftime(datefmtstr), ext)
 
     def _set_cookies(self, src):
+        '''
+        function that returns a urllib2 opener for retrieving data from *src*
+
+        input:
+            *src* : 'asos' or 'wunderground'
+        '''
         jar = cookielib.CookieJar()
         handler = urllib2.HTTPCookieProcessor(jar)
         opener = urllib2.build_opener(handler)
@@ -77,6 +98,14 @@ class station:
         return opener
 
     def _url_by_date(self, timestamp, src='wunderground'):
+        '''
+        function that returns a url to retrieve data for a *timestamp* 
+        from the *src*
+
+        input:
+            *src* : 'asos' or 'wunderground'
+            *timestamp* : pands timestamp object
+        '''
         date = timestamp.to_datetime()
         "http://www.wunderground.com/history/airport/KDCA/1950/12/18/DailyHistory.html?format=1"
         _check_src(src)
@@ -94,6 +123,14 @@ class station:
         return url
 
     def _make_data_file(self, timestamp, src, step):
+        '''
+        creates a data file for a *timestamp* from a *src* at a *step*
+        
+        input:
+            *timestamp* : pands timestamp object
+            *src* : 'asos' or 'wunderground'
+            *step* : 'raw' or 'flat'
+        '''
         _check_src(src)
         _check_step(step)
         datadir = self._find_dir(src, step)
@@ -102,31 +139,24 @@ class station:
         _check_dirs(subdirs)
         return os.path.join(datadir, datafile)
 
-    def _stitch_files(self, src, force_regen=False):
-        stepdir = self._find_dir(src, 'flat')
-        stepfilenames = os.listdir(stepdir)
+    def _get_data(self, timestamp, errorfile=None, 
+                  src='asos', force_download=False):
+        '''
+        method that downloads data from a *src* for a *timestamp*
+        returns the status of the download ('downloaded', 
+                'already exists', 'not downloaded')
 
-        finalfilename = self._make_data_file(datetime.datetime.today(), src, 'final')
-        #print(finalfilename)
-        #print(os.getcwd())
-        if not os.path.exists(finalfilename) or force_regen:
-            finalfile = open(finalfilename, 'w')
-            for n, stepname in enumerate(stepfilenames):
-                stepfile = open(os.path.join(stepdir, stepname), 'r')
-                if n == 0:
-                    finalfile.writelines(stepfile.readlines())
-                else:
-                    finalfile.writelines(stepfile.readlines()[1:])
-                stepfile.close()
-            finalfile.close()
-        return finalfilename
-
-    def _get_data(self, timestamp, errorfile=None, src='wunderground'):
+        input:
+            *timestamp* : pands timestamp object
+            *src* : 'asos' or 'wunderground'
+            *errorfile* : writable buffer to log errors in retrieving data
+            *force_download* : bool; default False
+        '''
         date = timestamp.to_datetime()
         observations = []
         outname = self._make_data_file(timestamp, src, 'raw')
         status = 'not downloaded'
-        if not os.path.exists(outname):
+        if not os.path.exists(outname) or force_download:
             outfile = open(outname, 'w')
             url = self._url_by_date(timestamp, src=src)
             if src.lower() == 'wunderground':
@@ -137,6 +167,8 @@ class station:
                     status = 'downloaded'
                 except:
                     print('error on: %s\n' % (url,))
+                    outfile.close()
+                    os.remove(outname)
                     if errorfile is not None:
                         errorfile.write('error on: %s\n' % (url,))
             elif src.lower() == 'asos':
@@ -146,6 +178,8 @@ class station:
                     outfile.writelines(weblines)
                     status = 'downloaded'
                 except:
+                    outfile.close()
+                    os.remove(outname)
                     print('error on: %s\n' % (url,))
                     if errorfile is not None:
                         errorfile.write('error on: %s\n' % (url,))
@@ -156,10 +190,21 @@ class station:
         #print('%s - %s' % (date.strftime('%Y-%m'), status))
         return status
 
-    def _attempt_download(self, timestamp, errorfile, src, attempt=0):
+    def _attempt_download(self, timestamp, errorfile, src, attempt=0, max_attempts=10):
+        '''
+        recursively calls _attempt_download at most *max_attempts* times.
+        returns the status of the download ('downloaded', 
+                'already exists', 'not downloaded')
+        input:
+            *timestamp* : a pandas timestamp object
+            *errorfile* : writable buffer to log errors
+            *src* : 'asos' or 'wunderground' 
+            *attempt* : the current attempt number 
+            *max_attempts* : the max number of tries to download a file (default=10)
+        '''
         attempt += 1
         status = self._get_data(timestamp, errorfile=errorfile, src=src)
-        if status == 'not downloaded' and attempt < 10:
+        if status == 'not downloaded' and attempt < max_attempts
             attempt += 1
             self._attempt_download(timestamp, errorfile, 
                                    src, attempt=attempt)
@@ -167,6 +212,15 @@ class station:
         return status
 
     def _process_ASOS_file(self, timestamp, errorfile):
+        '''
+        processes as raw ASOS data file (*.dat) to a flat file (*csv).
+        returns the filename and status of the download ('downloaded', 
+            'already exists', 'not downloaded')
+
+        input:
+            *timestamp* : a pandas timestamp object
+            *errorfile* : writable buffer to log errors
+        '''
         date = timestamp.to_datetime()
         rawfilename = self._make_data_file(timestamp, 'asos', 'raw')
         flatfilename = self._make_data_file(timestamp, 'asos', 'flat')
@@ -213,6 +267,16 @@ class station:
         return flatfilename, status
 
     def _read_csv(self, timestamp, errorfile, src):
+        '''
+        tries to retrieve data from the web from *src* for a *timestamp*
+        returns a pandas dataframe if the download and prcoessing are 
+        successful. returns None if they fail.
+
+        input: 
+            *timestamp* : a pandas timestamp object
+            *errorfile* : writable buffer to log errors
+            *src* : 'asos' or 'wunderground'
+        '''
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         status = 'already exists'
         if not os.path.exists(flatfilename):
@@ -227,9 +291,30 @@ class station:
         return data
 
     def getASOSdata(self, startdate, enddate, errorfile):
-        timestamps = pandas.DatetimeIndex(start=_parse_date(startdate), 
-                                          end=_parse_date(enddate),
-                                          freq='MS')
+        '''
+        This function will return ASOS data in the form of a pandas dataframe
+        for the station between *startdate* and *enddate*. 
+
+        Input:
+            *startdate* : string representing the earliest date for the data
+            *enddate* : string representing the latest data for the data
+            *errorfile* : a writable buffer to log errors
+
+        Returns:
+            *data* : a pandas data frame of the ASOS data for this station
+
+        Example:
+        >>> import metar.Station as Station
+        >>> startdate = '2012-1-1'
+        >>> enddate = 'September 30, 2012'
+        >>> errors = open('errors.log', 'a')
+        >>> pdx = Station.station('KPDX')
+        >>> data = pdx.getASOSdata(startdate, enddate, errors)
+        >>> errors.close()
+        '''
+        start = _parse_date(startdate)
+        end = _parse_date(enddate)
+        timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
         data = None
         for ts in timestamps:
             if data is None:
@@ -237,23 +322,34 @@ class station:
             else:
                 data = data.append(self._read_csv(ts, errorfile, 'asos'))
                 
-
         return data
 
 def _parse_date(datestring):
+    '''
+    takes a date string and returns a datetime.datetime object
+    '''
     datenum = mdates.datestr2num(datestring)
     dateval = mdates.num2date(datenum)
     return dateval           
 
 def _check_src(src):
+    '''
+    checks that a *src* value is valid
+    '''
     if src.lower() not in ('wunderground','asos'):
-        raise ValueError('src must be one of "wunderground", or "asos"')
+        raise ValueError('src must be one of "wunderground" or "asos"')
 
 def _check_step(step):
-    if step.lower() not in ('raw','flat','final'):
-        raise ValueError('step must be one of "raw", "flat", or "final"')
+    '''
+    checks that a *step* value is valid
+    '''
+    if step.lower() not in ('raw','flat'):
+        raise ValueError('step must be one of "raw" or "flat"')
 
 def _check_dirs(subdirs):
+    '''
+    checks to see that a directory exists. if not, it makes it.
+    '''
     if not os.path.exists(subdirs[0]):
         #print('making '+subdirs[0])
         os.mkdir(subdirs[0])
@@ -277,6 +373,10 @@ def _date_ASOS(metarstring):
     return date
 
 def _append_val(obsval, listobj, fillNone='NA'):
+    '''
+    appends attribute of an object to a list. if attribute does
+    not exist or is none, appends the *fillNone* value instead.
+    '''
     if obsval is not None and hasattr(obsval, 'value'):
         listobj.append(obsval.value())
     else:
@@ -284,6 +384,10 @@ def _append_val(obsval, listobj, fillNone='NA'):
     return listobj
 
 def _determine_reset_time(date, precip):
+    '''
+    determines the precip gauge reset time for a month's 
+    worth of ASOS data.
+    '''
     minutes = np.zeros(12)
     if len(date) != len(precip):
         raise ValueError("date and precip must be same length")
