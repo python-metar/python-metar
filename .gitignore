@@ -44,6 +44,7 @@ Thumbs.db
 # big files #
 ############# 
 output
+data
 
 # tex files #
 ############
@@ -52,7 +53,3 @@ tex/*.tex
 *.aux
 *.out
 *.toc
-
-# data #
-########
-data/*
