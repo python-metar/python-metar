@@ -26,13 +26,12 @@ import pandas
 class station:
     """An object representing a weather station."""
 
-    def __init__(self, sta_id, city=None, state=None,
-                country=None, latitude=None, longitude=None):
+    def __init__(self, sta_id, city=None, state=None, country=None, lat=None, lon=None):
         self.sta_id = sta_id
         self.city = city
         self.state = state
         self.country = country
-        self.position = Datatypes.position(latitude,longitude)
+        self.position = Datatypes.position(lat,lon)
         if self.state:
             self.name = "%s, %s" % (self.city, self.state)
         else:
@@ -40,6 +39,7 @@ class station:
 
         self.wundergound = self._set_cookies(src='wunderground')
         self.asos = self._set_cookies(src='asos')
+        self.errorfile = 'data/%s_errors.log' % (sta_id,)
 
     def _find_dir(self, src, step):
         '''
@@ -147,20 +147,20 @@ class station:
         _check_dirs(subdirs)
         return os.path.join(datadir, datafile)
 
-    def _get_data(self, timestamp, errorfile=None, src='asos', force_download=False):
+    def _get_data(self, timestamp, src='asos', force_download=False):
         ''' method that downloads data from a *src* for a *timestamp*
         returns the status of the download
             ('ok', 'bad', 'not there')
         input:
         *timestamp* : pands timestamp object
         *src* : 'asos' or 'wunderground'
-        *errorfile* : writable buffer to log errors in retrieving data
         *force_download* : bool; default False
         '''
         date = timestamp.to_datetime()
         observations = []
         outname = self._make_data_file(timestamp, src, 'raw')
         status = 'not there'
+        errorfile = open(self.errorfile, 'a')
         if not os.path.exists(outname) or force_download:
             outfile = open(outname, 'w')
             url = self._url_by_date(timestamp, src=src)
@@ -173,8 +173,7 @@ class station:
                     print('error on: %s\n' % (url,))
                     outfile.close()
                     os.remove(outname)
-                    if errorfile is not None:
-                        errorfile.write('error on: %s\n' % (url,))
+                    errorfile.write('error on: %s\n' % (url,))
             elif src.lower() == 'asos':
                 try:
                     webdata = self.asos.open(url)
@@ -184,38 +183,36 @@ class station:
                     outfile.close()
                     os.remove(outname)
                     print('error on: %s\n' % (url,))
-                    if errorfile is not None:
-                        errorfile.write('error on: %s\n' % (url,))
+                    errorfile.write('error on: %s\n' % (url,))
             outfile.close()
             status = _check_file(outname)
         else:
             status = _check_file(outname)
 
         #print('%s - %s' % (date.strftime('%Y-%m'), status))
+        errorfile.close()
         return status
 
-    def _attempt_download(self, timestamp, errorfile, src, attempt=0, max_attempts=10):
+    def _attempt_download(self, timestamp, src, attempt=0, max_attempts=10):
         '''
         recursively calls _attempt_download at most *max_attempts* times.
         returns the status of the download
             ('ok', 'bad', 'not there')
         input:
             *timestamp* : a pandas timestamp object
-            *errorfile* : writable buffer to log errors
             *src* : 'asos' or 'wunderground'
             *attempt* : the current attempt number
             *max_attempts* : the max number of tries to download a file (default=10)
         '''
         attempt += 1
-        status = self._get_data(timestamp, errorfile=errorfile, src=src)
+        status = self._get_data(timestamp, src=src)
         if status == 'not there' and attempt < max_attempts:
             attempt += 1
-            self._attempt_download(timestamp, errorfile,
-                                   src, attempt=attempt)
+            self._attempt_download(timestamp, errorfile, src)
 
         return status
 
-    def _process_ASOS_file(self, timestamp, errorfile):
+    def _process_ASOS_file(self, timestamp):
         '''
         processes as raw ASOS data file (*.dat) to a flat file (*csv).
         returns the filename and status of the download
@@ -223,14 +220,12 @@ class station:
 
         input:
             *timestamp* : a pandas timestamp object
-            *errorfile* : writable buffer to log errors
         '''
         date = timestamp.to_datetime()
         rawfilename = self._make_data_file(timestamp, 'asos', 'raw')
         flatfilename = self._make_data_file(timestamp, 'asos', 'flat')
         if not os.path.exists(rawfilename):
-            rawstatus = self._attempt_download(timestamp, errorfile,
-                                               'asos', attempt=0)
+            rawstatus = self._attempt_download(timestamp, 'asos', attempt=0)
         else:
             rawstatus = _check_file(rawfilename)
 
@@ -249,6 +244,8 @@ class station:
             windspd = []
             winddir = []
             press = []
+
+            errorfile = open(self.errorfile, 'a')
             for metarstring in datain:
                 obs = Metar.Metar(metarstring, errorfile=errorfile)
                 dates.append(_date_ASOS(metarstring))
@@ -258,7 +255,7 @@ class station:
                 windspd = _append_val(obs.wind_speed, windspd)
                 winddir = _append_val(obs.wind_dir, winddir)
                 press = _append_val(obs.press, press)
-
+            errorfile.close()
             rains = np.array(rains)
             dates = np.array(dates)
 
@@ -273,7 +270,7 @@ class station:
         flatstatus = _check_file(flatfilename)
         return flatfilename, flatstatus
 
-    def _read_csv(self, timestamp, errorfile, src):
+    def _read_csv(self, timestamp, src):
         '''
         tries to retrieve data from the web from *src* for a *timestamp*
         returns a pandas dataframe if the download and prcoessing are
@@ -281,13 +278,12 @@ class station:
 
         input:
             *timestamp* : a pandas timestamp object
-            *errorfile* : writable buffer to log errors
             *src* : 'asos' or 'wunderground'
         '''
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(flatfilename):
             if src.lower() == 'asos':
-                flatfilename, flatstatus = self._process_ASOS_file(timestamp, errorfile)
+                flatfilename, flatstatus = self._process_ASOS_file(timestamp)
 
         flatstatus = _check_file(flatfilename)
         if flatstatus == 'ok':
@@ -297,7 +293,7 @@ class station:
 
         return data
 
-    def getASOSdata(self, startdate, enddate, errorfile):
+    def getASOSdata(self, startdate, enddate):
         '''
         This function will return ASOS data in the form of a pandas dataframe
         for the station between *startdate* and *enddate*.
@@ -305,7 +301,6 @@ class station:
         Input:
             *startdate* : string representing the earliest date for the data
             *enddate* : string representing the latest data for the data
-            *errorfile* : a writable buffer to log errors
 
         Returns:
             *data* : a pandas data frame of the ASOS data for this station
@@ -314,10 +309,8 @@ class station:
         >>> import metar.Station as Station
         >>> startdate = '2012-1-1'
         >>> enddate = 'September 30, 2012'
-        >>> errors = open('errors.log', 'a')
         >>> pdx = Station.station('KPDX')
         >>> data = pdx.getASOSdata(startdate, enddate, errors)
-        >>> errors.close()
         '''
         start = _parse_date(startdate)
         end = _parse_date(enddate)
@@ -325,9 +318,9 @@ class station:
         data = None
         for ts in timestamps:
             if data is None:
-                data = self._read_csv(ts, errorfile, 'asos')
+                data = self._read_csv(ts, 'asos')
             else:
-                data = data.append(self._read_csv(ts, errorfile, 'asos'))
+                data = data.append(self._read_csv(ts, 'asos'))
 
         return data
 
