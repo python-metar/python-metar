@@ -23,7 +23,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
 
-class station:
+class station(object):
     """An object representing a weather station."""
 
     def __init__(self, sta_id, city=None, state=None, country=None, lat=None, lon=None):
@@ -37,7 +37,7 @@ class station:
         else:
             self.name = self.city
 
-        self.wundergound = self._set_cookies(src='wunderground')
+        self.wunderground = self._set_cookies(src='wunderground')
         self.asos = self._set_cookies(src='asos')
         self.errorfile = 'data/%s_errors.log' % (sta_id,)
 
