@@ -1,5 +1,6 @@
 from nose.tools import *
 from metar import Station
+from metar import Metar
 import numpy as np
 import datetime as dt
 import types
@@ -146,7 +147,7 @@ def test_getASOSdata():
     end = '2012-2-1'
     data = sta.getASOSdata(start, end)
     known_columns = ['Sta', 'Date', 'Precip1hr', 'Precip5min', 'Temp', 
-                     'DewPnt', 'WindSpd', 'WindDir', 'AtmPress']
+                     'DewPnt', 'WindSpd', 'WindDir', 'AtmPress', 'SkyCover']
     for col in data.columns:
         assert_in(col, known_columns)
     pass
@@ -215,6 +216,13 @@ def test_process_precip():
     precip = data.Precip1hr.tolist()
     p2 = Station._process_precip(dates, precip)
     assert_true(np.all(p2 <= precip))
+    pass
+
+def test_process_sky_cover():
+    teststring = 'METAR KPDX 010855Z 00000KT 10SM FEW010 OVC200 04/03 A3031 RMK AO2 SLP262 T00390028 53010 $'
+    obs = Metar.Metar(teststring)
+    testval = Station._process_sky_cover(obs)
+    assert_equal(testval, 1.0000)
     pass
 
 def test_rain_clock():
