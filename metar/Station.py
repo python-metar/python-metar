@@ -234,7 +234,7 @@ class station(object):
             dataout = open(flatfilename, 'w')
 
             headers = 'Sta,Date,Precip1hr,Precip5min,Temp,' + \
-                        'DewPnt,WindSpd,WindDir,AtmPress\n'
+                        'DewPnt,WindSpd,WindDir,AtmPress,SkyCover\n'
             dataout.write(headers)
 
             dates = []
@@ -244,6 +244,7 @@ class station(object):
             windspd = []
             winddir = []
             press = []
+            cover = []
 
             errorfile = open(self.errorfile, 'a')
             for metarstring in datain:
@@ -255,6 +256,8 @@ class station(object):
                 windspd = _append_val(obs.wind_speed, windspd)
                 winddir = _append_val(obs.wind_dir, winddir)
                 press = _append_val(obs.press, press)
+                cover.append(_process_sky_cover(obs))
+
             errorfile.close()
             rains = np.array(rains)
             dates = np.array(dates)
@@ -262,8 +265,8 @@ class station(object):
             final_precip = _process_precip(dates, rains)
 
             for row in zip([self.sta_id]*rains.shape[0], dates, rains, final_precip, \
-                            temps, dewpt, windspd, winddir, press):
-                dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
+                            temps, dewpt, windspd, winddir, press, cover):
+                dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
 
             datain.close()
             dataout.close()
@@ -438,6 +441,28 @@ def _process_precip(dateval, p1):
             p2[n] = (float(p1[n]) - float(p1[n-1]))
 
     return p2
+
+def _process_sky_cover(obs):
+    coverdict = {'CLR' : 0.0000,
+                 'SKC' : 0.0000,
+                 'NSC' : 0.0000,
+                 'NCD' : 0.0000,
+                 'FEW' : 0.1785,
+                 'SCT' : 0.4375,
+                 'BKN' : 0.7500,
+                 'VV'  : 0.9900,
+                 'OVC' : 1.0000}
+    coverlist = []
+    for sky in obs.sky:
+        coverval = coverdict[sky[0]]
+        coverlist.append(coverval)
+
+    if len(coverlist) > 0:
+        cover = np.max(coverlist)
+    else:
+        cover = 'NA'
+
+    return cover
 
 def rainClock(rainfall):
     am_hours = np.arange(0, 12)
