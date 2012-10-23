@@ -5,6 +5,12 @@ import datetime as dt
 import types
 import os
 import pandas
+import urllib2
+import matplotlib
+
+class testClass(object):
+    def value(self):
+        return 'item2'
 
 def makeStationAndTS():
     sta = Station.station('KPDX', city='Portland', state='OR', 
@@ -47,6 +53,9 @@ def test_find_file():
     pass
 
 def test_set_cookies():
+    sta, ts = makeStationAndTS()
+    assert_true(isinstance(sta.asos, urllib2.OpenerDirector))
+    assert_true(isinstance(sta.wunderground, urllib2.OpenerDirector))
     pass
 
 def test_url_by_date():
@@ -90,11 +99,19 @@ def test_get_data():
 
 def test_attempt_download():
     sta, ts = makeStationAndTS()
-    status_asos = sta._attempt_download(ts, src='asos')
-    status_wund = sta._attempt_download(ts, src='wunderground')
+    status_asos, attempt1 = sta._attempt_download(ts, src='asos')
+    status_wund, attempt2 = sta._attempt_download(ts, src='wunderground')
     known_statuses = ['ok', 'bad', 'not there']
     assert_in(status_asos, known_statuses)
     assert_in(status_wund, known_statuses)
+    ts2 = pandas.DatetimeIndex(start='1999-1-1', freq='D', periods=1)[0]
+    status_fail, attempt3 = sta._attempt_download(ts2, src='asos')
+    assert_equal(status_fail, 'not there')
+
+    assert_less_equal(attempt1, 10)
+    assert_less_equal(attempt2, 10)
+    assert_equal(attempt3, 10)
+    pass
 
 def test_process_ASOS_file():
     sta, ts = makeStationAndTS()
@@ -144,5 +161,77 @@ def test_parse_dates():
         assert_equal(dd.day, kd.day)
     pass
 
+def test_check_src():
+    Station._check_src('asos')
+    Station._check_src('wunderground')
+    assert_raises(ValueError, Station._check_src, 'fart')
+    pass
 
+def test_check_step():
+    Station._check_step('flat')
+    Station._check_step('raw')
+    assert_raises(ValueError, Station._check_step, 'fart')
+    pass
+
+def test_check_file():
+    assert_equal(Station._check_file('test/testfile1'), 'bad')
+    assert_equal(Station._check_file('test/testfile2'), 'ok')
+    assert_equal(Station._check_file('test/testfile3'), 'not there')
+    pass
     
+def test_check_dirs():
+    pass
+
+def test_date_asos():
+    teststring = '24229KPDX PDX20010101000010001/01/01 00:00:31  5-MIN KPDX'
+    knowndate = dt.datetime(2001, 1, 1, 0, 0)
+    assert_equal(Station._date_ASOS(teststring), knowndate)
+    pass
+
+def test_append_val():
+    x = testClass()
+    knownlist = ['item1', 'item2', 'NA']
+    testlist = ['item1']
+    testlist = Station._append_val(x, testlist)
+    testlist = Station._append_val(None, testlist)
+    assert_list_equal(testlist, knownlist)
+    pass
+
+def test_determine_reset_time():
+    sta, ts = makeStationAndTS()
+    known_rt = 0
+    data = sta.getASOSdata('2001-1-1', '2001-2-1')
+    dates = data.index.tolist()
+    precip = data.Precip1hr.tolist()
+    test_rt = Station._determine_reset_time(dates, precip)
+    assert_equal(known_rt, test_rt)
+    pass
+
+def test_process_precip():
+    sta, ts = makeStationAndTS()
+    known_rt = 0
+    data = sta.getASOSdata('2001-1-1', '2001-2-1')
+    dates = data.index.tolist()
+    precip = data.Precip1hr.tolist()
+    p2 = Station._process_precip(dates, precip)
+    assert_true(np.all(p2 <= precip))
+    pass
+
+def test_rain_clock():
+    sta, ts = makeStationAndTS()
+    data = sta.getASOSdata('2001-1-1', '2001-2-1')
+    fig, (ax1, ax2) = Station.rainClock(data.Precip5min)
+    assert_true(isinstance(fig, matplotlib.figure.Figure))
+    assert_true(isinstance(ax2, matplotlib.axes.Axes))
+    assert_true(isinstance(ax2, matplotlib.axes.Axes))    
+    pass
+
+def test_getAllStations():
+    stations = Station.getAllStations()
+    pass
+
+def test_getStationByID():
+    pdx = Station.getStationByID('KPDX')
+    assert_true(isinstance(pdx, Station.station))
+    pass
+
