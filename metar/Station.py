@@ -294,7 +294,14 @@ class station(object):
         else:
             data = None
 
-        return data
+        # add a row number to each row
+        data['rownum'] = range(data.shape[0])
+
+        # corrected data are appended to the bottom of the ASOS files by NCDC
+        # QA people. So for any given date/time index, we want the *last* row
+        # that appeared in the data file.
+        grouped_data = data.groupby(level=0, by=['rownum'])
+        return grouped_data.last().drop(['rownum'], axis=1)
 
     def getASOSdata(self, startdate, enddate):
         '''
