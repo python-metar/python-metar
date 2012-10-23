@@ -208,7 +208,13 @@ def test_determine_reset_time():
     pass
 
 def test_process_precip():
-
+    sta, ts = makeStationAndTS()
+    known_rt = 0
+    data = sta.getASOSdata('2001-1-1', '2001-2-1')
+    dates = data.index.tolist()
+    precip = data.Precip1hr.tolist()
+    p2 = Station._process_precip(dates, precip)
+    assert_true(np.all(p2 <= precip))
     pass
 
 def test_rain_clock():
@@ -221,8 +227,11 @@ def test_rain_clock():
     pass
 
 def test_getAllStations():
+    stations = Station.getAllStations()
     pass
 
 def test_getStationByID():
+    pdx = Station.getStationByID('KPDX')
+    assert_true(isinstance(pdx, Station.station))
     pass
 

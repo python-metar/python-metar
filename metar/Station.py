@@ -474,14 +474,16 @@ def getAllStations():
     fh = open(station_file_name,'r')
     for line in fh:
         f = line.strip().split(";")
-        stations[f[0]] = station(f[0],f[3],f[4],f[5],f[7],f[8])
+        stations[f[0]] = (f[0],f[3],f[4],f[5],f[7],f[8])
     fh.close()
 
     return stations
 
 def getStationByID(sta_id):
     stations = getAllStations()
-    return stations[sta_id]
+    info = stations[sta_id]
+    return station(sta_id, city=info[1], state=info[2], 
+                   country=info[3], lat=info[4], lon=info[5])
 
 def processWundergroundFile(csvin, csvout, errorfile):
     coverdict = {'CLR' : 0,
