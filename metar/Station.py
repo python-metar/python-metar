@@ -207,10 +207,10 @@ class station(object):
         attempt += 1
         status = self._get_data(timestamp, src=src)
         if status == 'not there' and attempt < max_attempts:
-            attempt += 1
-            self._attempt_download(timestamp, errorfile, src)
+            print(attempt)
+            status, attempt = self._attempt_download(timestamp, src, attempt=attempt)
 
-        return status
+        return status, attempt
 
     def _process_ASOS_file(self, timestamp):
         '''
@@ -225,7 +225,7 @@ class station(object):
         rawfilename = self._make_data_file(timestamp, 'asos', 'raw')
         flatfilename = self._make_data_file(timestamp, 'asos', 'flat')
         if not os.path.exists(rawfilename):
-            rawstatus = self._attempt_download(timestamp, 'asos', attempt=0)
+            rawstatus, attempt = self._attempt_download(timestamp, 'asos', attempt=0)
         else:
             rawstatus = _check_file(rawfilename)
 
@@ -467,7 +467,7 @@ def rainClock(rainfall):
     return fig, (ax1, ax2)
 
 def getAllStations():
-    station_file_name = "nsd_cccc.txt"
+    station_file_name = "data/nsd_cccc.txt"
     station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
     stations = {}
 
