@@ -140,7 +140,7 @@ def test_read_csv_wunderground():
     assert_equal(1,2)
     pass
 
-def test_getASOSdata():
+def test_getASOSdata_columns():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-2-1'
@@ -149,6 +149,14 @@ def test_getASOSdata():
                      'DewPnt', 'WindSpd', 'WindDir', 'AtmPress']
     for col in data.columns:
         assert_in(col, known_columns)
+    pass
+
+def test_getASOSdata_index():
+    sta, ts = makeStationAndTS()
+    start = '2012-1-1'
+    end = '2012-9-1'
+    data = sta.getASOSdata(start, end)
+    assert_true(data.index.is_unique)
     pass
 
 def test_parse_dates():
