@@ -114,9 +114,9 @@ def test_attempt_download():
     assert_equal(attempt3, 10)
     pass
 
-def test_process_ASOS_file():
+def test_process_file_asos():
     sta, ts = makeStationAndTS()
-    filename, status = sta._process_ASOS_file(ts)
+    filename, status = sta._process_file(ts, 'asos')
 
     if os.path.sep == '/':
         knownfile = 'data/KPDX/asos/flat/KPDX_200101.csv'
@@ -128,17 +128,38 @@ def test_process_ASOS_file():
     assert_in(status, known_statuses)
     pass
 
+def test_process_file_wunderground():
+    sta, ts = makeStationAndTS()
+    filename, status = sta._process_file(ts, 'wunderground')
+
+    if os.path.sep == '/':
+        knownfile = 'data/KPDX/wunderground/flat/KPDX_20010101.csv'
+    else:
+        knownfile = 'data\\KPDX\\wunderground\\flat\\KPDX_20010101.csv'
+    
+    assert_equal(filename, knownfile)
+    known_statuses = ['ok', 'bad', 'not there']
+    assert_in(status, known_statuses)
+    pass
+
 def test_read_csv_asos():
     sta, ts = makeStationAndTS()
     data = sta._read_csv(ts, 'asos')
-    known_columns = ['Sta', 'Date', 'Precip1hr', 'Precip5min', 'Temp', 
-                     'DewPnt', 'WindSpd', 'WindDir', 'AtmPress']
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
+                     'DewPnt', 'WindSpd', 'WindDir', 
+                     'AtmPress', 'SkyCover']
     for col in data.columns:
         assert_in(col, known_columns)
     pass
 
 def test_read_csv_wunderground():
-    assert_equal(1,2)
+    sta, ts = makeStationAndTS()
+    data = sta._read_csv(ts, 'wunderground')
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
+                     'DewPnt', 'WindSpd', 'WindDir', 
+                     'AtmPress', 'SkyCover']
+    for col in data.columns:
+        assert_in(col, known_columns)
     pass
 
 def test_getASOSdata_columns():
@@ -146,8 +167,9 @@ def test_getASOSdata_columns():
     start = '2012-1-1'
     end = '2012-2-1'
     data = sta.getASOSdata(start, end)
-    known_columns = ['Sta', 'Date', 'Precip1hr', 'Precip5min', 'Temp', 
-                     'DewPnt', 'WindSpd', 'WindDir', 'AtmPress', 'SkyCover']
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
+                     'DewPnt', 'WindSpd', 'WindDir', 
+                     'AtmPress', 'SkyCover']
     for col in data.columns:
         assert_in(col, known_columns)
     pass
@@ -206,6 +228,7 @@ def test_append_val():
     assert_list_equal(testlist, knownlist)
     pass
 
+'''
 def test_determine_reset_time():
     sta, ts = makeStationAndTS()
     known_rt = 0
@@ -225,6 +248,7 @@ def test_process_precip():
     p2 = Station._process_precip(dates, precip)
     assert_true(np.all(p2 <= precip))
     pass
+'''
 
 def test_process_sky_cover():
     teststring = 'METAR KPDX 010855Z 00000KT 10SM FEW010 OVC200 04/03 A3031 RMK AO2 SLP262 T00390028 53010 $'
@@ -236,7 +260,7 @@ def test_process_sky_cover():
 def test_rain_clock():
     sta, ts = makeStationAndTS()
     data = sta.getASOSdata('2001-1-1', '2001-2-1')
-    fig, (ax1, ax2) = Station.rainClock(data.Precip5min)
+    fig, (ax1, ax2) = Station.rainClock(data.Precip)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax2, matplotlib.axes.Axes))
     assert_true(isinstance(ax2, matplotlib.axes.Axes))    
