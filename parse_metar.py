@@ -12,15 +12,15 @@ def usage():
     program = os.path.basename(sys.argv[0])
     print("Usage: %s [-s] [<file>]" % program)
     options =  """Options:
-  <file> ... a file containing METAR reports to parse
-  -q ....... run "quietly" - just report parsing error.
-  -s ....... run silently. (no output)
-  -p ....... run with profiling turned on.
-This program reads lines containing coded METAR reports from a file
-and prints human-reable reports.  Lines are taken from stdin if no
-file is given.  For testing purposes, the script can run silently,
-reporting only when a METAR report can't be fully parsed.
-"""
+        <file> ... a file containing METAR reports to parse
+        -q ....... run "quietly" - just report parsing error.
+        -s ....... run silently. (no output)
+        -p ....... run with profiling turned on.
+      This program reads lines containing coded METAR reports from a file
+      and prints human-reable reports.  Lines are taken from stdin if no
+      file is given.  For testing purposes, the script can run silently,
+      reporting only when a METAR report can't be fully parsed.
+    """
     print(options)
     sys.exit(1)
 
@@ -36,12 +36,12 @@ try:
         if opt[0] == '-s':
             silent = True
             report = False
-         elif opt[0] == '-q':
+        elif opt[0] == '-q':
             report = False
-         elif opt[0] == '-d':
+        elif opt[0] == '-d':
             debug = True
             Metar.debug = True
-         elif opt[0] == '-p':
+        elif opt[0] == '-p':
             prof = True
 except:
   usage()

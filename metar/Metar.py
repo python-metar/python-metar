@@ -419,8 +419,8 @@ class Metar(object):
                 errorfile.write(msg)
             else:
                 print(msg)
-            #raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
-            #raise err
+                raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
+                raise err
         if self._unparsed_groups:
             code = ' '.join(self._unparsed_groups)
             msg = "Unparsed groups: '%s' in '%s'\n" % (code, self.code)
