@@ -8,6 +8,7 @@ import os
 import pandas
 import urllib2
 import matplotlib
+import matplotlib.dates as mdates
 
 class testClass(object):
     def value(self):
@@ -19,6 +20,21 @@ def makeStationAndTS():
     start = dt.datetime(2001, 1, 1)
     ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]    
     return sta, ts
+
+def makeFakeRainData():
+    tdelta = dt.datetime(2001,1,1,1,5) - dt.datetime(2001,1,1,1,0)
+    start = dt.datetime(2001, 1, 1, 12, 0)
+    end = dt.datetime(2001, 1, 1, 16, 0)
+    daterange_num = mdates.drange(start, end, tdelta)
+    daterange = mdates.num2date(daterange_num)
+
+    rain_raw = [ 
+        0.,  1.,  2.,  3.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,  
+        0.,  0.,  0.,  0.,  0.,  5.,  5.,  5.,  5.,  5.,  5.,  5.,  
+        0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  
+        1.,  2.,  3.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
+
+    return daterange, rain_raw
 
 def test_station():
     sta, ts = makeStationAndTS()
@@ -254,27 +270,21 @@ def test_append_val():
     assert_list_equal(testlist, knownlist)
     pass
 
-'''
 def test_determine_reset_time():
-    sta, ts = makeStationAndTS()
-    known_rt = 0
-    data = sta.getASOSdata('2001-1-1', '2001-2-1')
-    dates = data.index.tolist()
-    precip = data.Precip1hr.tolist()
+    dates, precip = makeFakeRainData()
     test_rt = Station._determine_reset_time(dates, precip)
+    known_rt = 0
     assert_equal(known_rt, test_rt)
     pass
 
 def test_process_precip():
-    sta, ts = makeStationAndTS()
+    dates, precip = makeFakeRainData()
+    test_rt = Station._determine_reset_time(dates, precip)
     known_rt = 0
-    data = sta.getASOSdata('2001-1-1', '2001-2-1')
-    dates = data.index.tolist()
-    precip = data.Precip1hr.tolist()
     p2 = Station._process_precip(dates, precip)
     assert_true(np.all(p2 <= precip))
     pass
-'''
+
 
 def test_process_sky_cover():
     teststring = 'METAR KPDX 010855Z 00000KT 10SM FEW010 OVC200 04/03 A3031 RMK AO2 SLP262 T00390028 53010 $'

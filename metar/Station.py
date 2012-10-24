@@ -338,6 +338,7 @@ class station(object):
         >>> pdx = Station.getStationByID('KPDX')
         >>> data = pdx.getData(startdate, enddate, 'wunderground')
         '''
+        _check_src(source)
         start = _parse_date(startdate)
         end = _parse_date(enddate)
         timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
