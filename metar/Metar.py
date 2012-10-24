@@ -313,7 +313,7 @@ class Metar(object):
     """METAR (aviation meteorology report)"""
 
     def __init__(self, metarcode, month=None, year=None,
-                 utcdelta=None, errorfile=None):
+                 utcdelta=None, errorfile=None, allexceptions=False):
         """Parse raw METAR code."""
         self.code = metarcode              # original METAR code
         self.type = 'METAR'                # METAR (routine) or SPECI (special)
@@ -426,6 +426,8 @@ class Metar(object):
             msg = "Unparsed groups: '%s' in '%s'\n" % (code, self.code)
             if errorfile is not None:
                 errorfile.write(msg)
+            elif allexceptions:
+                raise ParserError("Unparsed groups in body: "+code)
             else:
                 print(msg)
 

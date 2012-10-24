@@ -13,7 +13,7 @@ tomorrow = today + timedelta(days=1)
 class MetarTest(unittest.TestCase):
 
   def raisesParserError(self, code):
-    self.assertRaises(Metar.ParserError, Metar.Metar, code )
+    self.assertRaises(Metar.ParserError, Metar.Metar, code, allexceptions=True )
 
   def test_010_parseType_default(self):
     """Check default value of the report type."""
@@ -23,7 +23,7 @@ class MetarTest(unittest.TestCase):
     """Check parsing of the report type."""
     self.assertEqual( Metar.Metar("METAR").type, "METAR" )
     self.assertEqual( Metar.Metar("SPECI").type, "SPECI" )
-#    self.raisesParserError("TAF" )
+    self.raisesParserError("TAF" )
 
   def test_020_parseStation_legal(self):
     """Check parsing of the station code."""
@@ -32,13 +32,13 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( Metar.Metar("BIX1").station_id, "BIX1" )
     self.assertEqual( Metar.Metar("K256").station_id, "K256" )
 
-#  def test_021_parseStation_illegal(self):
-#    """Check rejection of illegal station codes."""
-#    self.raisesParserError( "1ABC" )
-#    self.raisesParserError( "METAR METAR" )
-#    self.raisesParserError( "METAR DC" )
-#    self.raisesParserError( "METAR A" )
-#    self.raisesParserError( "kewr" )
+  def test_021_parseStation_illegal(self):
+    """Check rejection of illegal station codes."""
+    self.raisesParserError( "1ABC" )
+    self.raisesParserError( "METAR METAR" )
+    self.raisesParserError( "METAR DC" )
+    self.raisesParserError( "METAR A" )
+    self.raisesParserError( "kewr" )
 
   def test_030_parseTime_legal(self):
     """Check parsing of the time stamp."""
@@ -139,12 +139,12 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("FINO").mod, "NO DATA" )
     self.assertEqual( report("NIL").mod, "NO DATA" )
 
-#  def test_043_parseModifier_illegal(self):
-#    """Check rejection of illegal 'modifier' groups."""
-#    self.raisesParserError( "KEWR AUTO" )
-#    self.raisesParserError( sta_time+"auto" )
-#    self.raisesParserError( sta_time+"CCH" )
-#    self.raisesParserError( sta_time+"MAN" )
+  def test_043_parseModifier_illegal(self):
+    """Check rejection of illegal 'modifier' groups."""
+    #self.raisesParserError( "KEWR AUTO" )
+    self.raisesParserError( sta_time+"auto" )
+    self.raisesParserError( sta_time+"CCH" )
+    self.raisesParserError( sta_time+"MAN" )
 
   def test_140_parseWind(self):
     """Check parsing of wind groups."""
@@ -240,17 +240,17 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("MMMMMGMMKT").wind(), "missing" )
     self.assertEqual( report("MMMMMG01KT").wind(), "missing" )
 
-#  def test_142_parseWind_illegal(self):
-#    """Check rejection of illegal wind groups."""
-#    self.raisesParserError( sta_time+"90010KT" )
-#    self.raisesParserError( sta_time+"9010KT" )
-#    self.raisesParserError( sta_time+"09010 KT" )
-#    self.raisesParserError( sta_time+"09010FPS" )
-#    self.raisesParserError( sta_time+"09010MPH" )
-#    self.raisesParserError( sta_time+"00///KT" )
-#    self.raisesParserError( sta_time+"VAR10KT" )
-#    self.raisesParserError( sta_time+"21010KT 180-240" )
-#    self.raisesParserError( sta_time+"123UnME" )
+  def test_142_parseWind_illegal(self):
+    """Check rejection of illegal wind groups."""
+    self.raisesParserError( sta_time+"90010KT" )
+    self.raisesParserError( sta_time+"9010KT" )
+    self.raisesParserError( sta_time+"09010 KT" )
+    self.raisesParserError( sta_time+"09010FPS" )
+    self.raisesParserError( sta_time+"09010MPH" )
+    self.raisesParserError( sta_time+"00///KT" )
+    self.raisesParserError( sta_time+"VAR10KT" )
+    self.raisesParserError( sta_time+"21010KT 180-240" )
+    self.raisesParserError( sta_time+"123UnME" )
 
   def test_150_parseVisibility(self):
     """Check parsing of visibility groups."""
