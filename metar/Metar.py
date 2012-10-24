@@ -32,7 +32,7 @@ __author__ = "Tom Pollard"
 
 __email__ = "pollard@alum.mit.edu"
 
-__version__ = "1.2"
+__version__ = "2.0.Xdev"
 
 __LICENSE__ = """
 Copyright (c) 2004, %s
