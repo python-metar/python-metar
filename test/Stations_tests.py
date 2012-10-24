@@ -162,11 +162,11 @@ def test_read_csv_wunderground():
         assert_in(col, known_columns)
     pass
 
-def test_getASOSdata_columns():
+def test_getASOSData_columns():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-2-1'
-    data = sta.getASOSdata(start, end)
+    data = sta.getASOSData(start, end)
     known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
                      'DewPnt', 'WindSpd', 'WindDir', 
                      'AtmPress', 'SkyCover']
@@ -174,13 +174,39 @@ def test_getASOSdata_columns():
         assert_in(col, known_columns)
     pass
 
-def test_getASOSdata_index():
+def test_getASOSData_index():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-9-1'
-    data = sta.getASOSdata(start, end)
+    data = sta.getASOSData(start, end)
     assert_true(data.index.is_unique)
     pass
+
+def test_getWundergroundData_columns():
+    sta, ts = makeStationAndTS()
+    start = '2012-1-1'
+    end = '2012-2-1'
+    data = sta.getWundergroundData(start, end)
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
+                     'DewPnt', 'WindSpd', 'WindDir', 
+                     'AtmPress', 'SkyCover']
+    for col in data.columns:
+        assert_in(col, known_columns)
+    pass
+
+def test_getWundergroundData_index():
+    sta, ts = makeStationAndTS()
+    start = '2012-1-1'
+    end = '2012-9-1'
+    data = sta.getWundergroundData(start, end)
+    assert_true(data.index.is_unique)
+    pass
+
+def test_getData():
+    sta, ts = makeStationAndTS()
+    start = '2012-1-1'
+    end = '2012-2-1'
+    assert_raises(ValueError, sta.getData, start, end, 'fart')
 
 def test_parse_dates():
     datestrings = ['2012-6-4', 'September 23, 1982']
@@ -259,7 +285,7 @@ def test_process_sky_cover():
 
 def test_rain_clock():
     sta, ts = makeStationAndTS()
-    data = sta.getASOSdata('2001-1-1', '2001-2-1')
+    data = sta.getASOSData('2001-1-1', '2001-2-1')
     fig, (ax1, ax2) = Station.rainClock(data.Precip)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax2, matplotlib.axes.Axes))

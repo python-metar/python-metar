@@ -147,7 +147,7 @@ class station(object):
         _check_dirs(subdirs)
         return os.path.join(datadir, datafile)
 
-    def _get_data(self, timestamp, src='asos', force_download=False):
+    def _fetch_data(self, timestamp, src='asos', force_download=False):
         ''' method that downloads data from a *src* for a *timestamp*
         returns the status of the download
             ('ok', 'bad', 'not there')
@@ -186,7 +186,6 @@ class station(object):
         else:
             status = _check_file(outname)
 
-        #print('%s - %s' % (date.strftime('%Y-%m'), status))
         errorfile.close()
         return status
 
@@ -202,7 +201,7 @@ class station(object):
             *max_attempts* : the max number of tries to download a file (default=10)
         '''
         attempt += 1
-        status = self._get_data(timestamp, src=src)
+        status = self._fetch_data(timestamp, src=src)
         if status == 'not there' and attempt < max_attempts:
             print(attempt)
             status, attempt = self._attempt_download(timestamp, src, attempt=attempt)
@@ -318,7 +317,40 @@ class station(object):
 
         return final_data
 
-    def getASOSdata(self, startdate, enddate):
+    def getData(self, startdate, enddate, source):
+        '''
+        This function will return ASOS data in the form of a pandas dataframe
+        for the station between *startdate* and *enddate*.
+
+        Input:
+            *startdate* : string representing the earliest date for the data
+            *enddate* : string representing the latest data for the data
+            *source* : string indicating where the data will come from
+                can in "asos" or "wunderground"
+
+        Returns:
+            *data* : a pandas data frame of the ASOS data for this station
+
+        Example:
+        >>> import metar.Station as Station
+        >>> startdate = '2012-1-1'
+        >>> enddate = 'September 30, 2012'
+        >>> pdx = Station.getStationByID('KPDX')
+        >>> data = pdx.getData(startdate, enddate, 'wunderground')
+        '''
+        start = _parse_date(startdate)
+        end = _parse_date(enddate)
+        timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
+        data = None
+        for ts in timestamps:
+            if data is None:
+                data = self._read_csv(ts, source)
+            else:
+                data = data.append(self._read_csv(ts, source))
+
+        return data
+
+    def getASOSData(self, startdate, enddate):
         '''
         This function will return ASOS data in the form of a pandas dataframe
         for the station between *startdate* and *enddate*.
@@ -334,19 +366,32 @@ class station(object):
         >>> import metar.Station as Station
         >>> startdate = '2012-1-1'
         >>> enddate = 'September 30, 2012'
-        >>> pdx = Station.station('KPDX')
-        >>> data = pdx.getASOSdata(startdate, enddate, errors)
+        >>> pdx = Station.getStationByID('KPDX')
+        >>> data = pdx.getASOSdata(startdate, enddate)
         '''
-        start = _parse_date(startdate)
-        end = _parse_date(enddate)
-        timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
-        data = None
-        for ts in timestamps:
-            if data is None:
-                data = self._read_csv(ts, 'asos')
-            else:
-                data = data.append(self._read_csv(ts, 'asos'))
+        data = self.getData(startdate, enddate, 'asos')
+        return data
 
+    def getWundergroundData(self, startdate, enddate):
+        '''
+        This function will return ASOS data in the form of a pandas dataframe
+        for the station between *startdate* and *enddate*.
+
+        Input:
+            *startdate* : string representing the earliest date for the data
+            *enddate* : string representing the latest data for the data
+
+        Returns:
+            *data* : a pandas data frame of the ASOS data for this station
+
+        Example:
+        >>> import metar.Station as Station
+        >>> startdate = '2012-1-1'
+        >>> enddate = 'September 30, 2012'
+        >>> pdx = Station.getStationByID('KPDX')
+        >>> data = pdx.getWundergroundData(startdate, enddate)
+        '''
+        data = self.getData(startdate, enddate, 'wunderground')
         return data
 
 def _parse_date(datestring):
