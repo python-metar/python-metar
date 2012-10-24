@@ -293,15 +293,6 @@ def test_process_sky_cover():
     assert_equal(testval, 1.0000)
     pass
 
-def test_rain_clock():
-    sta, ts = makeStationAndTS()
-    data = sta.getASOSData('2001-1-1', '2001-2-1')
-    fig, (ax1, ax2) = Station.rainClock(data.Precip)
-    assert_true(isinstance(fig, matplotlib.figure.Figure))
-    assert_true(isinstance(ax2, matplotlib.axes.Axes))
-    assert_true(isinstance(ax2, matplotlib.axes.Axes))    
-    pass
-
 def test_getAllStations():
     stations = Station.getAllStations()
     pass
