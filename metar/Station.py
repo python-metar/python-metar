@@ -181,18 +181,6 @@ class station(object):
                 os.remove(outname)
                 errorfile.write('error on: %s\n' % (url,))
             
-            '''
-            elif src.lower() == 'asos':
-                try:
-                    webdata = self.asos.open(url)
-                    weblines = webdata.readlines()
-                    outfile.writelines(weblines)
-                except:
-                    outfile.close()
-                    os.remove(outname)
-                    print('error on: %s\n' % (url,))
-                    errorfile.write('error on: %s\n' % (url,))
-            '''
             outfile.close()
             status = _check_file(outname)
         else:
@@ -543,70 +531,3 @@ def getStationByID(sta_id):
     info = stations[sta_id]
     return station(sta_id, city=info[1], state=info[2], 
                    country=info[3], lat=info[4], lon=info[5])
-
-def processWundergroundFile(csvin, csvout, errorfile):
-    coverdict = {'CLR' : 0,
-                 'SKC' : 0,
-                 'OVC' : 1,
-                 'BKN' : 0.75,
-                 'SCT' : 0.4375,
-                 'FEW' : 0.1875,
-                 'VV'  : 0.99}
-
-    headers =['LocalTime',
-              'Temperature C',
-              'Dew Point C',
-              'Humidity',
-              'Sea Level Pressure hPa',
-              'VisibilityKm',
-              'Wind Direction',
-              'Wind Speed Km/h',
-              'Gust Speed Km/h',
-              'Precipitationmm',
-              'Events',
-              'Conditions',
-              'FullMetar',
-              'WindDirDegrees',
-              'DateUTC',
-              'maxskycover',
-              'allskycover->']
-    datain = open(csvin, 'r')
-    dataout = open(csvout, 'w')
-
-    for h in headers[:-1]:
-        dataout.write('%s,' % (h,))
-    dataout.write('%s\n' % (headers[-1]),)
-
-    junk = datain.readline()
-    for line in datain:
-        dataline = line.split('<')[0]
-        row = dataline.split(',')
-        dataout.write(dataline)
-        datestr = row[-1]
-
-        try:
-            datenum = mdates.datestr2num(datestr)
-            date = mdates.num2date(datenum)
-            good = True
-        except ValueError:
-            good = False
-            errorfile.write('%s: %s\n' % (date.strftime('%Y-%m-%d'), datestr))
-
-        if good:
-            metarstring = row[-3]
-            obs = Metar.Metar(metarstring, errorfile=errorfile,
-                              month=date.month, year=date.year)
-
-            cover = []
-            for sky in obs.sky:
-                coverval = coverdict[sky[0]]
-                cover.append(coverval)
-
-            if len(cover) > 0:
-                dataout.write(',%0.2f' % (np.max(cover),))
-                for c in cover:
-                    dataout.write(',%0.2f' % (c,))
-            dataout.write('\n')
-
-    datain.close()
-    dataout.close()
