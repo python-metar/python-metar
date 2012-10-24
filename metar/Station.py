@@ -147,7 +147,7 @@ class station(object):
         _check_dirs(subdirs)
         return os.path.join(datadir, datafile)
 
-    def _get_data(self, timestamp, src='asos', force_download=False):
+    def _fetch_data(self, timestamp, src='asos', force_download=False):
         ''' method that downloads data from a *src* for a *timestamp*
         returns the status of the download
             ('ok', 'bad', 'not there')
@@ -165,31 +165,27 @@ class station(object):
             outfile = open(outname, 'w')
             url = self._url_by_date(timestamp, src=src)
             if src.lower() == 'wunderground':
-                try:
-                    webdata = self.wunderground.open(url)
-                    weblines = webdata.readlines()
-                    outfile.writelines(weblines)
-                except:
-                    print('error on: %s\n' % (url,))
-                    outfile.close()
-                    os.remove(outname)
-                    errorfile.write('error on: %s\n' % (url,))
+                start = 2
+                source = self.wunderground
             elif src.lower() == 'asos':
-                try:
-                    webdata = self.asos.open(url)
-                    weblines = webdata.readlines()
-                    outfile.writelines(weblines)
-                except:
-                    outfile.close()
-                    os.remove(outname)
-                    print('error on: %s\n' % (url,))
-                    errorfile.write('error on: %s\n' % (url,))
+                start = 0
+                source = self.asos
+
+            try:
+                webdata = source.open(url)
+                weblines = webdata.readlines()[start:]
+                outfile.writelines(weblines)
+            except:
+                print('error on: %s\n' % (url,))
+                outfile.close()
+                os.remove(outname)
+                errorfile.write('error on: %s\n' % (url,))
+            
             outfile.close()
             status = _check_file(outname)
         else:
             status = _check_file(outname)
 
-        #print('%s - %s' % (date.strftime('%Y-%m'), status))
         errorfile.close()
         return status
 
@@ -205,27 +201,29 @@ class station(object):
             *max_attempts* : the max number of tries to download a file (default=10)
         '''
         attempt += 1
-        status = self._get_data(timestamp, src=src)
+        status = self._fetch_data(timestamp, src=src)
         if status == 'not there' and attempt < max_attempts:
             print(attempt)
             status, attempt = self._attempt_download(timestamp, src, attempt=attempt)
 
         return status, attempt
 
-    def _process_ASOS_file(self, timestamp):
+    def _process_file(self, timestamp, src):
         '''
-        processes as raw ASOS data file (*.dat) to a flat file (*csv).
+        processes a raw data file (*.dat) to a flat file (*csv).
         returns the filename and status of the download
             ('ok', 'bad', 'not there')
 
         input:
             *timestamp* : a pandas timestamp object
         '''
+        #pdb.set_trace()
+        _check_src(src)
         date = timestamp.to_datetime()
-        rawfilename = self._make_data_file(timestamp, 'asos', 'raw')
-        flatfilename = self._make_data_file(timestamp, 'asos', 'flat')
+        rawfilename = self._make_data_file(timestamp, src, 'raw')
+        flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(rawfilename):
-            rawstatus, attempt = self._attempt_download(timestamp, 'asos', attempt=0)
+            rawstatus, attempt = self._attempt_download(timestamp, src, attempt=0)
         else:
             rawstatus = _check_file(rawfilename)
 
@@ -233,8 +231,8 @@ class station(object):
             datain = open(rawfilename, 'r')
             dataout = open(flatfilename, 'w')
 
-            headers = 'Sta,Date,Precip1hr,Precip5min,Temp,' + \
-                        'DewPnt,WindSpd,WindDir,AtmPress,SkyCover\n'
+            headers = 'Sta,Date,Precip,Temp,DewPnt,' + \
+                          'WindSpd,WindDir,AtmPress,SkyCover\n'
             dataout.write(headers)
 
             dates = []
@@ -247,26 +245,41 @@ class station(object):
             cover = []
 
             errorfile = open(self.errorfile, 'a')
-            for metarstring in datain:
-                obs = Metar.Metar(metarstring, errorfile=errorfile)
-                dates.append(_date_ASOS(metarstring))
-                rains = _append_val(obs.precip_1hr, rains, fillNone=0.0)
-                temps = _append_val(obs.temp, temps)
-                dewpt = _append_val(obs.dewpt, dewpt)
-                windspd = _append_val(obs.wind_speed, windspd)
-                winddir = _append_val(obs.wind_dir, winddir)
-                press = _append_val(obs.press, press)
-                cover.append(_process_sky_cover(obs))
+            for line in datain:
+                if src == 'asos':
+                    metarstring = line
+                    dates.append(_date_ASOS(metarstring))
+                else:
+                    row = line.split(',')
+                    if len(row) > 2:
+                        metarstring = row[-3]
+                        datestring = row[-1].split('<')[0]
+                        dates.append(_parse_date(datestring))
+                    else:
+                        metarstring = None
+
+                if metarstring is not None:
+                    obs = Metar.Metar(metarstring, errorfile=errorfile)
+                    rains = _append_val(obs.precip_1hr, rains, fillNone=0.0)
+                    temps = _append_val(obs.temp, temps)
+                    dewpt = _append_val(obs.dewpt, dewpt)
+                    windspd = _append_val(obs.wind_speed, windspd)
+                    winddir = _append_val(obs.wind_dir, winddir)
+                    press = _append_val(obs.press, press)
+                    cover.append(_process_sky_cover(obs))
 
             errorfile.close()
             rains = np.array(rains)
             dates = np.array(dates)
 
-            final_precip = _process_precip(dates, rains)
+            if src == 'asos':
+                final_precip = _process_precip(dates, rains)
+            else:
+                final_precip = rains
 
-            for row in zip([self.sta_id]*rains.shape[0], dates, rains, final_precip, \
+            for row in zip([self.sta_id]*rains.shape[0], dates, final_precip, \
                             temps, dewpt, windspd, winddir, press, cover):
-                dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
+                dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
 
             datain.close()
             dataout.close()
@@ -285,25 +298,60 @@ class station(object):
         '''
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(flatfilename):
-            if src.lower() == 'asos':
-                flatfilename, flatstatus = self._process_ASOS_file(timestamp)
+            flatfilename, flatstatus = self._process_file(timestamp, 'asos')
 
         flatstatus = _check_file(flatfilename)
         if flatstatus == 'ok':
             data = pandas.read_csv(flatfilename, index_col=[1], parse_dates=True)
+
+            # add a row number to each row
+            data['rownum'] = range(data.shape[0])
+
+            # corrected data are appended to the bottom of the ASOS files by NCDC
+            # QA people. So for any given date/time index, we want the *last* row
+            # that appeared in the data file.
+            grouped_data = data.groupby(level=0, by=['rownum'])
+            final_data = grouped_data.last().drop(['rownum'], axis=1)
         else:
-            data = None
+            final_data = None
 
-        # add a row number to each row
-        data['rownum'] = range(data.shape[0])
+        return final_data
 
-        # corrected data are appended to the bottom of the ASOS files by NCDC
-        # QA people. So for any given date/time index, we want the *last* row
-        # that appeared in the data file.
-        grouped_data = data.groupby(level=0, by=['rownum'])
-        return grouped_data.last().drop(['rownum'], axis=1)
+    def getData(self, startdate, enddate, source):
+        '''
+        This function will return ASOS data in the form of a pandas dataframe
+        for the station between *startdate* and *enddate*.
 
-    def getASOSdata(self, startdate, enddate):
+        Input:
+            *startdate* : string representing the earliest date for the data
+            *enddate* : string representing the latest data for the data
+            *source* : string indicating where the data will come from
+                can in "asos" or "wunderground"
+
+        Returns:
+            *data* : a pandas data frame of the ASOS data for this station
+
+        Example:
+        >>> import metar.Station as Station
+        >>> startdate = '2012-1-1'
+        >>> enddate = 'September 30, 2012'
+        >>> pdx = Station.getStationByID('KPDX')
+        >>> data = pdx.getData(startdate, enddate, 'wunderground')
+        '''
+        _check_src(source)
+        start = _parse_date(startdate)
+        end = _parse_date(enddate)
+        timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
+        data = None
+        for ts in timestamps:
+            if data is None:
+                data = self._read_csv(ts, source)
+            else:
+                data = data.append(self._read_csv(ts, source))
+
+        return data
+
+    def getASOSData(self, startdate, enddate):
         '''
         This function will return ASOS data in the form of a pandas dataframe
         for the station between *startdate* and *enddate*.
@@ -319,19 +367,32 @@ class station(object):
         >>> import metar.Station as Station
         >>> startdate = '2012-1-1'
         >>> enddate = 'September 30, 2012'
-        >>> pdx = Station.station('KPDX')
-        >>> data = pdx.getASOSdata(startdate, enddate, errors)
+        >>> pdx = Station.getStationByID('KPDX')
+        >>> data = pdx.getASOSdata(startdate, enddate)
         '''
-        start = _parse_date(startdate)
-        end = _parse_date(enddate)
-        timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
-        data = None
-        for ts in timestamps:
-            if data is None:
-                data = self._read_csv(ts, 'asos')
-            else:
-                data = data.append(self._read_csv(ts, 'asos'))
+        data = self.getData(startdate, enddate, 'asos')
+        return data
 
+    def getWundergroundData(self, startdate, enddate):
+        '''
+        This function will return ASOS data in the form of a pandas dataframe
+        for the station between *startdate* and *enddate*.
+
+        Input:
+            *startdate* : string representing the earliest date for the data
+            *enddate* : string representing the latest data for the data
+
+        Returns:
+            *data* : a pandas data frame of the ASOS data for this station
+
+        Example:
+        >>> import metar.Station as Station
+        >>> startdate = '2012-1-1'
+        >>> enddate = 'September 30, 2012'
+        >>> pdx = Station.getStationByID('KPDX')
+        >>> data = pdx.getWundergroundData(startdate, enddate)
+        '''
+        data = self.getData(startdate, enddate, 'wunderground')
         return data
 
 def _parse_date(datestring):
@@ -346,7 +407,7 @@ def _check_src(src):
     '''
     checks that a *src* value is valid
     '''
-    if src.lower() not in ('wunderground','asos'):
+    if src.lower() not in ('wunderground', 'asos'):
         raise ValueError('src must be one of "wunderground" or "asos"')
 
 def _check_step(step):
@@ -516,70 +577,3 @@ def getStationByID(sta_id):
     info = stations[sta_id]
     return station(sta_id, city=info[1], state=info[2], 
                    country=info[3], lat=info[4], lon=info[5])
-
-def processWundergroundFile(csvin, csvout, errorfile):
-    coverdict = {'CLR' : 0,
-                 'SKC' : 0,
-                 'OVC' : 1,
-                 'BKN' : 0.75,
-                 'SCT' : 0.4375,
-                 'FEW' : 0.1875,
-                 'VV'  : 0.99}
-
-    headers =['LocalTime',
-              'Temperature C',
-              'Dew Point C',
-              'Humidity',
-              'Sea Level Pressure hPa',
-              'VisibilityKm',
-              'Wind Direction',
-              'Wind Speed Km/h',
-              'Gust Speed Km/h',
-              'Precipitationmm',
-              'Events',
-              'Conditions',
-              'FullMetar',
-              'WindDirDegrees',
-              'DateUTC',
-              'maxskycover',
-              'allskycover->']
-    datain = open(csvin, 'r')
-    dataout = open(csvout, 'w')
-
-    for h in headers[:-1]:
-        dataout.write('%s,' % (h,))
-    dataout.write('%s\n' % (headers[-1]),)
-
-    junk = datain.readline()
-    for line in datain:
-        dataline = line.split('<')[0]
-        row = dataline.split(',')
-        dataout.write(dataline)
-        datestr = row[-1]
-
-        try:
-            datenum = mdates.datestr2num(datestr)
-            date = mdates.num2date(datenum)
-            good = True
-        except ValueError:
-            good = False
-            errorfile.write('%s: %s\n' % (date.strftime('%Y-%m-%d'), datestr))
-
-        if good:
-            metarstring = row[-3]
-            obs = Metar.Metar(metarstring, errorfile=errorfile,
-                              month=date.month, year=date.year)
-
-            cover = []
-            for sky in obs.sky:
-                coverval = coverdict[sky[0]]
-                cover.append(coverval)
-
-            if len(cover) > 0:
-                dataout.write(',%0.2f' % (np.max(cover),))
-                for c in cover:
-                    dataout.write(',%0.2f' % (c,))
-            dataout.write('\n')
-
-    datain.close()
-    dataout.close()
