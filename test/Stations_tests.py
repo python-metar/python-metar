@@ -89,10 +89,10 @@ def test_make_data_file():
     assert_equal(testfile2, knownfile2)
     pass
 
-def test_get_data():
+def test_fetch_data():
     sta, ts = makeStationAndTS()
-    status_asos = sta._get_data(ts, src='asos')
-    status_wund = sta._get_data(ts, src='wunderground')
+    status_asos = sta._fetch_data(ts, src='asos')
+    status_wund = sta._fetch_data(ts, src='wunderground')
     known_statuses = ['ok', 'bad', 'not there']
     assert_in(status_asos, known_statuses)
     assert_in(status_wund, known_statuses)
