@@ -18,11 +18,20 @@ def makeStationAndTS():
     ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]    
     return sta, ts
 
-def test_rain_clock():
+def test_rainClock():
+    '''Confirm that rainClock returns an mpl figure and two axes'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
     fig, (ax1, ax2) = Graphics.rainClock(data.Precip)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
-    assert_true(isinstance(ax2, matplotlib.axes.Axes))
+    assert_true(isinstance(ax1, matplotlib.axes.Axes))
     assert_true(isinstance(ax2, matplotlib.axes.Axes))    
     pass
+
+def test_windRose():
+    '''Confirm that windRose returns an mpl figure and one axis'''
+    sta, ts = makeStationAndTS()
+    data = sta.getASOSData('2001-1-1', '2001-2-1')
+    fig, ax1 = Graphics.windRose(data)
+    assert_true(isinstance(fig, matplotlib.figure.Figure))
+    assert_true(isinstance(ax1, matplotlib.axes.Axes))
