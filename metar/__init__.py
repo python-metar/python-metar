@@ -51,3 +51,4 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 import Datatypes
 import Metar
 import Station
+import Graphics
