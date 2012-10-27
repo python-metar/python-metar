@@ -1,7 +1,64 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
-import pdb
+import matplotlib.dates as dates
+import pandas
+
+
+def hyetograph(rain, freq='hourly', ax=None):
+    if ax is not None:
+        fig = plt.gcf()
+    else:
+        fig, ax = plt.subplots()
+
+    rules = {
+        '5min' : ('5Min', 'line'), 
+        '5 min' : ('5Min', 'line'), 
+        '5-min' : ('5Min', 'line'), 
+        '5 minute' : ('5Min', 'line'), 
+        '5-minute' : ('5Min', 'line'),
+        '15min' : ('15Min', 'line'), 
+        '15 min' : ('15Min', 'line'), 
+        '15-min' : ('15Min', 'line'), 
+        '15 minute' : ('15Min', 'line'), 
+        '15-minute' : ('15Min', 'line'),
+        'hour' : ('H', 'line'),
+        'hourly' : ('H', 'line'),
+        'day' : ('D', 'line'),
+        'daily' : ('D', 'line'),
+        'week' : ('W', 'line'),
+        'weekly' : ('W', 'line'),
+        'month' : ('M', 'bar'), 
+        'monthly' : ('M', 'bar'),
+        'annual' : ('A', 'bar'), 
+        'year' : ('A', 'bar'), 
+        'yearly' : ('A', 'bar'),
+    }
+    if freq.lower() in rules.keys():
+        rule = rules[freq][0]
+        kind = rules[freq][1]
+        data = rain.resample(how='sum', rule=rule)
+        data.fillna(value=0, inplace=True)
+        data.plot(ax=ax, kind=kind)
+        if rule == 'A':
+            xformat = dates.DateFormatter('%Y')
+            ax.xaxis.set_major_formatter(xformat)
+        elif rule == 'M':
+            xformat = dates.DateFormatter('%Y-%m')
+            ax.xaxis.set_major_formatter(xformat)
+
+        ax.set_ylabel('%s Rainfall Depth (in)' % freq.title())
+
+
+    else:
+        msg = "`freq` should be on of ['5-min', 'hourly', 'daily', 'weekly, 'monthly', 'yearly']"
+        raise ValueError, msg 
+
+    ax.tick_params(axis='x', labelsize=8)
+    ax.set_xlabel('Date')
+    #plt.tight_layout()
+    return fig, ax
+
 
 def rainClock(rainfall):
     '''

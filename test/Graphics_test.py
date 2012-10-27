@@ -35,3 +35,12 @@ def test_windRose():
     fig, ax1 = Graphics.windRose(data)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
+
+def test_hyetograph():
+    '''Confirm that windRose returns an mpl figure and one axis'''
+    sta, ts = makeStationAndTS()
+    data = sta.getASOSData('2001-1-1', '2001-2-1')
+    for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly', 'yearly']:
+        fig, ax1 = Graphics.windRose(data)
+        assert_true(isinstance(fig, matplotlib.figure.Figure))
+        assert_true(isinstance(ax1, matplotlib.axes.Axes))
