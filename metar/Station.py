@@ -298,7 +298,7 @@ class station(object):
         '''
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(flatfilename):
-            flatfilename, flatstatus = self._process_file(timestamp, 'asos')
+            flatfilename, flatstatus = self._process_file(timestamp, src)
 
         flatstatus = _check_file(flatfilename)
         if flatstatus == 'ok':
