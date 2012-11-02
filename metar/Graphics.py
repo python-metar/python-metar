@@ -6,10 +6,10 @@ import pandas
 
 
 def hyetograph(rain, freq='hourly', ax=None):
-    if ax is not None:
-        fig = plt.gcf()
-    else:
+    if ax is None:
         fig, ax = plt.subplots()
+    else:
+        fig = plt.gcf()
 
     rules = {
         '5min' : ('5Min', 'line'), 
@@ -56,7 +56,6 @@ def hyetograph(rain, freq='hourly', ax=None):
 
     ax.tick_params(axis='x', labelsize=8)
     ax.set_xlabel('Date')
-    #plt.tight_layout()
     return fig, ax
 
 

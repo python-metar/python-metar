@@ -304,18 +304,10 @@ class station(object):
         if flatstatus == 'ok':
             data = pandas.read_csv(flatfilename, index_col=[1], parse_dates=True)
 
-            # add a row number to each row
-            data['rownum'] = range(data.shape[0])
-
-            # corrected data are appended to the bottom of the ASOS files by NCDC
-            # QA people. So for any given date/time index, we want the *last* row
-            # that appeared in the data file.
-            grouped_data = data.groupby(level=0, by=['rownum'])
-            final_data = grouped_data.last().drop(['rownum'], axis=1)
         else:
-            final_data = None
+            data = None
 
-        return final_data
+        return data
 
     def getData(self, startdate, enddate, source):
         '''
@@ -357,7 +349,16 @@ class station(object):
             else:
                 data = data.append(self._read_csv(ts, source))
 
-        return data
+        # add a row number to each row
+        data['rownum'] = range(data.shape[0])
+
+        # corrected data are appended to the bottom of the ASOS files by NCDC
+        # QA people. So for any given date/time index, we want the *last* row
+        # that appeared in the data file.
+        grouped_data = data.groupby(level=0, by=['rownum'])
+        final_data = grouped_data.last().drop(['rownum'], axis=1)
+
+        return final_data
 
     def getASOSData(self, startdate, enddate):
         '''
