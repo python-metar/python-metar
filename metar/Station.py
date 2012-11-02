@@ -298,7 +298,7 @@ class station(object):
         '''
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(flatfilename):
-            flatfilename, flatstatus = self._process_file(timestamp, 'asos')
+            flatfilename, flatstatus = self._process_file(timestamp, src)
 
         flatstatus = _check_file(flatfilename)
         if flatstatus == 'ok':
@@ -341,7 +341,15 @@ class station(object):
         _check_src(source)
         start = _parse_date(startdate)
         end = _parse_date(enddate)
-        timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
+
+        freq = {'asos' : 'MS',
+                'wunderground' : 'D'}
+        try:
+            timestamps = pandas.DatetimeIndex(start=start, end=enddate,
+                                              freq=freq[source])
+        except KeyError:
+            raise ValueError, 'source must be in either "ASOS" or "wunderground"'
+
         data = None
         for ts in timestamps:
             if data is None:
