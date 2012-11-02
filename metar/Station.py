@@ -180,7 +180,7 @@ class station(object):
                 outfile.close()
                 os.remove(outname)
                 errorfile.write('error on: %s\n' % (url,))
-            
+
             outfile.close()
             status = _check_file(outname)
         else:
@@ -557,5 +557,5 @@ def getAllStations():
 def getStationByID(sta_id):
     stations = getAllStations()
     info = stations[sta_id]
-    return station(sta_id, city=info[1], state=info[2], 
+    return station(sta_id, city=info[1], state=info[2],
                    country=info[3], lat=info[4], lon=info[5])

@@ -15,10 +15,10 @@ class testClass(object):
         return 'item2'
 
 def makeStationAndTS():
-    sta = Station.station('KPDX', city='Portland', state='OR', 
+    sta = Station.station('KPDX', city='Portland', state='OR',
                           country='Cascadia', lat=999, lon=999)
     start = dt.datetime(2001, 1, 1)
-    ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]    
+    ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]
     return sta, ts
 
 def makeFakeRainData():
@@ -28,10 +28,10 @@ def makeFakeRainData():
     daterange_num = mdates.drange(start, end, tdelta)
     daterange = mdates.num2date(daterange_num)
 
-    rain_raw = [ 
-        0.,  1.,  2.,  3.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,  
-        0.,  0.,  0.,  0.,  0.,  5.,  5.,  5.,  5.,  5.,  5.,  5.,  
-        0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  
+    rain_raw = [
+        0.,  1.,  2.,  3.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,
+        0.,  0.,  0.,  0.,  0.,  5.,  5.,  5.,  5.,  5.,  5.,  5.,
+        0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,
         1.,  2.,  3.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
 
     return daterange, rain_raw
@@ -46,7 +46,7 @@ def test_station():
 
 def test_find_dir():
     sta, ts = makeStationAndTS()
-    sep = os.path.sep 
+    sep = os.path.sep
     testdir = sta._find_dir('asos', 'raw')
 
     if os.path.sep == '/':
@@ -138,7 +138,7 @@ def test_process_file_asos():
         knownfile = 'data/KPDX/asos/flat/KPDX_200101.csv'
     else:
         knownfile = 'data\\KPDX\\asos\\flat\\KPDX_200101.csv'
-    
+
     assert_equal(filename, knownfile)
     known_statuses = ['ok', 'bad', 'not there']
     assert_in(status, known_statuses)
@@ -152,7 +152,7 @@ def test_process_file_wunderground():
         knownfile = 'data/KPDX/wunderground/flat/KPDX_20010101.csv'
     else:
         knownfile = 'data\\KPDX\\wunderground\\flat\\KPDX_20010101.csv'
-    
+
     assert_equal(filename, knownfile)
     known_statuses = ['ok', 'bad', 'not there']
     assert_in(status, known_statuses)
@@ -161,8 +161,8 @@ def test_process_file_wunderground():
 def test_read_csv_asos():
     sta, ts = makeStationAndTS()
     data = sta._read_csv(ts, 'asos')
-    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
-                     'DewPnt', 'WindSpd', 'WindDir', 
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp',
+                     'DewPnt', 'WindSpd', 'WindDir',
                      'AtmPress', 'SkyCover']
     for col in data.columns:
         assert_in(col, known_columns)
@@ -171,8 +171,8 @@ def test_read_csv_asos():
 def test_read_csv_wunderground():
     sta, ts = makeStationAndTS()
     data = sta._read_csv(ts, 'wunderground')
-    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
-                     'DewPnt', 'WindSpd', 'WindDir', 
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp',
+                     'DewPnt', 'WindSpd', 'WindDir',
                      'AtmPress', 'SkyCover']
     for col in data.columns:
         assert_in(col, known_columns)
@@ -183,8 +183,8 @@ def test_getASOSData_columns():
     start = '2012-1-1'
     end = '2012-2-1'
     data = sta.getASOSData(start, end)
-    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
-                     'DewPnt', 'WindSpd', 'WindDir', 
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp',
+                     'DewPnt', 'WindSpd', 'WindDir',
                      'AtmPress', 'SkyCover']
     for col in data.columns:
         assert_in(col, known_columns)
@@ -203,8 +203,8 @@ def test_getWundergroundData_columns():
     start = '2012-1-1'
     end = '2012-2-1'
     data = sta.getWundergroundData(start, end)
-    known_columns = ['Sta', 'Date', 'Precip', 'Temp', 
-                     'DewPnt', 'WindSpd', 'WindDir', 
+    known_columns = ['Sta', 'Date', 'Precip', 'Temp',
+                     'DewPnt', 'WindSpd', 'WindDir',
                      'AtmPress', 'SkyCover']
     for col in data.columns:
         assert_in(col, known_columns)
@@ -251,7 +251,7 @@ def test_check_file():
     assert_equal(Station._check_file('test/testfile2'), 'ok')
     assert_equal(Station._check_file('test/testfile3'), 'not there')
     pass
-    
+
 def test_check_dirs():
     pass
 
