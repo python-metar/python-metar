@@ -341,7 +341,15 @@ class station(object):
         _check_src(source)
         start = _parse_date(startdate)
         end = _parse_date(enddate)
-        timestamps = pandas.DatetimeIndex(start=start, end=enddate, freq='MS')
+
+        freq = {'asos' : 'MS',
+                'wunderground' : 'D'}
+        try:
+            timestamps = pandas.DatetimeIndex(start=start, end=enddate,
+                                              freq=freq[source])
+        except KeyError:
+            raise ValueError, 'source must be in either "ASOS" or "wunderground"'
+
         data = None
         for ts in timestamps:
             if data is None:
