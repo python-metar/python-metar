@@ -4,7 +4,7 @@
 #    Copyright 2004    Tom Pollard
 # 
 import re
-from math import sin, cos, atan2, sqrt
+from math import sin, cos, atan, sqrt
 
 ## exceptions
 
@@ -435,7 +435,7 @@ class position(object):
         lat2 = position2.latitude
         long2 = position2.longitude
         a = sin(0.5(lat2-lat1)) + cos(lat1)*cos(lat2)*sin(0.5*(long2-long1)**2)
-        c = 2.0*atan2(sqrt(a)*sqrt(1.0-a))
+        c = 2.0*atan(sqrt(a)*sqrt(1.0-a))
         d = distance(earth_radius*c,"M")
         return d
 
