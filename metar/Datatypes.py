@@ -4,7 +4,7 @@
 #    Copyright 2004    Tom Pollard
 # 
 import re
-from math import sin, cos, atan2, sqrt
+from math import sin, cos, atan, sqrt
 
 ## exceptions
 

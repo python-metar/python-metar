@@ -12,10 +12,10 @@ import matplotlib
 import matplotlib.dates as mdates
 
 def makeStationAndTS():
-    sta = Station.station('KPDX', city='Portland', state='OR', 
+    sta = Station.station('KPDX', city='Portland', state='OR',
                           country='Cascadia', lat=999, lon=999)
     start = dt.datetime(2001, 1, 1)
-    ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]    
+    ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]
     return sta, ts
 
 def test_rainClock():
@@ -25,7 +25,7 @@ def test_rainClock():
     fig, (ax1, ax2) = Graphics.rainClock(data.Precip)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
-    assert_true(isinstance(ax2, matplotlib.axes.Axes))    
+    assert_true(isinstance(ax2, matplotlib.axes.Axes))
     pass
 
 def test_windRose():
@@ -37,10 +37,19 @@ def test_windRose():
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
 
 def test_hyetograph():
-    '''Confirm that windRose returns an mpl figure and one axis'''
+    '''Confirm that hyetograph returns an mpl figure and one axis'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
     for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        fig, ax1 = Graphics.windRose(data)
+        fig, ax1 = Graphics.hyetograph(data)
+        assert_true(isinstance(fig, matplotlib.figure.Figure))
+        assert_true(isinstance(ax1, matplotlib.axes.Axes))
+
+def test_pyschromograph():
+    '''Confirm that psychromograph returns an mpl figure and one axis'''
+    sta, ts = makeStationAndTS()
+    data = sta.getASOSData('2001-1-1', '2001-2-1')
+    for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly', 'yearly']:
+        fig, ax1 = Graphics.psychromograph(data)
         assert_true(isinstance(fig, matplotlib.figure.Figure))
         assert_true(isinstance(ax1, matplotlib.axes.Axes))
