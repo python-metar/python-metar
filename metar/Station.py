@@ -18,10 +18,11 @@ import os
 # math stuff
 import numpy as np
 import matplotlib
-#matplotlib.rcParams['timezone'] = 'UTC'
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
+
+__all__ = ['getAllStations', 'getStationByID', 'station']
 
 class station(object):
     """An object representing a weather station."""

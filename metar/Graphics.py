@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import matplotlib.dates as dates
 
+__all__ = ['hyetograph', 'rainClock', 'windRose']
+
 def _plotter(series, freq='hourly', how='sum', ax=None):
     if ax is None:
         fig, ax = plt.subplots()
