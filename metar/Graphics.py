@@ -36,8 +36,8 @@ def _plotter(series, freq='hourly', how='sum', ax=None):
     }
 
     if freq.lower() in rules.keys():
-        rule = rules[freq][0]
-        kind = rules[freq][1]
+        rule = rules[freq.lower()][0]
+        kind = rules[freq.lower()][1]
         data = series.resample(how=how, rule=rule)
         data.fillna(value=0, inplace=True)
         data.plot(ax=ax, kind=kind)
@@ -56,9 +56,11 @@ def _plotter(series, freq='hourly', how='sum', ax=None):
     ax.set_xlabel('Date')
     return fig, ax
 
-def hyetograph(dataframe, freq='hourly', ax=None):
+def hyetograph(dataframe, freq='hourly', ax=None, downward=True):
     fig, ax = _plotter(dataframe.Precip, freq=freq, how='sum', ax=ax)
     ax.set_ylabel('%s Rainfall Depth (in)' % freq.title())
+    if downward:
+        ax.invert_yaxis()
     return fig, ax
 
 def psychromograph(dataframe, freq='hourly', ax=None):
