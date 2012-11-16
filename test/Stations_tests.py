@@ -218,11 +218,23 @@ def test_getWundergroundData_index():
     assert_true(data.index.is_unique)
     pass
 
-def test_getData():
+def test_getDataBadSource():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-2-1'
-    assert_raises(ValueError, sta.getData, start, end, 'fart')
+    assert_raises(ValueError, sta._get_data, start, end, 'fart', None)
+
+def test_getDataGoodSource():
+    sta, ts = makeStationAndTS()
+    start = '2012-1-1'
+    end = '2012-2-1'
+    data  = sta._get_data(start, end, 'asos', None)
+
+def test_getDataSaveFile():
+    sta, ts = makeStationAndTS()
+    start = '2012-1-1'
+    end = '2012-2-1'
+    sta._get_data(start, end, 'asos', 'testfile.csv')
 
 def test_parse_dates():
     datestrings = ['2012-6-4', 'September 23, 1982']
@@ -284,7 +296,6 @@ def test_process_precip():
     p2 = Station._process_precip(dates, precip)
     assert_true(np.all(p2 <= precip))
     pass
-
 
 def test_process_sky_cover():
     teststring = 'METAR KPDX 010855Z 00000KT 10SM FEW010 OVC200 04/03 A3031 RMK AO2 SLP262 T00390028 53010 $'

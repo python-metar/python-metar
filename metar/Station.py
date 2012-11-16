@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import pandas
 
 __all__ = ['getAllStations', 'getStationByID', 'station']
+matplotlib.rcParams['timezone'] = 'UTC'
 
 class station(object):
     """An object representing a weather station."""
@@ -310,9 +311,9 @@ class station(object):
 
         return data
 
-    def getData(self, startdate, enddate, source):
+    def _get_data(self, startdate, enddate, source, filename):
         '''
-        This function will return ASOS data in the form of a pandas dataframe
+        This function will return data in the form of a pandas dataframe
         for the station between *startdate* and *enddate*.
 
         Input:
@@ -322,14 +323,7 @@ class station(object):
                 can in "asos" or "wunderground"
 
         Returns:
-            *data* : a pandas data frame of the ASOS data for this station
-
-        Example:
-        >>> import metar.Station as Station
-        >>> startdate = '2012-1-1'
-        >>> enddate = 'September 30, 2012'
-        >>> pdx = Station.getStationByID('KPDX')
-        >>> data = pdx.getData(startdate, enddate, 'wunderground')
+            *data* : a pandas data frame of the data for this station
         '''
         _check_src(source)
         start = _parse_date(startdate)
@@ -338,7 +332,7 @@ class station(object):
         freq = {'asos' : 'MS',
                 'wunderground' : 'D'}
         try:
-            timestamps = pandas.DatetimeIndex(start=start, end=enddate,
+            timestamps = pandas.DatetimeIndex(start=startdate, end=enddate,
                                               freq=freq[source])
         except KeyError:
             raise ValueError, 'source must be in either "ASOS" or "wunderground"'
@@ -359,9 +353,12 @@ class station(object):
         grouped_data = data.groupby(level=0, by=['rownum'])
         final_data = grouped_data.last().drop(['rownum'], axis=1)
 
+        if filename is not None:
+            final_data.to_csv(filename)
+
         return final_data
 
-    def getASOSData(self, startdate, enddate):
+    def getASOSData(self, startdate, enddate, filename=None):
         '''
         This function will return ASOS data in the form of a pandas dataframe
         for the station between *startdate* and *enddate*.
@@ -380,12 +377,12 @@ class station(object):
         >>> pdx = Station.getStationByID('KPDX')
         >>> data = pdx.getASOSdata(startdate, enddate)
         '''
-        data = self.getData(startdate, enddate, 'asos')
+        data = self._get_data(startdate, enddate, 'asos', filename)
         return data
 
-    def getWundergroundData(self, startdate, enddate):
+    def getWundergroundData(self, startdate, enddate, filename=None):
         '''
-        This function will return ASOS data in the form of a pandas dataframe
+        This function will return Wunderground data in the form of a pandas dataframe
         for the station between *startdate* and *enddate*.
 
         Input:
@@ -393,7 +390,7 @@ class station(object):
             *enddate* : string representing the latest data for the data
 
         Returns:
-            *data* : a pandas data frame of the ASOS data for this station
+            *data* : a pandas data frame of the Wunderground data for this station
 
         Example:
         >>> import metar.Station as Station
@@ -402,7 +399,7 @@ class station(object):
         >>> pdx = Station.getStationByID('KPDX')
         >>> data = pdx.getWundergroundData(startdate, enddate)
         '''
-        data = self.getData(startdate, enddate, 'wunderground')
+        data = self._get_data(startdate, enddate, 'wunderground', filename)
         return data
 
 def _parse_date(datestring):
