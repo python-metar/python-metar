@@ -1,5 +1,5 @@
 import unittest
-from metar.Datatypes import direction
+from metar.datatypes import direction
 
 def suite():
   return unittest.makeSuite(DirectionTest)

@@ -1,5 +1,5 @@
 import unittest
-from metar.Datatypes import speed, UnitsError
+from metar.datatypes import speed, UnitsError
 
 class SpeedTest(unittest.TestCase):
   

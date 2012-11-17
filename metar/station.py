@@ -5,8 +5,8 @@
 #  Copyright 2004  Tom Pollard
 
 # metar stuff
-import Metar
-import Datatypes
+import metar
+import datatypes
 
 # std lib stuff
 import datetime
@@ -33,7 +33,7 @@ class WeatherStation(object):
         self.city = city
         self.state = state
         self.country = country
-        self.position = Datatypes.position(lat,lon)
+        self.position = datatypes.position(lat,lon)
         if self.state:
             self.name = "%s, %s" % (self.city, self.state)
         else:
