@@ -15,7 +15,7 @@ class testClass(object):
         return 'item2'
 
 def makeStationAndTS():
-    sta = Station.station('KPDX', city='Portland', state='OR',
+    sta = Station.WeatherStation('KPDX', city='Portland', state='OR',
                           country='Cascadia', lat=999, lon=999)
     start = dt.datetime(2001, 1, 1)
     ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]
@@ -310,6 +310,25 @@ def test_getAllStations():
 
 def test_getStationByID():
     pdx = Station.getStationByID('KPDX')
-    assert_true(isinstance(pdx, Station.station))
+    assert_true(isinstance(pdx, Station.WeatherStation))
     pass
 
+def test_getASOSData_station():
+    sta, ts = makeStationAndTS()
+    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1')
+    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
+
+def test_getASOSData_string():
+    sta, ts = makeStationAndTS()
+    data = Station.getASOSData('KPDX', '2012-1-1', '2012-2-1')
+    data = Station.getASOSData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
+
+def test_getWundergroundData_station():
+    sta, ts = makeStationAndTS()
+    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1')
+    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
+
+def test_getWundergroundData_string():
+    sta, ts = makeStationAndTS()
+    data = Station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')
+    data = Station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
