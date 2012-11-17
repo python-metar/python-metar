@@ -12,7 +12,7 @@ import matplotlib
 import matplotlib.dates as mdates
 
 def makeStationAndTS():
-    sta = Station.station('KPDX', city='Portland', state='OR',
+    sta = Station.WeatherStation('KPDX', city='Portland', state='OR',
                           country='Cascadia', lat=999, lon=999)
     start = dt.datetime(2001, 1, 1)
     ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]

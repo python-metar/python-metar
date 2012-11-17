@@ -22,10 +22,10 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
 
-__all__ = ['getAllStations', 'getStationByID', 'station']
+__all__ = ['getAllStations', 'getStationByID', 'WeatherStation', 'getASOSData']
 matplotlib.rcParams['timezone'] = 'UTC'
 
-class station(object):
+class WeatherStation(object):
     """An object representing a weather station."""
 
     def __init__(self, sta_id, city=None, state=None, country=None, lat=None, lon=None):
@@ -555,5 +555,19 @@ def getAllStations():
 def getStationByID(sta_id):
     stations = getAllStations()
     info = stations[sta_id]
-    return station(sta_id, city=info[1], state=info[2],
+    return WeatherStation(sta_id, city=info[1], state=info[2],
                    country=info[3], lat=info[4], lon=info[5])
+
+def getASOSData(station, startdate, enddate, filename=None):
+    if not isinstance(station, WeatherStation):
+        station = getStationByID(station)
+    
+    data = station.getASOSData(startdate, enddate, filename=filename)
+    return data
+
+def getWundergroundData(station, startdate, enddate, filename=None):
+    if not isinstance(station, WeatherStation):
+        station = getStationByID(station)
+    
+    data = station.getWundergroundData(startdate, enddate, filename=filename)
+    return data
