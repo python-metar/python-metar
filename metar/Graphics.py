@@ -56,7 +56,10 @@ def _plotter(series, freq='hourly', how='sum', ax=None):
     ax.set_xlabel('Date')
     return fig, ax
 
-def hyetograph(dataframe, freq='hourly', ax=None, downward=True):
+def hyetograph(dataframe, freq='hourly', ax=None, downward=True, raincol='Precip'):
+    if not hasattr(dataframe, raincol):
+        raise ValueError('input `dataframe` must have a `%s` column' % raincol)
+
     fig, ax = _plotter(dataframe.Precip, freq=freq, how='sum', ax=ax)
     ax.set_ylabel('%s Rainfall Depth (in)' % freq.title())
     if downward:
@@ -64,15 +67,22 @@ def hyetograph(dataframe, freq='hourly', ax=None, downward=True):
     return fig, ax
 
 def psychromograph(dataframe, freq='hourly', ax=None):
+    if not hasattr(dataframe, 'AtmPress'):
+        raise ValueError('input `dataframe` must have a `AtmPress` column')
+
     fig, ax = _plotter(dataframe.AtmPress, freq=freq, how='mean', ax=ax)
     ax.set_ylabel('%s Barometric Pressure (in Hg)' % freq.title())
     return fig, ax
 
-def rainClock(rainfall):
+def rainClock(dataframe, raincol='Precip'):
     '''
     Mathematically dubious representation of the likelihood of rain at
     at any hour given that will rain.
     '''
+    if not hasattr(dataframe, raincol):
+        raise ValueError('input `dataframe` must have a `%s` column' % raincol)
+
+    rainfall = dataframe[raincol]
     am_hours = np.arange(0, 12)
     am_hours[0] = 12
     rainhours = rainfall.index.hour
@@ -84,10 +94,13 @@ def rainClock(rainfall):
         rain_by_hour.append(total_depth/num_obervations)
 
     bar_width = 2*np.pi/12 * 0.8
-    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(7,3), subplot_kw=dict(polar=True))
+    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(7,3), 
+                                   subplot_kw=dict(polar=True))
     theta = np.arange(0.0, 2*np.pi, 2*np.pi/12)
-    am_bars = ax1.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[:12], bar_width, color='DodgerBlue', linewidth=0.5)
-    pm_bars = ax2.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[12:], bar_width, color='Crimson', linewidth=0.5)
+    am_bars = ax1.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[:12], 
+                      bar_width, color='DodgerBlue', linewidth=0.5)
+    pm_bars = ax2.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[12:], 
+                      bar_width, color='Crimson', linewidth=0.5)
     ax1.set_title('AM Hours')
     ax2.set_title('PM Hours')
     for ax in [ax1, ax2]:
@@ -99,11 +112,18 @@ def rainClock(rainfall):
 
     return fig, (ax1, ax2)
 
-def windRose(windData):
+def windRose(dataframe, speedcol='WindSpd', dircol='WindDir'):
     '''
     Plots a Wind Rose. Feed it a dataframe with 'WindSpd' (knots) and
     'WindDir' degrees clockwise from north (columns)
     '''
+
+    if not hasattr(dataframe, speedcol):
+        raise ValueError('input `dataframe` must have a `%s` column' % speedcol)
+
+    if not hasattr(dataframe, dircol):
+        raise ValueError('input `dataframe` must have a `%s` column' % dircol)
+
     # set up the figure
     fig, ax1 = plt.subplots(figsize=(6,6), subplot_kw=dict(polar=True))
     ax1.xaxis.grid(True, which='major', linestyle='-', alpha='0.125', zorder=0)
@@ -116,12 +136,12 @@ def windRose(windData):
     colors = ['#990000', '#FF4719', '#FFCC00', '#579443', '#0066FF']
 
     # number of total and zero-wind observations
-    total = np.float(windData.shape[0])
-    calm = np.float(windData[windData.WindSpd == 0].shape[0])/total
+    total = np.float(dataframe.shape[0])
+    calm = np.float(dataframe[dataframe[speedcol] == 0].shape[0])/total
 
     # loop through the speed bins
     for spd, clr in zip(speedBins, colors):
-        barLen = _get_wind_counts(windData, spd)
+        barLen = _get_wind_counts(dataframe, spd, speedcol, dircol)
         barLen = barLen/total
         barDir, barWidth = _convert_dir_to_left_radian(np.array(barLen.index))
         bars = ax1.bar(barDir, barLen, bottom=calm, width=barWidth,
@@ -139,8 +159,8 @@ def windRose(windData):
 
     return fig, ax1
 
-def _get_wind_counts(windData, maxSpeed):
-    group = windData[windData.WindSpd < maxSpeed].groupby(by='WindDir')
+def _get_wind_counts(dataframe, maxSpeed, speedcol, dircol):
+    group = dataframe[dataframe[speedcol] < maxSpeed].groupby(by=dircol)
     counts = group.size()
     return counts[counts.index != 0]
 
