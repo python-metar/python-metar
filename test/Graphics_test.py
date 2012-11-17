@@ -22,7 +22,7 @@ def test_rainClock():
     '''Confirm that rainClock returns an mpl figure and two axes'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
-    fig, (ax1, ax2) = Graphics.rainClock(data.Precip)
+    fig, (ax1, ax2) = Graphics.rainClock(data)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
     assert_true(isinstance(ax2, matplotlib.axes.Axes))
