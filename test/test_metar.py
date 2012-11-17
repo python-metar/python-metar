@@ -13,10 +13,7 @@ tomorrow = today + timedelta(days=1)
 class MetarTest(unittest.TestCase):
 
   def raisesParserError(self, code):
-    self.assertRaises(Metar.ParserError, Metar.Metar, code )
-
-  def raisesParserError(self, code):
-    self.assertRaises(Metar.ParserError, Metar.Metar, code )
+    self.assertRaises(Metar.ParserError, Metar.Metar, code, allexceptions=True )
 
   def test_010_parseType_default(self):
     """Check default value of the report type."""
@@ -144,7 +141,7 @@ class MetarTest(unittest.TestCase):
 
   def test_043_parseModifier_illegal(self):
     """Check rejection of illegal 'modifier' groups."""
-#    self.raisesParserError( "KEWR AUTO" )
+    #self.raisesParserError( "KEWR AUTO" )
     self.raisesParserError( sta_time+"auto" )
     self.raisesParserError( sta_time+"CCH" )
     self.raisesParserError( sta_time+"MAN" )
