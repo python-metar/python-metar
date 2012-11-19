@@ -137,25 +137,27 @@ def windRose(dataframe, speedcol='WindSpd', dircol='WindDir'):
 
     # number of total and zero-wind observations
     total = np.float(dataframe.shape[0])
-    calm = np.float(dataframe[dataframe[speedcol] == 0].shape[0])/total
+    calm = np.float(dataframe[dataframe[speedcol] == 0].shape[0])/total * 100
 
     # loop through the speed bins
     for spd, clr in zip(speedBins, colors):
         barLen = _get_wind_counts(dataframe, spd, speedcol, dircol)
         barLen = barLen/total
         barDir, barWidth = _convert_dir_to_left_radian(np.array(barLen.index))
-        bars = ax1.bar(barDir, barLen, bottom=calm, width=barWidth,
+        bars = ax1.bar(barDir, barLen, width=barWidth,
                        linewidth=0.50, edgecolor=(0.25,0.25,0.25),
                        color=clr, label=r"<%d kt" % spd, alpha=0.8)
 
     # format the plot's axes
-    ax1.legend(loc='lower right', bbox_to_anchor=(1.10,-0.13), fontsize=10)
+    ax1.legend(loc='lower right', bbox_to_anchor=(1.10,-0.13), fontsize=8)
     ax1.set_xticklabels(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'])
     ax1.xaxis.grid(True, which='major', color='k', alpha=0.5)
     ax1.yaxis.grid(True, which='major', color='k', alpha=0.5)
     ax1.yaxis.set_major_formatter(FuncFormatter(_pct_fmt))
-    if calm >= 0.1:
-        ax1.set_ylim(ymin=np.floor(calm*10)/10.)
+    fig.text(0.05, 0.95, 'Calm Winds: %0.1f%%' % calm)
+    #if calm >= 0.1:
+    #    ax1.set_ylim(ymin=np.floor(calm*10)/10.)
+
 
     return fig, ax1
 
