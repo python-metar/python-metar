@@ -50,7 +50,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 import re
 import datetime
 import string
-from Datatypes import *
+from datatypes import *
 
 ## Exceptions
 

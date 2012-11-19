@@ -1,6 +1,6 @@
 from nose.tools import *
-from metar import Station
-from metar import Metar
+from metar import station
+from metar import metar
 import numpy as np
 import datetime as dt
 import types
@@ -15,7 +15,7 @@ class testClass(object):
         return 'item2'
 
 def makeStationAndTS():
-    sta = Station.WeatherStation('KPDX', city='Portland', state='OR',
+    sta = station.WeatherStation('KPDX', city='Portland', state='OR',
                           country='Cascadia', lat=999, lon=999)
     start = dt.datetime(2001, 1, 1)
     ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]
@@ -240,28 +240,28 @@ def test_parse_dates():
     datestrings = ['2012-6-4', 'September 23, 1982']
     knowndates = [dt.datetime(2012, 6, 4), dt.datetime(1982, 9, 23)]
     for ds, kd in zip(datestrings, knowndates):
-        dd = Station._parse_date(ds)
+        dd = station._parse_date(ds)
         assert_equal(dd.year, kd.year)
         assert_equal(dd.month, kd.month)
         assert_equal(dd.day, kd.day)
     pass
 
 def test_check_src():
-    Station._check_src('asos')
-    Station._check_src('wunderground')
-    assert_raises(ValueError, Station._check_src, 'fart')
+    station._check_src('asos')
+    station._check_src('wunderground')
+    assert_raises(ValueError, station._check_src, 'fart')
     pass
 
 def test_check_step():
-    Station._check_step('flat')
-    Station._check_step('raw')
-    assert_raises(ValueError, Station._check_step, 'fart')
+    station._check_step('flat')
+    station._check_step('raw')
+    assert_raises(ValueError, station._check_step, 'fart')
     pass
 
 def test_check_file():
-    assert_equal(Station._check_file('test/testfile1'), 'bad')
-    assert_equal(Station._check_file('test/testfile2'), 'ok')
-    assert_equal(Station._check_file('test/testfile3'), 'not there')
+    assert_equal(station._check_file('test/testfile1'), 'bad')
+    assert_equal(station._check_file('test/testfile2'), 'ok')
+    assert_equal(station._check_file('test/testfile3'), 'not there')
     pass
 
 def test_check_dirs():
@@ -270,65 +270,65 @@ def test_check_dirs():
 def test_date_asos():
     teststring = '24229KPDX PDX20010101000010001/01/01 00:00:31  5-MIN KPDX'
     knowndate = dt.datetime(2001, 1, 1, 0, 0)
-    assert_equal(Station._date_ASOS(teststring), knowndate)
+    assert_equal(station._date_ASOS(teststring), knowndate)
     pass
 
 def test_append_val():
     x = testClass()
     knownlist = ['item1', 'item2', 'NA']
     testlist = ['item1']
-    testlist = Station._append_val(x, testlist)
-    testlist = Station._append_val(None, testlist)
+    testlist = station._append_val(x, testlist)
+    testlist = station._append_val(None, testlist)
     assert_list_equal(testlist, knownlist)
     pass
 
 def test_determine_reset_time():
     dates, precip = makeFakeRainData()
-    test_rt = Station._determine_reset_time(dates, precip)
+    test_rt = station._determine_reset_time(dates, precip)
     known_rt = 0
     assert_equal(known_rt, test_rt)
     pass
 
 def test_process_precip():
     dates, precip = makeFakeRainData()
-    test_rt = Station._determine_reset_time(dates, precip)
+    test_rt = station._determine_reset_time(dates, precip)
     known_rt = 0
-    p2 = Station._process_precip(dates, precip)
+    p2 = station._process_precip(dates, precip)
     assert_true(np.all(p2 <= precip))
     pass
 
 def test_process_sky_cover():
     teststring = 'METAR KPDX 010855Z 00000KT 10SM FEW010 OVC200 04/03 A3031 RMK AO2 SLP262 T00390028 53010 $'
-    obs = Metar.Metar(teststring)
-    testval = Station._process_sky_cover(obs)
+    obs = metar.Metar(teststring)
+    testval = station._process_sky_cover(obs)
     assert_equal(testval, 1.0000)
     pass
 
 def test_getAllStations():
-    stations = Station.getAllStations()
+    stations = station.getAllStations()
     pass
 
 def test_getStationByID():
-    pdx = Station.getStationByID('KPDX')
-    assert_true(isinstance(pdx, Station.WeatherStation))
+    pdx = station.getStationByID('KPDX')
+    assert_true(isinstance(pdx, station.WeatherStation))
     pass
 
 def test_getASOSData_station():
     sta, ts = makeStationAndTS()
-    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1')
-    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
+    data = station.getASOSData(sta, '2012-1-1', '2012-2-1')
+    data = station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getASOSData_string():
     sta, ts = makeStationAndTS()
-    data = Station.getASOSData('KPDX', '2012-1-1', '2012-2-1')
-    data = Station.getASOSData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
+    data = station.getASOSData('KPDX', '2012-1-1', '2012-2-1')
+    data = station.getASOSData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getWundergroundData_station():
     sta, ts = makeStationAndTS()
-    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1')
-    data = Station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
+    data = station.getASOSData(sta, '2012-1-1', '2012-2-1')
+    data = station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getWundergroundData_string():
     sta, ts = makeStationAndTS()
-    data = Station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')
-    data = Station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
+    data = station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')
+    data = station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')

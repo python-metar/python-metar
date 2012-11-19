@@ -53,5 +53,5 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #import Station
 #import Graphics
 
-from .Station import *
-from .Graphics import *
+from .station import *
+from .graphics import *

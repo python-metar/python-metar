@@ -1,7 +1,7 @@
 from nose.tools import *
-from metar import Station
-from metar import Metar
-from metar import Graphics
+from metar import station
+from metar import metar
+from metar import graphics
 import numpy as np
 import datetime as dt
 import types
@@ -12,7 +12,7 @@ import matplotlib
 import matplotlib.dates as mdates
 
 def makeStationAndTS():
-    sta = Station.WeatherStation('KPDX', city='Portland', state='OR',
+    sta = station.WeatherStation('KPDX', city='Portland', state='OR',
                           country='Cascadia', lat=999, lon=999)
     start = dt.datetime(2001, 1, 1)
     ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]
@@ -22,7 +22,7 @@ def test_rainClock():
     '''Confirm that rainClock returns an mpl figure and two axes'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
-    fig, (ax1, ax2) = Graphics.rainClock(data)
+    fig, (ax1, ax2) = graphics.rainClock(data)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
     assert_true(isinstance(ax2, matplotlib.axes.Axes))
@@ -32,7 +32,7 @@ def test_windRose():
     '''Confirm that windRose returns an mpl figure and one axis'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
-    fig, ax1 = Graphics.windRose(data)
+    fig, ax1 = graphics.windRose(data)
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
 
@@ -41,7 +41,7 @@ def test_hyetograph():
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
     for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        fig, ax1 = Graphics.hyetograph(data)
+        fig, ax1 = graphics.hyetograph(data)
         assert_true(isinstance(fig, matplotlib.figure.Figure))
         assert_true(isinstance(ax1, matplotlib.axes.Axes))
 
@@ -50,6 +50,6 @@ def test_pyschromograph():
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
     for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        fig, ax1 = Graphics.psychromograph(data)
+        fig, ax1 = graphics.psychromograph(data)
         assert_true(isinstance(fig, matplotlib.figure.Figure))
         assert_true(isinstance(ax1, matplotlib.axes.Axes))
