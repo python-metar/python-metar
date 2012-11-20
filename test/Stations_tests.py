@@ -15,7 +15,7 @@ class testClass(object):
         return 'item2'
 
 def makeStationAndTS():
-    sta = station.WeatherStation('KPDX', city='Portland', state='OR',
+    sta = station.WeatherStation('KSFO', city='Portland', state='OR',
                           country='Cascadia', lat=999, lon=999)
     start = dt.datetime(2001, 1, 1)
     ts = pandas.DatetimeIndex(start=start, freq='D', periods=1)[0]
@@ -50,9 +50,9 @@ def test_find_dir():
     testdir = sta._find_dir('asos', 'raw')
 
     if os.path.sep == '/':
-        knowndir = 'data/KPDX/asos/raw'
+        knowndir = 'data/%s/asos/raw' % sta.sta_id
     else:
-        knowndir = 'data\\KPDX\\asos\\raw'
+        knowndir = 'data\\%s\\asos\\raw' % sta.sta_id
 
     assert_equal(testdir, knowndir)
     pass
@@ -62,8 +62,8 @@ def test_find_file():
     testfile1 = sta._find_file(ts, 'asos', 'raw')
     testfile2 = sta._find_file(ts, 'wunderground', 'flat')
 
-    knownfile1 = 'KPDX_200101.dat'
-    knownfile2 = 'KPDX_20010101.csv'
+    knownfile1 = '%s_200101.dat' % sta.sta_id
+    knownfile2 = '%s_20010101.csv' % sta.sta_id
 
     assert_equal(testfile1, knownfile1)
     assert_equal(testfile2, knownfile2)
@@ -82,8 +82,8 @@ def test_url_by_date():
     testurl1 = sta._url_by_date(ts, src='wunderground')
     testurl2 = sta._url_by_date(ts, src='asos')
 
-    knownurl1 = "http://www.wunderground.com/history/airport/KPDX/2001/01/31/DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1"
-    knownurl2 = "ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/6401-2001/64010KPDX200101.dat"
+    knownurl1 = "http://www.wunderground.com/history/airport/%s/2001/01/31/DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1" % sta.sta_id
+    knownurl2 = "ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/6401-2001/64010%s200101.dat" % sta.sta_id
 
     assert_equal(testurl1, knownurl1)
     assert_equal(testurl2, knownurl2)
@@ -95,11 +95,11 @@ def test_make_data_file():
     testfile2 = sta._make_data_file(ts, 'asos', 'raw')
 
     if os.path.sep == '/':
-        knownfile1 = 'data/KPDX/wunderground/flat/KPDX_20010101.csv'
-        knownfile2 = 'data/KPDX/asos/raw/KPDX_200101.dat'
+        knownfile1 = 'data/%s/wunderground/flat/%s_20010101.csv' % (sta.sta_id, sta.sta_id)
+        knownfile2 = 'data/%s/asos/raw/%s_200101.dat' % (sta.sta_id, sta.sta_id)
     else:
-        knownfile1 = 'data\\KPDX\\wunderground\\flat\\KPDX_20010101.csv'
-        knownfile2 = 'data\\KPDX\\asos\\raw\\KPDX_200101.dat'
+        knownfile1 = 'data\\%s\\wunderground\\flat\\%s_20010101.csv' % (sta.sta_id, sta.sta_id)
+        knownfile2 = 'data\\%s\\asos\\raw\\%s_200101.dat' % (sta.sta_id, sta.sta_id)
 
     assert_equal(testfile1, knownfile1)
     assert_equal(testfile2, knownfile2)
@@ -135,9 +135,9 @@ def test_process_file_asos():
     filename, status = sta._process_file(ts, 'asos')
 
     if os.path.sep == '/':
-        knownfile = 'data/KPDX/asos/flat/KPDX_200101.csv'
+        knownfile = 'data/%s/asos/flat/%s_200101.csv' % (sta.sta_id, sta.sta_id)
     else:
-        knownfile = 'data\\KPDX\\asos\\flat\\KPDX_200101.csv'
+        knownfile = 'data\\%s\\asos\\flat\\%s_200101.csv' % (sta.sta_id, sta.sta_id)
 
     assert_equal(filename, knownfile)
     known_statuses = ['ok', 'bad', 'not there']
@@ -149,9 +149,9 @@ def test_process_file_wunderground():
     filename, status = sta._process_file(ts, 'wunderground')
 
     if os.path.sep == '/':
-        knownfile = 'data/KPDX/wunderground/flat/KPDX_20010101.csv'
+        knownfile = 'data/%s/wunderground/flat/%s_20010101.csv' % (sta.sta_id, sta.sta_id)
     else:
-        knownfile = 'data\\KPDX\\wunderground\\flat\\KPDX_20010101.csv'
+        knownfile = 'data\\%s\\wunderground\\flat\\%s_20010101.csv' % (sta.sta_id, sta.sta_id)
 
     assert_equal(filename, knownfile)
     known_statuses = ['ok', 'bad', 'not there']
@@ -268,7 +268,7 @@ def test_check_dirs():
     pass
 
 def test_date_asos():
-    teststring = '24229KPDX PDX20010101000010001/01/01 00:00:31  5-MIN KPDX'
+    teststring = '24229KPDX PDX20010101000010001/01/01 00:00:31  5-MIN KPDX' 
     knowndate = dt.datetime(2001, 1, 1, 0, 0)
     assert_equal(station._date_ASOS(teststring), knowndate)
     pass
@@ -324,8 +324,8 @@ def test_getASOSData_string():
 
 def test_getWundergroundData_station():
     sta, ts = makeStationAndTS()
-    data = station.getASOSData(sta, '2012-1-1', '2012-2-1')
-    data = station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
+    data = station.getWundergroundData(sta, '2012-1-1', '2012-2-1')
+    data = station.getWundergroundData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getWundergroundData_string():
     data = station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')

@@ -146,8 +146,7 @@ class WeatherStation(object):
         _check_step(step)
         datadir = self._find_dir(src, step)
         datafile = self._find_file(timestamp, src, step)
-        subdirs = datadir.split(os.path.sep)
-        _check_dirs(subdirs)
+        _check_dirs(datadir.split(os.path.sep))
         return os.path.join(datadir, datafile)
 
     def _fetch_data(self, timestamp, src='asos', force_download=False):
@@ -356,8 +355,7 @@ class WeatherStation(object):
 
         if filename is not None:
             compdir = self._find_dir(source, 'compile')
-            subdirs = compdir.split(os.path.sep)
-            _check_dirs(subdirs)
+            _check_dirs(compdir.split(os.path.sep))
             final_data.to_csv(os.path.join(compdir, filename))
 
         return final_data
@@ -421,13 +419,14 @@ class WeatherStation(object):
 
     def loadCompiledFile(self, source, filename):
         compdir = self._find_dir(source, 'compile')
+        _check_dirs(compdir.split(os.path.sep))
         compfiles = os.listdir(compdir)
-        if filename in compfiles:
+        if len(compfiles) > 0 and filename in compfiles:
             cfile = os.path.join(compdir, filename)
             data = pandas.read_csv(cfile, index_col=0, parse_dates=True)
             return data
         else:
-            raise IOError('%s does not exist' % cfile)
+            raise IOError('%s does not exist' % filename)
         
 def _parse_date(datestring):
     '''
