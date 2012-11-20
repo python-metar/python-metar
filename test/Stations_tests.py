@@ -319,7 +319,6 @@ def test_getASOSData_station():
     data = station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getASOSData_string():
-    sta, ts = makeStationAndTS()
     data = station.getASOSData('KPDX', '2012-1-1', '2012-2-1')
     data = station.getASOSData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
 
@@ -329,6 +328,13 @@ def test_getWundergroundData_station():
     data = station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getWundergroundData_string():
-    sta, ts = makeStationAndTS()
     data = station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')
     data = station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
+
+def test_loadCompData_asos():
+    sta, ts = makeStationAndTS()
+    data = sta.loadCompiledFile('asos', 'testfile.csv')
+
+def test_loadCompData_wunderground():
+    sta, ts = makeStationAndTS()
+    data = sta.loadCompiledFile('wunderground', 'testfile.csv')
