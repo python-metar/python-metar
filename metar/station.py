@@ -22,7 +22,8 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
 
-__all__ = ['getAllStations', 'getStationByID', 'WeatherStation', 'getASOSData']
+__all__ = ['getAllStations', 'getStationByID', 'WeatherStation', 
+           'getASOSData', 'getWundergroundData']
 matplotlib.rcParams['timezone'] = 'UTC'
 
 class WeatherStation(object):
@@ -49,7 +50,7 @@ class WeatherStation(object):
 
         input:
             *src* : 'asos' or 'wunderground'
-            *step* : 'raw' or 'flat'
+            *step* : 'raw' or 'flat' or 'compile'
         '''
         _check_src(src)
         _check_step(step)
@@ -145,8 +146,7 @@ class WeatherStation(object):
         _check_step(step)
         datadir = self._find_dir(src, step)
         datafile = self._find_file(timestamp, src, step)
-        subdirs = datadir.split(os.path.sep)
-        _check_dirs(subdirs)
+        _check_dirs(datadir.split(os.path.sep))
         return os.path.join(datadir, datafile)
 
     def _fetch_data(self, timestamp, src='asos', force_download=False):
@@ -261,7 +261,7 @@ class WeatherStation(object):
                         metarstring = None
 
                 if metarstring is not None:
-                    obs = Metar.Metar(metarstring, errorfile=errorfile)
+                    obs = metar.Metar(metarstring, errorfile=errorfile)
                     rains = _append_val(obs.precip_1hr, rains, fillNone=0.0)
                     temps = _append_val(obs.temp, temps)
                     dewpt = _append_val(obs.dewpt, dewpt)
@@ -354,7 +354,9 @@ class WeatherStation(object):
         final_data = grouped_data.last().drop(['rownum'], axis=1)
 
         if filename is not None:
-            final_data.to_csv(filename)
+            compdir = self._find_dir(source, 'compile')
+            _check_dirs(compdir.split(os.path.sep))
+            final_data.to_csv(os.path.join(compdir, filename))
 
         return final_data
 
@@ -402,6 +404,34 @@ class WeatherStation(object):
         data = self._get_data(startdate, enddate, 'wunderground', filename)
         return data
 
+    def showCompiledFiles(self, source):
+        compdir = self._find_dir(source, 'compile')
+        _check_dirs(compdir.split(os.path.sep))
+        compfiles = os.listdir(compdir)
+        if len(compfiles) == 0:
+            print('No compiled files')
+
+        for cf in compfiles:
+            cfile = open(os.path.join(compdir, cf), 'r')
+            cdata = cfile.readlines()
+            start = cdata[1].split(',')[0]
+            end = cdata[-1].split(',')[0]
+            cfile.close()
+            print('%s - start: %s\tend: %s' % (cf, start, end))
+
+        return compfiles
+
+    def loadCompiledFile(self, source, filename):
+        compdir = self._find_dir(source, 'compile')
+        _check_dirs(compdir.split(os.path.sep))
+        compfiles = os.listdir(compdir)
+        if len(compfiles) > 0 and filename in compfiles:
+            cfile = os.path.join(compdir, filename)
+            data = pandas.read_csv(cfile, index_col=0, parse_dates=True)
+            return data
+        else:
+            raise IOError('%s does not exist' % filename)
+        
 def _parse_date(datestring):
     '''
     takes a date string and returns a datetime.datetime object
@@ -421,7 +451,7 @@ def _check_step(step):
     '''
     checks that a *step* value is valid
     '''
-    if step.lower() not in ('raw','flat'):
+    if step.lower() not in ('raw', 'flat', 'compile'):
         raise ValueError('step must be one of "raw" or "flat"')
 
 def _check_file(filename):
