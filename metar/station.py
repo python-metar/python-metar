@@ -406,7 +406,11 @@ class WeatherStation(object):
 
     def showCompiledFiles(self, source):
         compdir = self._find_dir(source, 'compile')
+        _check_dirs(compdir.split(os.path.sep))
         compfiles = os.listdir(compdir)
+        if len(compfiles) == 0:
+            print('No compiled files')
+
         for cf in compfiles:
             cfile = open(os.path.join(compdir, cf), 'r')
             cdata = cfile.readlines()
