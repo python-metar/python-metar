@@ -45,6 +45,7 @@ Thumbs.db
 ############# 
 output
 data
+test/test_*.png
 
 # tex files #
 ############

@@ -333,8 +333,10 @@ def test_getWundergroundData_string():
 
 def test_loadCompData_asos():
     sta, ts = makeStationAndTS()
-    data = sta.loadCompiledFile('asos', 'testfile.csv')
+    data = sta.loadCompiledFile('asos', filename='testfile.csv')
+    data = sta.loadCompiledFile('asos', filenum=1)
 
 def test_loadCompData_wunderground():
     sta, ts = makeStationAndTS()
-    data = sta.loadCompiledFile('wunderground', 'testfile.csv')
+    data = sta.loadCompiledFile('wunderground', filename='testfile.csv')
+    data = sta.loadCompiledFile('wunderground', filenum=1)

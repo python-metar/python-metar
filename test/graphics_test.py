@@ -22,7 +22,7 @@ def test_rainClock():
     '''Confirm that rainClock returns an mpl figure and two axes'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
-    fig, (ax1, ax2) = graphics.rainClock(data)
+    fig, (ax1, ax2) = graphics.rainClock(data, fname='test/test_rainClock.png')
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
     assert_true(isinstance(ax2, matplotlib.axes.Axes))
@@ -32,7 +32,7 @@ def test_windRose():
     '''Confirm that windRose returns an mpl figure and one axis'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
-    fig, ax1 = graphics.windRose(data)
+    fig, ax1 = graphics.windRose(data, fname='test/test_windRose.png')
     assert_true(isinstance(fig, matplotlib.figure.Figure))
     assert_true(isinstance(ax1, matplotlib.axes.Axes))
 
@@ -40,16 +40,28 @@ def test_hyetograph():
     '''Confirm that hyetograph returns an mpl figure and one axis'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
-    for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        fig, ax1 = graphics.hyetograph(data)
+    for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly']: #, 'yearly']:
+        fig, ax1 = graphics.hyetograph(data, freq=freq, 
+                     fname='test/test_hyetograph_%s.png' % freq)
         assert_true(isinstance(fig, matplotlib.figure.Figure))
         assert_true(isinstance(ax1, matplotlib.axes.Axes))
 
-def test_pyschromograph():
+def test_psychromograph():
     '''Confirm that psychromograph returns an mpl figure and one axis'''
     sta, ts = makeStationAndTS()
     data = sta.getASOSData('2001-1-1', '2001-2-1')
-    for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly', 'yearly']:
-        fig, ax1 = graphics.psychromograph(data)
+    for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly']: #, 'yearly']:
+        fig, ax1 = graphics.psychromograph(data, freq=freq,
+                     fname='test/test_psychromograph_%s.png' % freq)
+        assert_true(isinstance(fig, matplotlib.figure.Figure))
+        assert_true(isinstance(ax1, matplotlib.axes.Axes))
+
+def test_temperaturePlot():
+    '''Confirm that temperaturePlot returns an mpl figure and one axis'''
+    sta, ts = makeStationAndTS()
+    data = sta.getASOSData('2001-1-1', '2001-2-1')
+    for freq in ['5min', 'hourly', 'daily', 'weekly', 'monthly']: #, 'yearly']:
+        fig, ax1 = graphics.temperaturePlot(data, freq=freq,
+                      fname='test/test_temperaturePlot_%s.png' % freq)
         assert_true(isinstance(fig, matplotlib.figure.Figure))
         assert_true(isinstance(ax1, matplotlib.axes.Axes))

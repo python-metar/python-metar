@@ -404,33 +404,49 @@ class WeatherStation(object):
         data = self._get_data(startdate, enddate, 'wunderground', filename)
         return data
 
-    def showCompiledFiles(self, source):
+    def _get_compiled_files(self, source):
         compdir = self._find_dir(source, 'compile')
         _check_dirs(compdir.split(os.path.sep))
         compfiles = os.listdir(compdir)
+        return compdir, compfiles
+
+    def showCompiledFiles(self, source):
+        compdir, compfiles = self._get_compiled_files(source)
         if len(compfiles) == 0:
             print('No compiled files')
 
-        for cf in compfiles:
+        for n, cf in enumerate(compfiles):
             cfile = open(os.path.join(compdir, cf), 'r')
             cdata = cfile.readlines()
             start = cdata[1].split(',')[0]
             end = cdata[-1].split(',')[0]
             cfile.close()
-            print('%s - start: %s\tend: %s' % (cf, start, end))
+            print('%d) %s - start: %s\tend: %s' % (n+1, cf, start, end))
 
-        return compfiles
+    def loadCompiledFile(self, source, filename=None, filenum=None):
+        if filename is None and filenum is None:
+            raise ValueError("must specify either a file name or number")
 
-    def loadCompiledFile(self, source, filename):
-        compdir = self._find_dir(source, 'compile')
-        _check_dirs(compdir.split(os.path.sep))
-        compfiles = os.listdir(compdir)
-        if len(compfiles) > 0 and filename in compfiles:
-            cfile = os.path.join(compdir, filename)
-            data = pandas.read_csv(cfile, index_col=0, parse_dates=True)
-            return data
+        compdir, compfiles = self._get_compiled_files(source)
+        N = len(compfiles)
+        if N > 0:
+            if filenum is not None:
+                if 0 < filenum <= N:
+                    filename = compfiles[filenum-1]
+                else:
+                    raise ValueError('file number must be between 1 and %d' % N)
+            elif filename not in compfiles:
+                raise ValueError('filename does not exist')
+
+
+            cfilepath = os.path.join(compdir, filename)
+            data = pandas.read_csv(cfilepath, index_col=0, parse_dates=True)
+
         else:
-            raise IOError('%s does not exist' % filename)
+            print('No files to load')
+            data = None
+
+        return data
         
 def _parse_date(datestring):
     '''

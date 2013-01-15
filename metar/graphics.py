@@ -3,13 +3,18 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import matplotlib.dates as dates
 
-__all__ = ['hyetograph', 'rainClock', 'windRose', 'psychromograph']
+__all__ = ['hyetograph', 'rainClock', 'windRose', 'psychromograph', 'temperaturePlot']
 
-def _plotter(series, freq='hourly', how='sum', ax=None):
+def _plotter(dataframe, col, ylabel, freq='hourly', how='sum', 
+             ax=None, downward=False, fname=None, fillna=None):
+
+    if not hasattr(dataframe, col):
+        raise ValueError('input `dataframe` must have a `%s` column' % col)
+
     if ax is None:
         fig, ax = plt.subplots()
     else:
-        fig = plt.gcf()
+        fig = ax.figure
 
     rules = {
         '5min' : ('5Min', 'line'),
@@ -28,18 +33,21 @@ def _plotter(series, freq='hourly', how='sum', ax=None):
         'daily' : ('D', 'line'),
         'week' : ('W', 'line'),
         'weekly' : ('W', 'line'),
-        'month' : ('M', 'bar'),
-        'monthly' : ('M', 'bar'),
-        'annual' : ('A', 'bar'),
-        'year' : ('A', 'bar'),
-        'yearly' : ('A', 'bar'),
+        'month' : ('M', 'line'),
+        'monthly' : ('M', 'line'),
+        #'annual' : ('A', 'line'),
+        #'annually' : ('A', 'line'),
+        #'year' : ('A', 'line'),
+        #'yearly' : ('A', 'line'),
     }
 
     if freq.lower() in rules.keys():
         rule = rules[freq.lower()][0]
         kind = rules[freq.lower()][1]
-        data = series.resample(how=how, rule=rule)
-        data.fillna(value=0, inplace=True)
+        data = dataframe[col].resample(how=how, rule=rule)
+        if fillna is not None:
+            data.fillna(value=fillna, inplace=True)
+
         data.plot(ax=ax, kind=kind)
         if rule == 'A':
             xformat = dates.DateFormatter('%Y')
@@ -49,32 +57,40 @@ def _plotter(series, freq='hourly', how='sum', ax=None):
             ax.xaxis.set_major_formatter(xformat)
 
     else:
-        m = "freq should be ['5-min', 'hourly', 'daily', 'weekly, 'monthly', 'yearly']"
+        m = "freq should be ['5-min', 'hourly', 'daily', 'weekly, 'monthly']" #, 'yearly']"
         raise ValueError(m)
 
     ax.tick_params(axis='x', labelsize=8)
     ax.set_xlabel('Date')
-    return fig, ax
-
-def hyetograph(dataframe, freq='hourly', ax=None, downward=True, raincol='Precip'):
-    if not hasattr(dataframe, raincol):
-        raise ValueError('input `dataframe` must have a `%s` column' % raincol)
-
-    fig, ax = _plotter(dataframe.Precip, freq=freq, how='sum', ax=ax)
-    ax.set_ylabel('%s Rainfall Depth (in)' % freq.title())
+    ax.set_ylabel(ylabel)
     if downward:
         ax.invert_yaxis()
+
+    if fname is not None:
+        fig.tight_layout()
+        fig.savefig(fname)
+
     return fig, ax
 
-def psychromograph(dataframe, freq='hourly', ax=None):
-    if not hasattr(dataframe, 'AtmPress'):
-        raise ValueError('input `dataframe` must have a `AtmPress` column')
-
-    fig, ax = _plotter(dataframe.AtmPress, freq=freq, how='mean', ax=ax)
-    ax.set_ylabel('%s Barometric Pressure (in Hg)' % freq.title())
+def hyetograph(dataframe, freq='hourly', ax=None, downward=True, col='Precip', fname=None):
+    ylabel = '%s Rainfall Depth (in)' % freq.title()
+    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, fillna=0,
+                       how='sum', ax=ax, downward=True, fname=fname)
     return fig, ax
 
-def rainClock(dataframe, raincol='Precip'):
+def psychromograph(dataframe, freq='hourly', ax=None, col='AtmPress', fname=None):
+    ylabel = '%s Barometric Pressure (in Hg)' % freq.title()
+    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, 
+                       how='mean', ax=ax, fname=fname)
+    return fig, ax
+
+def temperaturePlot(dataframe, freq='hourly', ax=None, col='Temp', fname=None):
+    ylabel = u'%s Temperature (\xB0C)' % freq.title()
+    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, 
+                       how='mean', ax=ax, fname=fname)
+    return fig, ax
+
+def rainClock(dataframe, raincol='Precip', fname=None):
     '''
     Mathematically dubious representation of the likelihood of rain at
     at any hour given that will rain.
@@ -110,9 +126,13 @@ def rainClock(dataframe, raincol='Precip'):
         ax.set_xticklabels(am_hours)
         ax.set_yticklabels([])
 
+    if fname is not None:
+        fig.tight_layout()
+        fig.savefig(fname)
+
     return fig, (ax1, ax2)
 
-def windRose(dataframe, speedcol='WindSpd', dircol='WindDir'):
+def windRose(dataframe, speedcol='WindSpd', dircol='WindDir', fname=None):
     '''
     Plots a Wind Rose. Feed it a dataframe with 'WindSpd' (knots) and
     'WindDir' degrees clockwise from north (columns)
@@ -158,6 +178,9 @@ def windRose(dataframe, speedcol='WindSpd', dircol='WindDir'):
     #if calm >= 0.1:
     #    ax1.set_ylim(ymin=np.floor(calm*10)/10.)
 
+    if fname is not None:
+        fig.tight_layout()
+        fig.savefig(fname)
 
     return fig, ax1
 
