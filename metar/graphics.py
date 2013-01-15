@@ -6,14 +6,15 @@ import matplotlib.dates as dates
 __all__ = ['hyetograph', 'rainClock', 'windRose', 'psychromograph', 'temperaturePlot']
 
 def _plotter(dataframe, col, ylabel, freq='hourly', how='sum', 
-             ax=None, downward=False, fname=None):
+             ax=None, downward=False, fname=None, fillna=None):
+
     if not hasattr(dataframe, col):
         raise ValueError('input `dataframe` must have a `%s` column' % col)
 
     if ax is None:
         fig, ax = plt.subplots()
     else:
-        fig = plt.gcf()
+        fig = ax.figure
 
     rules = {
         '5min' : ('5Min', 'line'),
@@ -35,6 +36,7 @@ def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
         'month' : ('M', 'line'),
         'monthly' : ('M', 'line'),
         #'annual' : ('A', 'line'),
+        #'annually' : ('A', 'line'),
         #'year' : ('A', 'line'),
         #'yearly' : ('A', 'line'),
     }
@@ -43,7 +45,9 @@ def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
         rule = rules[freq.lower()][0]
         kind = rules[freq.lower()][1]
         data = dataframe[col].resample(how=how, rule=rule)
-        data.fillna(value=0, inplace=True)
+        if fillna is not None:
+            data.fillna(value=fillna, inplace=True)
+
         data.plot(ax=ax, kind=kind)
         if rule == 'A':
             xformat = dates.DateFormatter('%Y')
@@ -70,7 +74,7 @@ def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
 
 def hyetograph(dataframe, freq='hourly', ax=None, downward=True, col='Precip', fname=None):
     ylabel = '%s Rainfall Depth (in)' % freq.title()
-    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, 
+    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, fillna=0,
                        how='sum', ax=ax, downward=True, fname=fname)
     return fig, ax
 
