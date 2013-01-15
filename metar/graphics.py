@@ -75,7 +75,7 @@ def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
 def hyetograph(dataframe, freq='hourly', ax=None, downward=True, col='Precip', fname=None):
     ylabel = '%s Rainfall Depth (in)' % freq.title()
     fig, ax = _plotter(dataframe, col, ylabel, freq=freq, fillna=0,
-                       how='sum', ax=ax, downward=True, fname=fname)
+                       how='sum', ax=ax, downward=downward, fname=fname)
     return fig, ax
 
 def psychromograph(dataframe, freq='hourly', ax=None, col='AtmPress', fname=None):
