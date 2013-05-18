@@ -5,8 +5,8 @@ import matplotlib.dates as dates
 
 __all__ = ['hyetograph', 'rainClock', 'windRose', 'psychromograph', 'temperaturePlot']
 
-def _plotter(dataframe, col, ylabel, freq='hourly', how='sum', 
-             ax=None, downward=False, fname=None, fillna=None):
+def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
+    ax=None, downward=False, fname=None, fillna=None):
 
     if not hasattr(dataframe, col):
         raise ValueError('input `dataframe` must have a `%s` column' % col)
@@ -80,13 +80,13 @@ def hyetograph(dataframe, freq='hourly', ax=None, downward=True, col='Precip', f
 
 def psychromograph(dataframe, freq='hourly', ax=None, col='AtmPress', fname=None):
     ylabel = '%s Barometric Pressure (in Hg)' % freq.title()
-    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, 
+    fig, ax = _plotter(dataframe, col, ylabel, freq=freq,
                        how='mean', ax=ax, fname=fname)
     return fig, ax
 
 def temperaturePlot(dataframe, freq='hourly', ax=None, col='Temp', fname=None):
     ylabel = u'%s Temperature (\xB0C)' % freq.title()
-    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, 
+    fig, ax = _plotter(dataframe, col, ylabel, freq=freq,
                        how='mean', ax=ax, fname=fname)
     return fig, ax
 
@@ -110,12 +110,12 @@ def rainClock(dataframe, raincol='Precip', fname=None):
         rain_by_hour.append(total_depth/num_obervations)
 
     bar_width = 2*np.pi/12 * 0.8
-    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(7,3), 
+    fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(7,3),
                                    subplot_kw=dict(polar=True))
     theta = np.arange(0.0, 2*np.pi, 2*np.pi/12)
-    am_bars = ax1.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[:12], 
+    am_bars = ax1.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[:12],
                       bar_width, color='DodgerBlue', linewidth=0.5)
-    pm_bars = ax2.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[12:], 
+    pm_bars = ax2.bar(theta + 2*np.pi/12 * 0.1, rain_by_hour[12:],
                       bar_width, color='Crimson', linewidth=0.5)
     ax1.set_title('AM Hours')
     ax2.set_title('PM Hours')
@@ -190,7 +190,7 @@ def _get_wind_counts(dataframe, maxSpeed, speedcol, dircol):
     return counts[counts.index != 0]
 
 def _pct_fmt(x, pos=0):
-     return '%d%%' % (100*x)
+     return '%0.1f%%' % (100*x)
 
 def _convert_dir_to_left_radian(directions):
     N = directions.shape[0]
