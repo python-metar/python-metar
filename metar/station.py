@@ -22,7 +22,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas
 
-__all__ = ['getAllStations', 'getStationByID', 'WeatherStation', 
+__all__ = ['getAllStations', 'getStationByID', 'WeatherStation',
            'getASOSData', 'getWundergroundData']
 matplotlib.rcParams['timezone'] = 'UTC'
 
@@ -447,7 +447,7 @@ class WeatherStation(object):
             data = None
 
         return data
-        
+
 def _parse_date(datestring):
     '''
     takes a date string and returns a datetime.datetime object
@@ -607,13 +607,13 @@ def getStationByID(sta_id):
 def getASOSData(station, startdate, enddate, filename=None):
     if not isinstance(station, WeatherStation):
         station = getStationByID(station)
-    
+
     data = station.getASOSData(startdate, enddate, filename=filename)
     return data
 
 def getWundergroundData(station, startdate, enddate, filename=None):
     if not isinstance(station, WeatherStation):
         station = getStationByID(station)
-    
+
     data = station.getWundergroundData(startdate, enddate, filename=filename)
     return data
