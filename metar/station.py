@@ -8,7 +8,6 @@
 import datetime
 import urllib2
 import cookielib
-import pdb
 import os
 
 # math stuff
