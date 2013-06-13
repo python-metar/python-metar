@@ -4,10 +4,6 @@
 #
 #  Copyright 2004  Tom Pollard
 
-# metar stuff
-import metar
-import datatypes
-
 # std lib stuff
 import datetime
 import urllib2
@@ -19,12 +15,16 @@ import os
 import numpy as np
 import matplotlib
 import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
 import pandas
+
+# metar stuff
+import metar
+import datatypes
 
 __all__ = ['getAllStations', 'getStationByID', 'WeatherStation',
            'getASOSData', 'getWundergroundData']
 matplotlib.rcParams['timezone'] = 'UTC'
+
 
 class WeatherStation(object):
     """An object representing a weather station."""
@@ -36,6 +36,7 @@ class WeatherStation(object):
         self.country = country
         self.position = datatypes.position(lat, lon)
         self.max_attempts = max_attempts
+
         if self.state:
             self.name = "%s, %s" % (self.city, self.state)
         else:
@@ -123,15 +124,17 @@ class WeatherStation(object):
         _check_src(src)
         if src.lower() == 'wunderground':
             baseurl = 'http://www.wunderground.com/history/airport/%s' % self.sta_id
-            endurl =  'DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1'
+            endurl = 'DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1'
             datestring = date.strftime('%Y/%m/%d')
             url = '%s/%s/%s' % (baseurl, datestring, endurl)
+
         elif src.lower() == 'asos':
             baseurl = 'ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/6401-'
             url = '%s%s/64010%s%s%02d.dat' % \
-                        (baseurl, date.year, self.sta_id, date.year, date.month)
+                  (baseurl, date.year, self.sta_id, date.year, date.month)
         else:
-            raise ValueError, "src must be 'wunderground' or 'asos'"
+            raise ValueError("src must be 'wunderground' or 'asos'")
+
         return url
 
     def _make_data_file(self, timestamp, src, step):
@@ -159,8 +162,7 @@ class WeatherStation(object):
         *src* : 'asos' or 'wunderground'
         *force_download* : bool; default False
         '''
-        date = timestamp.to_datetime()
-        observations = []
+
         outname = self._make_data_file(timestamp, src, 'raw')
         status = 'not there'
         errorfile = open(self.errorfile, 'a')
@@ -221,7 +223,6 @@ class WeatherStation(object):
         '''
         #pdb.set_trace()
         _check_src(src)
-        date = timestamp.to_datetime()
         rawfilename = self._make_data_file(timestamp, src, 'raw')
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(rawfilename):
@@ -233,8 +234,8 @@ class WeatherStation(object):
             datain = open(rawfilename, 'r')
             dataout = open(flatfilename, 'w')
 
-            headers = 'Sta,Date,Precip,Temp,DewPnt,' + \
-                          'WindSpd,WindDir,AtmPress,SkyCover\n'
+            headers = 'Sta,Date,Precip,Temp,DewPnt,' \
+                      'WindSpd,WindDir,AtmPress,SkyCover\n'
             dataout.write(headers)
 
             dates = []
@@ -279,8 +280,8 @@ class WeatherStation(object):
             else:
                 final_precip = rains
 
-            for row in zip([self.sta_id]*rains.shape[0], dates, final_precip, \
-                            temps, dewpt, windspd, winddir, press, cover):
+            for row in zip([self.sta_id]*rains.shape[0], dates, final_precip,
+                           temps, dewpt, windspd, winddir, press, cover):
                 dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
 
             datain.close()
@@ -326,16 +327,14 @@ class WeatherStation(object):
             *data* : a pandas data frame of the data for this station
         '''
         _check_src(source)
-        start = _parse_date(startdate)
-        end = _parse_date(enddate)
 
-        freq = {'asos' : 'MS',
-                'wunderground' : 'D'}
+        freq = {'asos': 'MS',
+                'wunderground': 'D'}
         try:
             timestamps = pandas.DatetimeIndex(start=startdate, end=enddate,
                                               freq=freq[source])
         except KeyError:
-            raise ValueError, 'source must be in either "ASOS" or "wunderground"'
+            raise ValueError('source must be either "ASOS" or "wunderground"')
 
         data = None
         for ts in timestamps:
@@ -438,7 +437,6 @@ class WeatherStation(object):
             elif filename not in compfiles:
                 raise ValueError('filename does not exist')
 
-
             cfilepath = os.path.join(compdir, filename)
             data = pandas.read_csv(cfilepath, index_col=0, parse_dates=True)
 
@@ -448,6 +446,7 @@ class WeatherStation(object):
 
         return data
 
+
 def _parse_date(datestring):
     '''
     takes a date string and returns a datetime.datetime object
@@ -456,6 +455,7 @@ def _parse_date(datestring):
     dateval = mdates.num2date(datenum)
     return dateval
 
+
 def _check_src(src):
     '''
     checks that a *src* value is valid
@@ -463,12 +463,14 @@ def _check_src(src):
     if src.lower() not in ('wunderground', 'asos'):
         raise ValueError('src must be one of "wunderground" or "asos"')
 
+
 def _check_step(step):
     '''
     checks that a *step* value is valid
     '''
     if step.lower() not in ('raw', 'flat', 'compile'):
         raise ValueError('step must be one of "raw" or "flat"')
+
 
 def _check_file(filename):
     '''
@@ -488,6 +490,7 @@ def _check_file(filename):
 
     return status
 
+
 def _check_dirs(subdirs):
     '''
     checks to see that a directory exists. if not, it makes it.
@@ -497,10 +500,11 @@ def _check_dirs(subdirs):
         os.mkdir(subdirs[0])
 
     if len(subdirs) > 1:
-        topdir = [os.path.join(subdirs[0],subdirs[1])]
+        topdir = [os.path.join(subdirs[0], subdirs[1])]
         for sd in subdirs[2:]:
             topdir.append(sd)
         _check_dirs(topdir)
+
 
 def _date_ASOS(metarstring):
     '''get date/time of asos reading'''
@@ -510,9 +514,10 @@ def _date_ASOS(metarstring):
     hr = int(metarstring[37:39])   # hour
     mi = int(metarstring[40:42])   # minute
 
-    date = datetime.datetime(yr,mo,da,hr,mi)
+    date = datetime.datetime(yr, mo, da, hr, mi)
 
     return date
+
 
 def _append_val(obsval, listobj, fillNone='NA'):
     '''
@@ -525,6 +530,7 @@ def _append_val(obsval, listobj, fillNone='NA'):
         listobj.append(fillNone)
     return listobj
 
+
 def _determine_reset_time(date, precip):
     '''
     determines the precip gauge reset time for a month's
@@ -534,13 +540,14 @@ def _determine_reset_time(date, precip):
     if len(date) != len(precip):
         raise ValueError("date and precip must be same length")
     else:
-        for n in range(1,len(date)):
+        for n in range(1, len(date)):
             if precip[n] < precip[n-1]:
                 minuteIndex = date[n].minute/5
                 minutes[minuteIndex] += 1
 
-        resetTime, = np.where(minutes==minutes.max())
+        resetTime, = np.where(minutes == minutes.max())
         return resetTime[0]*5
+
 
 def _process_precip(dateval, p1):
     '''convert 5-min rainfall data from cumuative w/i an hour to 5-min totals
@@ -563,16 +570,17 @@ def _process_precip(dateval, p1):
 
     return p2
 
+
 def _process_sky_cover(obs):
-    coverdict = {'CLR' : 0.0000,
-                 'SKC' : 0.0000,
-                 'NSC' : 0.0000,
-                 'NCD' : 0.0000,
-                 'FEW' : 0.1785,
-                 'SCT' : 0.4375,
-                 'BKN' : 0.7500,
-                 'VV'  : 0.9900,
-                 'OVC' : 1.0000}
+    coverdict = {'CLR': 0.0000,
+                 'SKC': 0.0000,
+                 'NSC': 0.0000,
+                 'NCD': 0.0000,
+                 'FEW': 0.1785,
+                 'SCT': 0.4375,
+                 'BKN': 0.7500,
+                 'VV': 0.9900,
+                 'OVC': 1.0000}
     coverlist = []
     for sky in obs.sky:
         coverval = coverdict[sky[0]]
@@ -585,24 +593,28 @@ def _process_sky_cover(obs):
 
     return cover
 
+
 def getAllStations():
     station_file_name = "reference/nsd_cccc.txt"
-    station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
+    #station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
     stations = {}
 
-    fh = open(station_file_name,'r')
+    fh = open(station_file_name, 'r')
     for line in fh:
         f = line.strip().split(";")
-        stations[f[0]] = (f[0],f[3],f[4],f[5],f[7],f[8])
+        stations[f[0]] = (f[0], f[3], f[4], f[5], f[7], f[8])
+
     fh.close()
 
     return stations
 
+
 def getStationByID(sta_id):
     stations = getAllStations()
     info = stations[sta_id]
-    return WeatherStation(sta_id, city=info[1], state=info[2],
-                   country=info[3], lat=info[4], lon=info[5])
+    return WeatherStation(sta_id, city=info[1], state=info[2], country=info[3],
+                          lat=info[4], lon=info[5])
+
 
 def getASOSData(station, startdate, enddate, filename=None):
     if not isinstance(station, WeatherStation):
@@ -610,6 +622,7 @@ def getASOSData(station, startdate, enddate, filename=None):
 
     data = station.getASOSData(startdate, enddate, filename=filename)
     return data
+
 
 def getWundergroundData(station, startdate, enddate, filename=None):
     if not isinstance(station, WeatherStation):
