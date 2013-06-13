@@ -29,12 +29,13 @@ matplotlib.rcParams['timezone'] = 'UTC'
 class WeatherStation(object):
     """An object representing a weather station."""
 
-    def __init__(self, sta_id, city=None, state=None, country=None, lat=None, lon=None):
+    def __init__(self, sta_id, city=None, state=None, country=None, lat=None, lon=None, max_attempts=10):
         self.sta_id = sta_id
         self.city = city
         self.state = state
         self.country = country
-        self.position = datatypes.position(lat,lon)
+        self.position = datatypes.position(lat, lon)
+        self.max_attempts = max_attempts
         if self.state:
             self.name = "%s, %s" % (self.city, self.state)
         else:
@@ -191,7 +192,7 @@ class WeatherStation(object):
         errorfile.close()
         return status
 
-    def _attempt_download(self, timestamp, src, attempt=0, max_attempts=10):
+    def _attempt_download(self, timestamp, src, attempt=0):
         '''
         recursively calls _attempt_download at most *max_attempts* times.
         returns the status of the download
@@ -200,11 +201,10 @@ class WeatherStation(object):
             *timestamp* : a pandas timestamp object
             *src* : 'asos' or 'wunderground'
             *attempt* : the current attempt number
-            *max_attempts* : the max number of tries to download a file (default=10)
         '''
         attempt += 1
         status = self._fetch_data(timestamp, src=src)
-        if status == 'not there' and attempt < max_attempts:
+        if status == 'not there' and attempt < self.max_attempts:
             print(attempt)
             status, attempt = self._attempt_download(timestamp, src, attempt=attempt)
 
@@ -555,7 +555,7 @@ def _process_precip(dateval, p1):
 
         tdelta = dateval[n] - dateval[n-1]
         if p1[n] < p1[n-1] or dateval[n].minute == RT or tdelta.seconds/60 != 5:
-            p2[n] = p1[n]/100.
+            p2[n] = p1[n]
 
         #elif tdelta.seconds/60 == 5 and dateval[n].minute != RT:
         else:
