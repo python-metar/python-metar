@@ -44,6 +44,7 @@ class WeatherStation(object):
         self.wunderground = self._set_cookies(src='wunderground')
         self.asos = self._set_cookies(src='asos')
         self.errorfile = 'data/%s_errors.log' % (sta_id,)
+        self.data = {}
 
     def _find_dir(self, src, step):
         '''
@@ -377,8 +378,7 @@ class WeatherStation(object):
         >>> pdx = Station.getStationByID('KPDX')
         >>> data = pdx.getASOSdata(startdate, enddate)
         '''
-        data = self._get_data(startdate, enddate, 'asos', filename)
-        return data
+        self.data['asos'] = self._get_data(startdate, enddate, 'asos', filename)
 
     def getWundergroundData(self, startdate, enddate, filename=None):
         '''
@@ -399,8 +399,7 @@ class WeatherStation(object):
         >>> pdx = Station.getStationByID('KPDX')
         >>> data = pdx.getWundergroundData(startdate, enddate)
         '''
-        data = self._get_data(startdate, enddate, 'wunderground', filename)
-        return data
+        self.data['wunder'] = self._get_data(startdate, enddate, 'wunderground', filename)
 
     def _get_compiled_files(self, source):
         compdir = self._find_dir(source, 'compile')

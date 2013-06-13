@@ -182,11 +182,11 @@ def test_getASOSData_columns():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-2-1'
-    data = sta.getASOSData(start, end)
+    sta.getASOSData(start, end)
     known_columns = ['Sta', 'Date', 'Precip', 'Temp',
                      'DewPnt', 'WindSpd', 'WindDir',
                      'AtmPress', 'SkyCover']
-    for col in data.columns:
+    for col in sta.data['asos'].columns:
         assert_in(col, known_columns)
     pass
 
@@ -194,19 +194,19 @@ def test_getASOSData_index():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-9-1'
-    data = sta.getASOSData(start, end)
-    assert_true(data.index.is_unique)
+    sta.getASOSData(start, end)
+    assert_true(sta.data['asos'].index.is_unique)
     pass
 
 def test_getWundergroundData_columns():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-2-1'
-    data = sta.getWundergroundData(start, end)
+    sta.getWundergroundData(start, end)
     known_columns = ['Sta', 'Date', 'Precip', 'Temp',
                      'DewPnt', 'WindSpd', 'WindDir',
                      'AtmPress', 'SkyCover']
-    for col in data.columns:
+    for col in sta.data['wunder'].columns:
         assert_in(col, known_columns)
     pass
 
@@ -214,8 +214,8 @@ def test_getWundergroundData_index():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-9-1'
-    data = sta.getWundergroundData(start, end)
-    assert_true(data.index.is_unique)
+    sta.getWundergroundData(start, end)
+    assert_true(sta.data['wunder'].index.is_unique)
     pass
 
 def test_getDataBadSource():
@@ -228,7 +228,7 @@ def test_getDataGoodSource():
     sta, ts = makeStationAndTS()
     start = '2012-1-1'
     end = '2012-2-1'
-    data  = sta._get_data(start, end, 'asos', None)
+    sta._get_data(start, end, 'asos', None)
 
 def test_getDataSaveFile():
     sta, ts = makeStationAndTS()
@@ -268,7 +268,7 @@ def test_check_dirs():
     pass
 
 def test_date_asos():
-    teststring = '24229KPDX PDX20010101000010001/01/01 00:00:31  5-MIN KPDX' 
+    teststring = '24229KPDX PDX20010101000010001/01/01 00:00:31  5-MIN KPDX'
     knowndate = dt.datetime(2001, 1, 1, 0, 0)
     assert_equal(station._date_ASOS(teststring), knowndate)
     pass
@@ -315,21 +315,21 @@ def test_getStationByID():
 
 def test_getASOSData_station():
     sta, ts = makeStationAndTS()
-    data = station.getASOSData(sta, '2012-1-1', '2012-2-1')
-    data = station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
+    station.getASOSData(sta, '2012-1-1', '2012-2-1')
+    station.getASOSData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getASOSData_string():
-    data = station.getASOSData('KPDX', '2012-1-1', '2012-2-1')
-    data = station.getASOSData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
+    station.getASOSData('KPDX', '2012-1-1', '2012-2-1')
+    station.getASOSData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getWundergroundData_station():
     sta, ts = makeStationAndTS()
-    data = station.getWundergroundData(sta, '2012-1-1', '2012-2-1')
-    data = station.getWundergroundData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
+    station.getWundergroundData(sta, '2012-1-1', '2012-2-1')
+    station.getWundergroundData(sta, '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_getWundergroundData_string():
-    data = station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')
-    data = station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
+    station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')
+    station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
 
 def test_loadCompData_asos():
     sta, ts = makeStationAndTS()
