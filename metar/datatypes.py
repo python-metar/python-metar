@@ -2,7 +2,7 @@
 #    Python classes to represent dimensioned quantities used in weather reports
 #
 #    Copyright 2004    Tom Pollard
-# 
+#
 import re
 from math import sin, cos, atan, sqrt
 
