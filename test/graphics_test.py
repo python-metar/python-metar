@@ -22,10 +22,19 @@ class test_graphics():
         assert_true(isinstance(ax2, matplotlib.axes.Axes))
         pass
 
-    def test_windRose(self):
+    def test_windRose_kt(self):
         '''Confirm that windRose returns an mpl figure and one axis'''
         fig, ax1 = graphics.windRose(self.sta.data['asos'],
-                                     fname='test/test_windRose.png')
+                                     fname='test/test_windRose_kt.png',
+                                     mph=False)
+        assert_true(isinstance(fig, matplotlib.figure.Figure))
+        assert_true(isinstance(ax1, matplotlib.axes.Axes))
+
+    def test_windRose_mph(self):
+        '''Confirm that windRose returns an mpl figure and one axis'''
+        fig, ax1 = graphics.windRose(self.sta.data['asos'],
+                                     fname='test/test_windRose_mph.png',
+                                     mph=False)
         assert_true(isinstance(fig, matplotlib.figure.Figure))
         assert_true(isinstance(ax1, matplotlib.axes.Axes))
 
