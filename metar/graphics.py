@@ -66,7 +66,7 @@ def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
 
     if fname is not None:
         fig.tight_layout()
-        fig.savefig(fname)
+        fig.savefig(fname, dpi=300, bbox_inches='tight')
 
     return fig, ax
 
@@ -130,12 +130,13 @@ def rainClock(dataframe, raincol='Precip', fname=None):
 
     if fname is not None:
         fig.tight_layout()
-        fig.savefig(fname)
+        fig.savefig(fname, dpi=300, bbox_inches='tight')
 
     return fig, (ax1, ax2)
 
 
-def windRose(dataframe, speedcol='WindSpd', dircol='WindDir', fname=None):
+def windRose(dataframe, speedcol='WindSpd', dircol='WindDir', mph=False,
+             fname=None):
     '''
     Plots a Wind Rose. Feed it a dataframe with 'WindSpd' (knots) and
     'WindDir' degrees clockwise from north (columns)
@@ -160,16 +161,23 @@ def windRose(dataframe, speedcol='WindSpd', dircol='WindDir', fname=None):
 
     # number of total and zero-wind observations
     total = np.float(dataframe.shape[0])
+    if mph:
+        factor =  1.15
+        units = 'mph'
+    else:
+        factor = 1
+        units = 'kt'
+
     calm = np.float(dataframe[dataframe[speedcol] == 0].shape[0])/total * 100
 
     # loop through the speed bins
     for spd, clr in zip(speedBins, colors):
-        barLen = _get_wind_counts(dataframe, spd, speedcol, dircol)
+        barLen = _get_wind_counts(dataframe, spd, speedcol, dircol, factor=factor)
         barLen = barLen/total
         barDir, barWidth = _convert_dir_to_left_radian(np.array(barLen.index))
         ax1.bar(barDir, barLen, width=barWidth, linewidth=0.50,
-                edgecolor=(0.25, 0.25, 0.25), color=clr, label=r"<%d kt" % spd,
-                alpha=0.8)
+                edgecolor=(0.25, 0.25, 0.25), color=clr, alpha=0.8,
+                label=r"<%d %s" % (spd, units))
 
     # format the plot's axes
     ax1.legend(loc='lower right', bbox_to_anchor=(1.10, -0.13), fontsize=8)
@@ -183,13 +191,13 @@ def windRose(dataframe, speedcol='WindSpd', dircol='WindDir', fname=None):
 
     if fname is not None:
         fig.tight_layout()
-        fig.savefig(fname)
+        fig.savefig(fname, dpi=300, bbox_inches='tight')
 
     return fig, ax1
 
 
-def _get_wind_counts(dataframe, maxSpeed, speedcol, dircol):
-    group = dataframe[dataframe[speedcol] < maxSpeed].groupby(by=dircol)
+def _get_wind_counts(dataframe, maxSpeed, speedcol, dircol, factor=1):
+    group = dataframe[dataframe[speedcol]*factor < maxSpeed].groupby(by=dircol)
     counts = group.size()
     return counts[counts.index != 0]
 
