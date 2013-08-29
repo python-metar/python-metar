@@ -42,6 +42,7 @@ class WeatherStation(object):
             self.name = self.city
 
         self.wunderground = self._set_cookies(src='wunderground')
+        self.wunder_nonairport = self._set_cookies(src='wunder_nonairport')
         self.asos = self._set_cookies(src='asos')
         self.errorfile = 'data/%s_errors.log' % (sta_id,)
         self.data = {}
@@ -76,7 +77,7 @@ class WeatherStation(object):
         else:
             ext = 'csv'
 
-        if src.lower() == 'wunderground' or step == 'final':
+        if src.lower() in ['wunderground', 'wunder_nonairport'] or step == 'final':
             datefmtstr = '%Y%m%d'
         else:
             datefmtstr = '%Y%m'
@@ -88,7 +89,7 @@ class WeatherStation(object):
         function that returns a urllib2 opener for retrieving data from *src*
 
         input:
-            *src* : 'asos' or 'wunderground'
+            *src* : 'asos' or 'wunderground' or 'wunder_nonairport'
         '''
         jar = cookielib.CookieJar()
         handler = urllib2.HTTPCookieProcessor(jar)
@@ -102,9 +103,15 @@ class WeatherStation(object):
                 opener.open(url1)
                 opener.open(url2)
                 opener.open(url3)
+
             elif src.lower() == 'asos':
                 url = 'ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/'
                 opener.open(url)
+
+            elif src.lower() == 'wunder_nonairport':
+                url = 'http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=MEGKO3&day=1&year=2013&month=1&graphspan=day&format=1'
+                opener.open(url)
+
         except urllib2.URLError:
             print('connection to %s not available. working locally' % src)
 
@@ -127,6 +134,12 @@ class WeatherStation(object):
             endurl = 'DailyHistory.html?&&theprefset=SHOWMETAR&theprefvalue=1&format=1'
             datestring = date.strftime('%Y/%m/%d')
             url = '%s/%s/%s' % (baseurl, datestring, endurl)
+
+        elif src.lower() == 'wunder_nonairport':
+            baseurl = 'http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=%s' % self.sta_id
+            endurl = '&day=%s&year=%s&month=%s&graphspan=day&format=1' % \
+                (date.strftime('%d'), date.strftime('%Y'), date.strftime('%m'))
+            url = '%s%s' % (baseurl, endurl)
 
         elif src.lower() == 'asos':
             baseurl = 'ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin/6401-'
@@ -172,6 +185,9 @@ class WeatherStation(object):
             if src.lower() == 'wunderground':
                 start = 2
                 source = self.wunderground
+            elif src.lower() == 'wunder_nonairport':
+                start = 2
+                source = self.wunder_nonairport
             elif src.lower() == 'asos':
                 start = 0
                 source = self.asos
@@ -179,7 +195,14 @@ class WeatherStation(object):
             try:
                 webdata = source.open(url)
                 weblines = webdata.readlines()[start:]
-                outfile.writelines(weblines)
+
+                if src != 'wunder_nonairport':
+                    outfile.writelines(weblines)
+                else:
+                    for line in weblines:
+                        if '<br>' not in line:
+                            outfile.write(line)
+
             except:
                 print('error on: %s\n' % (url,))
                 outfile.close()
@@ -328,8 +351,12 @@ class WeatherStation(object):
         '''
         _check_src(source)
 
-        freq = {'asos': 'MS',
-                'wunderground': 'D'}
+        freq = {
+            'asos': 'MS',
+            'wunderground': 'D',
+            'wunder_nonairport': 'D'
+        }
+
         try:
             timestamps = pandas.DatetimeIndex(start=startdate, end=enddate,
                                               freq=freq[source])
@@ -401,6 +428,28 @@ class WeatherStation(object):
         '''
         self.data['wunder'] = self._get_data(startdate, enddate, 'wunderground', filename)
 
+    def getWunderground_NonAirportData(self, startdate, enddate, filename=None):
+        '''
+        This function will return non-airport Wunderground data in the form of a pandas dataframe
+        for the station between *startdate* and *enddate*.
+
+        Input:
+            *startdate* : string representing the earliest date for the data
+            *enddate* : string representing the latest data for the data
+
+        Returns:
+            *data* : a pandas data frame of the Wunderground data for this station
+
+        Example:
+        >>> import metar.Station as Station
+        >>> startdate = '2012-1-1'
+        >>> enddate = 'September 30, 2012'
+        >>> pdx = Station.getStationByID('KPDX')
+        >>> data = pdx.getWunderground_NonAirportData(startdate, enddate)
+        '''
+        self.data['wunder_nonairport'] = self._get_data(startdate, enddate, 'wunder_nonairport', filename)
+
+
     def _get_compiled_files(self, source):
         compdir = self._find_dir(source, 'compile')
         _check_dirs(compdir.split(os.path.sep))
@@ -458,7 +507,7 @@ def _check_src(src):
     '''
     checks that a *src* value is valid
     '''
-    if src.lower() not in ('wunderground', 'asos'):
+    if src.lower() not in ('wunderground', 'asos', 'wunder_nonairport'):
         raise ValueError('src must be one of "wunderground" or "asos"')
 
 
