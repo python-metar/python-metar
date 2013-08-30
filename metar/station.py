@@ -9,6 +9,7 @@ import datetime
 import urllib2
 import cookielib
 import os
+import pdb
 
 # math stuff
 import numpy as np
@@ -21,7 +22,7 @@ import metar
 import datatypes
 
 __all__ = ['getAllStations', 'getStationByID', 'WeatherStation',
-           'getASOSData', 'getWundergroundData']
+           'getASOSData', 'getWundergroundData', 'getWunderground_NonAirportData']
 matplotlib.rcParams['timezone'] = 'UTC'
 
 
@@ -186,7 +187,7 @@ class WeatherStation(object):
                 start = 2
                 source = self.wunderground
             elif src.lower() == 'wunder_nonairport':
-                start = 2
+                start = 1
                 source = self.wunder_nonairport
             elif src.lower() == 'asos':
                 start = 0
@@ -200,8 +201,8 @@ class WeatherStation(object):
                     outfile.writelines(weblines)
                 else:
                     for line in weblines:
-                        if '<br>' not in line:
-                            outfile.write(line)
+                        if line != '<br>\n':
+                            outfile.write(line.strip() + '\n')
 
             except:
                 print('error on: %s\n' % (url,))
@@ -257,55 +258,66 @@ class WeatherStation(object):
             datain = open(rawfilename, 'r')
             dataout = open(flatfilename, 'w')
 
-            headers = 'Sta,Date,Precip,Temp,DewPnt,' \
-                      'WindSpd,WindDir,AtmPress,SkyCover\n'
-            dataout.write(headers)
+            if src.lower() in ['asos', 'wunderground']:
 
-            dates = []
-            rains = []
-            temps = []
-            dewpt = []
-            windspd = []
-            winddir = []
-            press = []
-            cover = []
+                headers = 'Sta,Date,Precip,Temp,DewPnt,' \
+                          'WindSpd,WindDir,AtmPress,SkyCover\n'
+                dataout.write(headers)
 
-            errorfile = open(self.errorfile, 'a')
-            for line in datain:
+                dates = []
+                rains = []
+                temps = []
+                dewpt = []
+                windspd = []
+                winddir = []
+                press = []
+                cover = []
+
+                errorfile = open(self.errorfile, 'a')
+                for line in datain:
+                    if src.lower() == 'asos':
+                        metarstring = line
+                        dates.append(_date_ASOS(metarstring))
+                    elif src.lower() == 'wunderground':
+                        row = line.split(',')
+                        if len(row) > 2:
+                            metarstring = row[-3]
+                            datestring = row[-1].split('<')[0]
+                            dates.append(_parse_date(datestring))
+                        else:
+                            metarstring = None
+
+                    if metarstring is not None:
+                        obs = metar.Metar(metarstring, errorfile=errorfile)
+                        rains = _append_val(obs.precip_1hr, rains, fillNone=0.0)
+                        temps = _append_val(obs.temp, temps)
+                        dewpt = _append_val(obs.dewpt, dewpt)
+                        windspd = _append_val(obs.wind_speed, windspd)
+                        winddir = _append_val(obs.wind_dir, winddir)
+                        press = _append_val(obs.press, press)
+                        cover.append(_process_sky_cover(obs))
+
+                errorfile.close()
+                rains = np.array(rains)
+                dates = np.array(dates)
+
                 if src == 'asos':
-                    metarstring = line
-                    dates.append(_date_ASOS(metarstring))
+                    final_precip = _process_precip(dates, rains)
                 else:
-                    row = line.split(',')
-                    if len(row) > 2:
-                        metarstring = row[-3]
-                        datestring = row[-1].split('<')[0]
-                        dates.append(_parse_date(datestring))
-                    else:
-                        metarstring = None
+                    final_precip = rains
 
-                if metarstring is not None:
-                    obs = metar.Metar(metarstring, errorfile=errorfile)
-                    rains = _append_val(obs.precip_1hr, rains, fillNone=0.0)
-                    temps = _append_val(obs.temp, temps)
-                    dewpt = _append_val(obs.dewpt, dewpt)
-                    windspd = _append_val(obs.wind_speed, windspd)
-                    winddir = _append_val(obs.wind_dir, winddir)
-                    press = _append_val(obs.press, press)
-                    cover.append(_process_sky_cover(obs))
+                for row in zip([self.sta_id]*rains.shape[0], dates, final_precip,
+                               temps, dewpt, windspd, winddir, press, cover):
+                    dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
 
-            errorfile.close()
-            rains = np.array(rains)
-            dates = np.array(dates)
-
-            if src == 'asos':
-                final_precip = _process_precip(dates, rains)
             else:
-                final_precip = rains
+                headers = 'Time,TemperatureC,DewpointC,PressurehPa,WindDirection,' \
+                           'WindDirectionDegrees,WindSpeedKMH,WindSpeedGustKMH,' \
+                           'Humidity,HourlyPrecipMM,Conditions,Clouds,dailyrainMM,' \
+                           'SolarRadiationWatts/m^2,SoftwareType,DateUTC\n'
 
-            for row in zip([self.sta_id]*rains.shape[0], dates, final_precip,
-                           temps, dewpt, windspd, winddir, press, cover):
-                dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
+                #dataout.write(headers)
+                dataout.write(datain.read())
 
             datain.close()
             dataout.close()
@@ -322,13 +334,18 @@ class WeatherStation(object):
             *timestamp* : a pandas timestamp object
             *src* : 'asos' or 'wunderground'
         '''
+        if src in ['asos', 'wunderground']:
+            icol = 1
+        elif src == 'wunder_nonairport':
+            icol = 0
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(flatfilename):
             flatfilename, flatstatus = self._process_file(timestamp, src)
 
         flatstatus = _check_file(flatfilename)
         if flatstatus == 'ok':
-            data = pandas.read_csv(flatfilename, index_col=[1], parse_dates=True)
+            data = pandas.read_csv(flatfilename, index_col=False, parse_dates=True)
+            data.set_index(data.columns[icol], inplace=True)
 
         else:
             data = None
@@ -677,3 +694,11 @@ def getWundergroundData(station, startdate, enddate, filename=None):
 
     data = station.getWundergroundData(startdate, enddate, filename=filename)
     return data
+
+def getWunderground_NonAirportData(station, startdate, enddate, filename=None):
+    if not isinstance(station, WeatherStation):
+        station = getStationByID(station)
+
+    data = station.getWunderground_NonAirportData(startdate, enddate, filename=filename)
+    return data
+
