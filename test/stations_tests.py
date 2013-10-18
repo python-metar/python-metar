@@ -5,7 +5,7 @@ import numpy as np
 import datetime as dt
 import os
 import pandas
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import matplotlib.dates as mdates
 
 class fakeClass(object):
@@ -71,14 +71,14 @@ class test_station():
         pass
 
     def test_set_cookies(self):
-        assert_true(isinstance(self.sta.asos, urllib2.OpenerDirector))
-        assert_true(isinstance(self.sta.wunderground, urllib2.OpenerDirector))
+        assert_true(isinstance(self.sta.asos, urllib.request.OpenerDirector))
+        assert_true(isinstance(self.sta.wunderground, urllib.request.OpenerDirector))
         pass
 
     def test_url_by_date(self):
         testurl1 = self.sta._url_by_date(self.ts, src='wunderground')
         testurl2 = self.sta._url_by_date(self.ts, src='asos')
-        print(self.ts)
+        print((self.ts))
         knownurl1 = "http://www.wunderground.com/history/airport/%s" \
                     "/2001/01/01/DailyHistory.html?&&theprefset=SHOWMETAR" \
                     "&theprefvalue=1&format=1" % self.sta.sta_id

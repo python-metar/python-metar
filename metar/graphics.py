@@ -125,7 +125,7 @@ def psychromograph(dataframe, freq='hourly', ax=None, col='AtmPress', fname=None
 
 
 def temperaturePlot(dataframe, freq='hourly', ax=None, col='Temp', fname=None):
-    ylabel = u'%s Temperature (\xB0C)' % freq.title()
+    ylabel = '%s Temperature (\xB0C)' % freq.title()
     fig, ax = _plotter(dataframe, col, ylabel, freq=freq,
                        how='mean', ax=ax, fname=fname)
     return fig, ax
