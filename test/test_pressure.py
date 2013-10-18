@@ -1,5 +1,5 @@
 import unittest
-from metar.Datatypes import pressure, UnitsError
+from metar.datatypes import pressure, UnitsError
 
 class PressureTest(unittest.TestCase):
   

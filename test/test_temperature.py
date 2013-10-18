@@ -1,5 +1,5 @@
 import unittest
-from metar.Datatypes import temperature, UnitsError
+from metar.datatypes import temperature, UnitsError
 
 class TemperatureTest(unittest.TestCase):
   

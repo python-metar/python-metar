@@ -1,5 +1,5 @@
 import unittest
-from metar import Metar
+from metar import metar
 
 # METAR fragments used in tests, below
 sta_time = "KEWR 101651Z "
@@ -13,27 +13,24 @@ tomorrow = today + timedelta(days=1)
 class MetarTest(unittest.TestCase):
 
   def raisesParserError(self, code):
-    self.assertRaises(Metar.ParserError, Metar.Metar, code )
-
-  def raisesParserError(self, code):
-    self.assertRaises(Metar.ParserError, Metar.Metar, code )
+    self.assertRaises(metar.ParserError, metar.Metar, code, allexceptions=True )
 
   def test_010_parseType_default(self):
     """Check default value of the report type."""
-    self.assertEqual( Metar.Metar("KEWR").type, "METAR" )
+    self.assertEqual( metar.Metar("KEWR").type, "METAR" )
 
   def test_011_parseType_legal(self):
     """Check parsing of the report type."""
-    self.assertEqual( Metar.Metar("METAR").type, "METAR" )
-    self.assertEqual( Metar.Metar("SPECI").type, "SPECI" )
+    self.assertEqual( metar.Metar("METAR").type, "METAR" )
+    self.assertEqual( metar.Metar("SPECI").type, "SPECI" )
     self.raisesParserError("TAF" )
 
   def test_020_parseStation_legal(self):
     """Check parsing of the station code."""
-    self.assertEqual( Metar.Metar("KEWR").station_id, "KEWR" )
-    self.assertEqual( Metar.Metar("METAR KEWR").station_id, "KEWR" )
-    self.assertEqual( Metar.Metar("BIX1").station_id, "BIX1" )
-    self.assertEqual( Metar.Metar("K256").station_id, "K256" )
+    self.assertEqual( metar.Metar("KEWR").station_id, "KEWR" )
+    self.assertEqual( metar.Metar("METAR KEWR").station_id, "KEWR" )
+    self.assertEqual( metar.Metar("BIX1").station_id, "BIX1" )
+    self.assertEqual( metar.Metar("K256").station_id, "K256" )
 
   def test_021_parseStation_illegal(self):
     """Check rejection of illegal station codes."""
@@ -45,7 +42,7 @@ class MetarTest(unittest.TestCase):
 
   def test_030_parseTime_legal(self):
     """Check parsing of the time stamp."""
-    report =  Metar.Metar("KEWR 101651Z")
+    report =  metar.Metar("KEWR 101651Z")
     self.assertEqual( report.time.day, 10 )
     self.assertEqual( report.time.hour, 16 )
     self.assertEqual( report.time.minute, 51 )
@@ -58,7 +55,7 @@ class MetarTest(unittest.TestCase):
     """Check that the year can be specified."""
     other_year = 2003
 
-    report =  Metar.Metar("KEWR 101651Z", year=other_year)
+    report =  metar.Metar("KEWR 101651Z", year=other_year)
     self.assertEqual( report.time.year, other_year )
 
   def test_032_parseTime_specify_month(self):
@@ -66,7 +63,7 @@ class MetarTest(unittest.TestCase):
     last_month = ((today.month - 2) % 12) + 1
     last_year = today.year - 1
 
-    report =  Metar.Metar("KEWR 101651Z", month=last_month)
+    report =  metar.Metar("KEWR 101651Z", month=last_month)
     self.assertEqual( report.time.month, last_month )
 
   def test_033_parseTime_auto_month(self):
@@ -77,7 +74,7 @@ class MetarTest(unittest.TestCase):
         last_year = today.year - 1
 
         timestr = "%02d1651Z" % (next_day)
-        report =  Metar.Metar("KEWR " + timestr)
+        report =  metar.Metar("KEWR " + timestr)
         self.assertEqual( report.time.day, next_day )
         self.assertEqual( report.time.month, last_month )
         if today.month > 1:
@@ -90,7 +87,7 @@ class MetarTest(unittest.TestCase):
     next_month = (today.month % 12) + 1
     last_year = today.year - 1
 
-    report =  Metar.Metar("KEWR 101651Z", month=next_month)
+    report =  metar.Metar("KEWR 101651Z", month=next_month)
     self.assertEqual( report.time.month, next_month )
     if next_month > 1:
         self.assertEqual( report.time.year, last_year )
@@ -105,7 +102,7 @@ class MetarTest(unittest.TestCase):
         last_year = today.year - 1
 
         timestr = "%02d1651Z" % (next_day)
-        report =  Metar.Metar("KEWR " + timestr, month=1)
+        report =  metar.Metar("KEWR " + timestr, month=1)
         self.assertEqual( report.time.day, next_day )
         self.assertEqual( report.time.month, 1 )
         if today.month > 1:
@@ -115,19 +112,19 @@ class MetarTest(unittest.TestCase):
 
   def test_040_parseModifier_default(self):
     """Check default 'modifier' value."""
-    self.assertEqual( Metar.Metar("KEWR").mod, "AUTO" )
+    self.assertEqual( metar.Metar("KEWR").mod, "AUTO" )
 
   def test_041_parseModifier(self):
     """Check parsing of 'modifier' groups."""
-    self.assertEqual( Metar.Metar(sta_time+"AUTO").mod, "AUTO" )
-    self.assertEqual( Metar.Metar(sta_time+"COR").mod, "COR" )
+    self.assertEqual( metar.Metar(sta_time+"AUTO").mod, "AUTO" )
+    self.assertEqual( metar.Metar(sta_time+"COR").mod, "COR" )
 
   def test_042_parseModifier_nonstd(self):
     """Check parsing of nonstandard 'modifier' groups."""
 
     def report(mod_group):
       """(Macro) Return Metar object from parsing the given modifier group."""
-      return Metar.Metar(sta_time+mod_group)
+      return metar.Metar(sta_time+mod_group)
 
     self.assertEqual( report("RTD").mod, "RTD" )
     self.assertEqual( report("TEST").mod, "TEST" )
@@ -144,14 +141,14 @@ class MetarTest(unittest.TestCase):
 
   def test_043_parseModifier_illegal(self):
     """Check rejection of illegal 'modifier' groups."""
-#    self.raisesParserError( "KEWR AUTO" )
+    #self.raisesParserError( "KEWR AUTO" )
     self.raisesParserError( sta_time+"auto" )
     self.raisesParserError( sta_time+"CCH" )
     self.raisesParserError( sta_time+"MAN" )
 
   def test_140_parseWind(self):
     """Check parsing of wind groups."""
-    report = Metar.Metar(sta_time+"09010KT" )
+    report = metar.Metar(sta_time+"09010KT" )
     self.assertEqual( report.wind_dir.value(), 90 )
     self.assertEqual( report.wind_speed.value(), 10 )
     self.assertEqual( report.wind_gust, None )
@@ -159,36 +156,36 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report.wind_dir_from, None )
     self.assertEqual( report.wind(), "E at 10 knots" )
 
-    report = Metar.Metar(sta_time+"09010MPS" )
+    report = metar.Metar(sta_time+"09010MPS" )
     self.assertEqual( report.wind_speed.value(), 10 )
     self.assertEqual( report.wind_speed.value("KMH"), 36 )
     self.assertEqual( report.wind(), "E at 19 knots" )
     self.assertEqual( report.wind("MPS"), "E at 10 mps" )
     self.assertEqual( report.wind("KMH"), "E at 36 km/h" )
 
-    report = Metar.Metar(sta_time+"09010KMH" )
+    report = metar.Metar(sta_time+"09010KMH" )
     self.assertEqual( report.wind_speed.value(), 10 )
     self.assertEqual( report.wind(), "E at 5 knots" )
     self.assertEqual( report.wind('KMH'), "E at 10 km/h" )
 
-    report = Metar.Metar(sta_time+"090010KT" )
+    report = metar.Metar(sta_time+"090010KT" )
     self.assertEqual( report.wind_dir.value(), 90 )
     self.assertEqual( report.wind_speed.value(), 10 )
 
-    report = Metar.Metar(sta_time+"000000KT" )
+    report = metar.Metar(sta_time+"000000KT" )
     self.assertEqual( report.wind_dir.value(), 0 )
     self.assertEqual( report.wind_speed.value(), 0 )
     self.assertEqual( report.wind(), "calm" )
 
-    report = Metar.Metar(sta_time+"VRB03KT" )
+    report = metar.Metar(sta_time+"VRB03KT" )
     self.assertEqual( report.wind_dir, None )
     self.assertEqual( report.wind_speed.value(), 3 )
     self.assertEqual( report.wind(), "variable at 3 knots" )
 
-    report = Metar.Metar(sta_time+"VRB00KT" )
+    report = metar.Metar(sta_time+"VRB00KT" )
     self.assertEqual( report.wind(), "calm" )
 
-    report = Metar.Metar(sta_time+"VRB03G40KT" )
+    report = metar.Metar(sta_time+"VRB03G40KT" )
     self.assertEqual( report.wind_dir, None )
     self.assertEqual( report.wind_speed.value(), 3 )
     self.assertEqual( report.wind_gust.value(), 40 )
@@ -196,10 +193,10 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report.wind_dir_to, None )
     self.assertEqual( report.wind(), "variable at 3 knots, gusting to 40 knots" )
 
-    report = Metar.Metar(sta_time+"21010G30KT" )
+    report = metar.Metar(sta_time+"21010G30KT" )
     self.assertEqual( report.wind(), "SSW at 10 knots, gusting to 30 knots" )
 
-    report = Metar.Metar(sta_time+"21010KT 180V240" )
+    report = metar.Metar(sta_time+"21010KT 180V240" )
     self.assertEqual( report.wind_dir.value(), 210 )
     self.assertEqual( report.wind_speed.value(), 10 )
     self.assertEqual( report.wind_gust, None )
@@ -212,7 +209,7 @@ class MetarTest(unittest.TestCase):
 
     def report(wind_group):
       """(Macro) Return Metar object from parsing the given wind group."""
-      return Metar.Metar(sta_time+wind_group)
+      return metar.Metar(sta_time+wind_group)
 
     self.assertEqual( report("OOOOOKT").wind_speed.value(), 0 )
     self.assertEqual( report("OOOOOKT").wind(), "calm" )
@@ -260,7 +257,7 @@ class MetarTest(unittest.TestCase):
 
     def report(vis_group):
       """(Macro) Return Metar object for a report containing the given visibility group."""
-      return Metar.Metar(sta_time+"09010KT "+vis_group)
+      return metar.Metar(sta_time+"09010KT "+vis_group)
 
     self.assertEqual( report("10SM").vis.value(), 10 )
     self.assertEqual( report("10SM").vis_dir, None )
@@ -325,7 +322,7 @@ class MetarTest(unittest.TestCase):
 
     def report(vis_group):
       """(Macro) Return Metar object for a report containing the given visibility group."""
-      return Metar.Metar(sta_time+"09010KT "+vis_group)
+      return metar.Metar(sta_time+"09010KT "+vis_group)
 
     self.assertEqual( report("5000N").vis_dir.compass(), "N" )
     self.assertEqual( report("5000N").vis_dir.value(), 0 )
@@ -349,7 +346,7 @@ class MetarTest(unittest.TestCase):
 
     def report(vis_group):
       """(Macro) Return Metar object for a report containing the given visibility group."""
-      return Metar.Metar(sta_time+"09010KT "+vis_group)
+      return metar.Metar(sta_time+"09010KT "+vis_group)
 
     self.assertEqual( report("CAVOK 02/01").vis.value(), 10000 )
     self.assertEqual( report("CAVOK 02/01").vis_dir, None )
@@ -369,7 +366,7 @@ class MetarTest(unittest.TestCase):
     def report(runway_state):
       """(Macro) Return Metar object for a report containing the given runway state group"""
       sample_metar = 'EGNX 191250Z VRB03KT 9999 -RASN FEW008 SCT024 BKN046 M01/M03 Q0989 '
-      return Metar.Metar(sample_metar+' '+runway_state)
+      return metar.Metar(sample_metar+' '+runway_state)
 
     self.assertEqual( report('09690692 27550591').temp.value(), -1.0 )
     self.assertEqual( report('09690692 27550591').remarks(), "" )
@@ -386,7 +383,7 @@ class MetarTest(unittest.TestCase):
       forecast and remarks.
       """
       sample_metar = sta_time+"09010KT 10SM -SN OVC020 23/05 Q1001"
-      return Metar.Metar(sample_metar+' '+trend_group+' '+remarks)
+      return metar.Metar(sample_metar+' '+trend_group+' '+remarks)
 
     self.assertEqual( report('TEMPO FM0306 BKN030CU').trend(), 'TEMPO FM0306 BKN030CU' )
     self.assertEqual( report('TEMPO FM0306 BKN030CU').temp.value(), 23.0 )

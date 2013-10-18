@@ -1,5 +1,5 @@
 import unittest
-from metar.Datatypes import distance, UnitsError
+from metar.datatypes import distance, UnitsError
 
 class DistanceTest(unittest.TestCase):
   
