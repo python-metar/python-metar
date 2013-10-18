@@ -32,6 +32,7 @@ class test_station():
     def setup(self):
         self.sta = station.WeatherStation('KSFO', city='Portland', state='OR',
                                           country='Cascadia', lat=999, lon=999)
+        self.sta2 = station.WeatherStation('MWPKO3')
         self.start = dt.datetime(2001, 1, 1)
         self.end = dt.datetime(2001, 9, 1)
         self.sta.getASOSData(self.start, self.end)
@@ -296,6 +297,14 @@ class test_station():
         station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1')
         station.getWundergroundData('KPDX', '2012-1-1', '2012-2-1', filename='testfile.csv')
 
+    def test_getWunderground_NonAirport_station(self):
+        station.getWunderground_NonAirportData(self.sta2, '2012-1-1', '2012-2-1')
+        station.getWunderground_NonAirportData(self.sta2, '2012-1-1', '2012-2-1', filename='testfile.csv')
+
+    def test_getWunderground_NonAirport_string(self):
+        station.getWunderground_NonAirportData('MWPKO3', '2012-1-1', '2012-2-1')
+        station.getWunderground_NonAirportData('MWPKO3', '2012-1-1', '2012-2-1', filename='testfile.csv')
+
     def test_loadCompData_asos(self):
         self.sta.loadCompiledFile('asos', filename='testfile.csv')
         self.sta.loadCompiledFile('asos', filenum=1)
@@ -303,3 +312,7 @@ class test_station():
     def test_loadCompData_wunderground(self):
         self.sta.loadCompiledFile('wunderground', filename='testfile.csv')
         self.sta.loadCompiledFile('wunderground', filenum=1)
+
+    def test_loadCompData_wunderground_nonairport(self):
+        self.sta2.loadCompiledFile('wunder_nonairport', filename='testfile.csv')
+        self.sta2.loadCompiledFile('wunder_nonairport', filenum=1)

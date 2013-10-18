@@ -4,6 +4,7 @@ from metar import graphics
 import datetime as dt
 import pandas
 import matplotlib
+import matplotlib.pyplot as plt
 
 class test_graphics():
     def setup(self):
@@ -12,6 +13,47 @@ class test_graphics():
         self.start = dt.datetime(2001, 1, 1)
         self.ts = pandas.DatetimeIndex(start=self.start, freq='D', periods=1)[0]
         self.sta.getASOSData('2001-1-1', '2001-2-1')
+
+    def teardown(self):
+        plt.close('all')
+
+    def test_dumpSWMMFormat_form(self):
+        data = graphics.dumpSWMMFormat(
+            self.sta.data['asos'],
+            'Test-Station',
+            col='Precip',
+            freq='hourly',
+            dropzeros=True,
+            filename='test/test_dumpSWMM.dat'
+        )
+        assert_true(isinstance(data, pandas.DataFrame))
+        assert_list_equal(
+            data.columns.tolist(),
+            ['station', 'year', 'month', 'day', 'hour', 'minute', 'precip']
+        )
+        assert_equal(data[data.precip ==0].shape[0], 0)
+
+    def test_dumpSWMMFormat_DropZeros(self):
+        data = graphics.dumpSWMMFormat(
+            self.sta.data['asos'],
+            'Test-Station',
+            col='Precip',
+            freq='hourly',
+            dropzeros=True,
+            filename='test/test_dumpSWMM.dat'
+        )
+        assert_equal(data[data.precip ==0].shape[0], 0)
+
+    def test_dumpSWMMFormat_KeepZeros(self):
+        data = graphics.dumpSWMMFormat(
+            self.sta.data['asos'],
+            'Test-Station',
+            col='Precip',
+            freq='hourly',
+            dropzeros=False,
+            filename='test/test_dumpSWMM.dat'
+        )
+        assert_greater(data[data.precip ==0].shape[0], 0)
 
     def test_rainClock(self):
         '''Confirm that rainClock returns an mpl figure and two axes'''
@@ -55,7 +97,6 @@ class test_graphics():
                                                fname=fname)
             assert_true(isinstance(fig, matplotlib.figure.Figure))
             assert_true(isinstance(ax1, matplotlib.axes.Axes))
-
 
     def test_temperaturePlot(self):
         '''Confirm that temperaturePlot returns an mpl figure and one axis'''
