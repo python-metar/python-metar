@@ -6,8 +6,8 @@
 
 # std lib stuff
 import datetime
-import urllib2
-import cookielib
+import urllib.request, urllib.error, urllib.parse
+import http.cookiejar
 import os
 import pdb
 
@@ -18,8 +18,8 @@ import matplotlib.dates as mdates
 import pandas
 
 # metar stuff
-import metar
-import datatypes
+from . import metar
+from . import datatypes
 
 __all__ = ['getAllStations', 'getStationByID', 'WeatherStation',
            'getASOSData', 'getWundergroundData', 'getWunderground_NonAirportData']
@@ -92,9 +92,9 @@ class WeatherStation(object):
         input:
             *src* : 'asos' or 'wunderground' or 'wunder_nonairport'
         '''
-        jar = cookielib.CookieJar()
-        handler = urllib2.HTTPCookieProcessor(jar)
-        opener = urllib2.build_opener(handler)
+        jar = http.cookiejar.CookieJar()
+        handler = urllib.request.HTTPCookieProcessor(jar)
+        opener = urllib.request.build_opener(handler)
         try:
             if src.lower() == 'wunderground':
                 url1 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?' % self.sta_id
@@ -113,8 +113,8 @@ class WeatherStation(object):
                 url = 'http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=MEGKO3&day=1&year=2013&month=1&graphspan=day&format=1'
                 opener.open(url)
 
-        except urllib2.URLError:
-            print('connection to %s not available. working locally' % src)
+        except urllib.error.URLError:
+            print(('connection to %s not available. working locally' % src))
 
         return opener
 
@@ -205,7 +205,7 @@ class WeatherStation(object):
                             outfile.write(line.strip() + '\n')
 
             except:
-                print('error on: %s\n' % (url,))
+                print(('error on: %s\n' % (url,)))
                 outfile.close()
                 os.remove(outname)
                 errorfile.write('error on: %s\n' % (url,))
@@ -388,7 +388,7 @@ class WeatherStation(object):
                 data = data.append(self._read_csv(ts, source))
 
         # add a row number to each row
-        data['rownum'] = range(data.shape[0])
+        data['rownum'] = list(range(data.shape[0]))
 
         # corrected data are appended to the bottom of the ASOS files by NCDC
         # QA people. So for any given date/time index, we want the *last* row
@@ -483,7 +483,7 @@ class WeatherStation(object):
             start = cdata[1].split(',')[0]
             end = cdata[-1].split(',')[0]
             cfile.close()
-            print('%d) %s - start: %s\tend: %s' % (n+1, cf, start, end))
+            print(('%d) %s - start: %s\tend: %s' % (n+1, cf, start, end)))
 
     def loadCompiledFile(self, source, filename=None, filenum=None):
         if filename is None and filenum is None:
