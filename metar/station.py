@@ -10,6 +10,7 @@ import urllib.request, urllib.error, urllib.parse
 import http.cookiejar
 import os
 import pdb
+import codecs
 
 # math stuff
 import numpy as np
@@ -167,7 +168,7 @@ class WeatherStation(object):
         _check_dirs(datadir.split(os.path.sep))
         return os.path.join(datadir, datafile)
 
-    def _fetch_data(self, timestamp, src='asos', force_download=False):
+    def _fetch_data(self, timestamp, attempt, src='asos', force_download=False):
         ''' method that downloads data from a *src* for a *timestamp*
         returns the status of the download
             ('ok', 'bad', 'not there')
@@ -195,17 +196,17 @@ class WeatherStation(object):
 
             try:
                 webdata = source.open(url)
-                weblines = webdata.readlines()[start:]
+                for n, line in enumerate(codecs.iterdecode(webdata, 'utf-8')):
+                    if n >= start:
+                        if src != 'wunder_nonairport':
+                            outfile.write(line)
+                        else:
+                            if line != '<br>\n':
+                                outfile.write(line.strip() + '\n')
 
-                if src != 'wunder_nonairport':
-                    outfile.writelines(weblines)
-                else:
-                    for line in weblines:
-                        if line != '<br>\n':
-                            outfile.write(line.strip() + '\n')
-
-            except:
-                print(('error on: %s\n' % (url,)))
+            except Exception as e:
+                print(e)
+                print('error on: {0} (attempt {1})'.format(url, attempt))
                 outfile.close()
                 os.remove(outname)
                 errorfile.write('error on: %s\n' % (url,))
@@ -229,9 +230,8 @@ class WeatherStation(object):
             *attempt* : the current attempt number
         '''
         attempt += 1
-        status = self._fetch_data(timestamp, src=src)
+        status = self._fetch_data(timestamp, attempt, src=src)
         if status == 'not there' and attempt < self.max_attempts:
-            print(attempt)
             status, attempt = self._attempt_download(timestamp, src, attempt=attempt)
 
         return status, attempt
@@ -338,13 +338,18 @@ class WeatherStation(object):
             icol = 1
         elif src == 'wunder_nonairport':
             icol = 0
+        headerrows = {
+            'asos': 0,
+            'wunderground': 0,
+            'wunder_nonairport': 1
+        }
         flatfilename = self._make_data_file(timestamp, src, 'flat')
         if not os.path.exists(flatfilename):
             flatfilename, flatstatus = self._process_file(timestamp, src)
 
         flatstatus = _check_file(flatfilename)
         if flatstatus == 'ok':
-            data = pandas.read_csv(flatfilename, index_col=False, parse_dates=[icol])
+            data = pandas.read_csv(flatfilename, index_col=False, parse_dates=[icol], header=headerrows[src])
             data.set_index(data.columns[icol], inplace=True)
 
         else:
@@ -706,4 +711,5 @@ def getWunderground_NonAirportData(station, startdate, enddate, filename=None):
 
     data = station.getWunderground_NonAirportData(startdate, enddate, filename=filename)
     return data
+
 
