@@ -2,22 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import matplotlib.dates as dates
+import pandas
 
 __all__ = ['hyetograph', 'rainClock', 'windRose', 'psychromograph',
-           'temperaturePlot']
+           'temperaturePlot', 'dumpSWMMFormat']
 
 
-def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
-             ax=None, downward=False, fname=None, fillna=None):
-
-    if not hasattr(dataframe, col):
-        raise ValueError('input `dataframe` must have a `%s` column' % col)
-
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.figure
-
+def _resampler(dataframe, col, freq, how='sum', fillna=None):
     rules = {
         '5min': ('5Min', 'line'),
         '5 min': ('5Min', 'line'),
@@ -39,24 +30,72 @@ def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
         'monthly': ('M', 'line')
     }
 
-    if freq.lower() in rules.keys():
-        rule = rules[freq.lower()][0]
-        kind = rules[freq.lower()][1]
-        data = dataframe[col].resample(how=how, rule=rule)
-        if fillna is not None:
-            data.fillna(value=fillna, inplace=True)
-
-        data.plot(ax=ax, kind=kind)
-        if rule == 'A':
-            xformat = dates.DateFormatter('%Y')
-            ax.xaxis.set_major_formatter(xformat)
-        elif rule == 'M':
-            xformat = dates.DateFormatter('%Y-%m')
-            ax.xaxis.set_major_formatter(xformat)
-
-    else:
-        m = "freq should be in ['5-min', 'hourly', 'daily', 'weekly, 'monthly']"
+    if freq not in list(rules.keys()):
+        m = "freq should be in ['5-min', '15-'min', hourly', 'daily', 'weekly, 'monthly']"
         raise ValueError(m)
+
+    rule = rules[freq.lower()][0]
+    plotkind = rules[freq.lower()][1]
+    data = dataframe[col].resample(how=how, rule=rule)
+    if fillna is not None:
+        data.fillna(value=fillna, inplace=True)
+
+    return data, rule, plotkind
+
+
+def dumpSWMMFormat(dataframe, stationid, col='Precip', freq='hourly', dropzeros=True,
+                   filename=None, sep='\t'):
+    # resample the `col` column of `dataframe`, returns a series
+    data, rule, plotkind = _resampler(dataframe, col, freq=freq, how='sum')
+
+    # set the precip column's name and make the series a dataframe
+    data.name = col.lower()
+    data = pandas.DataFrame(data)
+
+    # add all of the data/time columns
+    data['station'] = stationid
+    data['year'] = data.index.year
+    data['month'] = data.index.month
+    data['day'] = data.index.day
+    data['hour'] = data.index.hour
+    data['minute'] = data.index.minute
+
+    # drop the zeros if we need to
+    if dropzeros:
+        data = data[data['precip'] > 0]
+
+    # make a file name if not provided
+    if filename is None:
+        filename = "{0}_{1}.dat".format(stationid, freq)
+
+    # force the order of columns that we need
+    data = data[['station', 'year', 'month', 'day', 'hour', 'minute', 'precip']]
+
+    # export and return the data
+    data.to_csv(filename, index=False, sep=sep)
+    return data
+
+
+def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
+             ax=None, downward=False, fname=None, fillna=None):
+
+    if not hasattr(dataframe, col):
+        raise ValueError('input `dataframe` must have a `%s` column' % col)
+
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.figure
+
+    data, rule, plotkind = _resampler(dataframe, col, freq=freq, how=how)
+
+    data.plot(ax=ax, kind=plotkind)
+    if rule == 'A':
+        xformat = dates.DateFormatter('%Y')
+        ax.xaxis.set_major_formatter(xformat)
+    elif rule == 'M':
+        xformat = dates.DateFormatter('%Y-%m')
+        ax.xaxis.set_major_formatter(xformat)
 
     ax.tick_params(axis='x', labelsize=8)
     ax.set_xlabel('Date')
