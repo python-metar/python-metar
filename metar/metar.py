@@ -1052,47 +1052,53 @@ class Metar(object):
 
     ## the list of handler functions to use (in order) to process a METAR report
 
-    handlers = [ (TYPE_RE, _handleType, False),
-                 (STATION_RE, _handleStation, False),
-                 (TIME_RE, _handleTime, False),
-                 (MODIFIER_RE, _handleModifier, False),
-                 (WIND_RE, _handleWind, False),
-                 (VISIBILITY_RE, _handleVisibility, True),
-                 (RUNWAY_RE, _handleRunway, True),
-                 (WEATHER_RE, _handleWeather, True),
-                 (SKY_RE, _handleSky, True),
-                 (TEMP_RE, _handleTemp, False),
-                 (PRESS_RE, _handlePressure, True),
-                 (RECENT_RE,_handleRecent, True),
-                 (WINDSHEAR_RE, _handleWindShear, True),
-                 (COLOR_RE, _handleColor, True),
-                 (RUNWAYSTATE_RE, _handleRunwayState, True),
-                 (TREND_RE, _handleTrend, False),
-                 (REMARK_RE, _startRemarks, False) ]
+    handlers = [
+        (TYPE_RE, _handleType, False),
+        (STATION_RE, _handleStation, False),
+        (TIME_RE, _handleTime, False),
+        (MODIFIER_RE, _handleModifier, False),
+        (WIND_RE, _handleWind, False),
+        (VISIBILITY_RE, _handleVisibility, True),
+        (RUNWAY_RE, _handleRunway, True),
+        (WEATHER_RE, _handleWeather, True),
+        (SKY_RE, _handleSky, True),
+        (TEMP_RE, _handleTemp, False),
+        (PRESS_RE, _handlePressure, True),
+        (RECENT_RE,_handleRecent, True),
+        (WINDSHEAR_RE, _handleWindShear, True),
+        (COLOR_RE, _handleColor, True),
+        (RUNWAYSTATE_RE, _handleRunwayState, True),
+        (TREND_RE, _handleTrend, False),
+        (REMARK_RE, _startRemarks, False)
+    ]
 
-    trend_handlers = [ (TRENDTIME_RE, _handleTrend, True),
-                       (WIND_RE, _handleTrend, True),
-                       (VISIBILITY_RE, _handleTrend, True),
-                       (WEATHER_RE, _handleTrend, True),
-                       (SKY_RE, _handleTrend, True),
-                       (COLOR_RE, _handleTrend, True)]
+    trend_handlers = [
+        (TRENDTIME_RE, _handleTrend, True),
+        (WIND_RE, _handleTrend, True),
+        (VISIBILITY_RE, _handleTrend, True),
+        (WEATHER_RE, _handleTrend, True),
+        (SKY_RE, _handleTrend, True),
+        (COLOR_RE, _handleTrend, True)
+    ]
 
     ## the list of patterns for the various remark groups,
     ## paired with the handler functions to use to record the decoded remark.
 
-    remark_handlers = [ (AUTO_RE,         _handleAutoRemark),
-                        (SEALVL_PRESS_RE, _handleSealvlPressRemark),
-                        (PEAK_WIND_RE,    _handlePeakWindRemark),
-                        (WIND_SHIFT_RE,   _handleWindShiftRemark),
-                        (LIGHTNING_RE,    _handleLightningRemark),
-                        (TS_LOC_RE,       _handleTSLocRemark),
-                        (TEMP_1HR_RE,     _handleTemp1hrRemark),
-                        (PRECIP_1HR_RE,   _handlePrecip1hrRemark),
-                        (PRECIP_24HR_RE,  _handlePrecip24hrRemark),
-                        (PRESS_3HR_RE,    _handlePress3hrRemark),
-                        (TEMP_6HR_RE,     _handleTemp6hrRemark),
-                        (TEMP_24HR_RE,    _handleTemp24hrRemark),
-                        (UNPARSED_RE,     _unparsedRemark) ]
+    remark_handlers = [
+        (AUTO_RE,         _handleAutoRemark),
+        (SEALVL_PRESS_RE, _handleSealvlPressRemark),
+        (PEAK_WIND_RE,    _handlePeakWindRemark),
+        (WIND_SHIFT_RE,   _handleWindShiftRemark),
+        (LIGHTNING_RE,    _handleLightningRemark),
+        (TS_LOC_RE,       _handleTSLocRemark),
+        (TEMP_1HR_RE,     _handleTemp1hrRemark),
+        (PRECIP_1HR_RE,   _handlePrecip1hrRemark),
+        (PRECIP_24HR_RE,  _handlePrecip24hrRemark),
+        (PRESS_3HR_RE,    _handlePress3hrRemark),
+        (TEMP_6HR_RE,     _handleTemp6hrRemark),
+        (TEMP_24HR_RE,    _handleTemp24hrRemark),
+        (UNPARSED_RE,     _unparsedRemark)
+    ]
 
     ## functions that return text representations of conditions for output
 
