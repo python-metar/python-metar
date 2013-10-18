@@ -344,7 +344,7 @@ class WeatherStation(object):
 
         flatstatus = _check_file(flatfilename)
         if flatstatus == 'ok':
-            data = pandas.read_csv(flatfilename, index_col=False, parse_dates=True)
+            data = pandas.read_csv(flatfilename, index_col=False, parse_dates=[icol])
             data.set_index(data.columns[icol], inplace=True)
 
         else:
@@ -465,7 +465,6 @@ class WeatherStation(object):
         >>> data = pdx.getWunderground_NonAirportData(startdate, enddate)
         '''
         self.data['wunder_nonairport'] = self._get_data(startdate, enddate, 'wunder_nonairport', filename)
-
 
     def _get_compiled_files(self, source):
         compdir = self._find_dir(source, 'compile')
@@ -694,6 +693,7 @@ def getWundergroundData(station, startdate, enddate, filename=None):
 
     data = station.getWundergroundData(startdate, enddate, filename=filename)
     return data
+
 
 def getWunderground_NonAirportData(station, startdate, enddate, filename=None):
     if not isinstance(station, WeatherStation):
