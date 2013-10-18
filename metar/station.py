@@ -674,9 +674,14 @@ def getAllStations():
 
 def getStationByID(sta_id):
     stations = getAllStations()
-    info = stations[sta_id]
-    return WeatherStation(sta_id, city=info[1], state=info[2], country=info[3],
-                          lat=info[4], lon=info[5])
+    try:
+        info = stations[sta_id]
+        sta = WeatherStation(sta_id, city=info[1], state=info[2],
+                             country=info[3], lat=info[4], lon=info[5])
+    except KeyError:
+        sta = WeatherStation(sta_id)
+
+    return sta
 
 
 def getASOSData(station, startdate, enddate, filename=None):

@@ -314,5 +314,5 @@ class test_station():
         self.sta.loadCompiledFile('wunderground', filenum=1)
 
     def test_loadCompData_wunderground_nonairport(self):
-        self.sta.loadCompiledFile('wunder_nonairport', filename='testfile.csv')
-        self.sta.loadCompiledFile('wunder_nonairport', filenum=1)
+        self.sta2.loadCompiledFile('wunder_nonairport', filename='testfile.csv')
+        self.sta2.loadCompiledFile('wunder_nonairport', filenum=1)
