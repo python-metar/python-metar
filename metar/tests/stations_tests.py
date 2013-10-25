@@ -23,18 +23,21 @@ def makeFakeRainData():
         0.,  1.,  2.,  3.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,  4.,
         0.,  0.,  0.,  0.,  0.,  5.,  5.,  5.,  5.,  5.,  5.,  5.,
         0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,
-        1.,  2.,  3.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.]
+        1.,  2.,  3.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.
+    ]
 
     return daterange, rain_raw
 
 
 class test_station():
     def setup(self):
-        self.sta = station.WeatherStation('KSFO', city='Portland', state='OR',
-                                          country='Cascadia', lat=999, lon=999)
-        self.sta2 = station.WeatherStation('MWPKO3')
-        self.start = dt.datetime(2001, 1, 1)
-        self.end = dt.datetime(2001, 9, 1)
+        self.max_attempts = 3
+        self.sta = station.WeatherStation('KCEZ', city='Portland', state='OR',
+                                          country='Cascadia', lat=999, lon=999,
+                                          max_attempts=self.max_attempts)
+        self.sta2 = station.WeatherStation('MWPKO3', max_attempts=self.max_attempts)
+        self.start = dt.datetime(2012, 1, 1)
+        self.end = dt.datetime(2012, 9, 1)
         self.sta.getASOSData(self.start, self.end)
         self.sta.getWundergroundData(self.start, self.end)
         self.ts = pandas.DatetimeIndex(start=self.start, freq='D', periods=1)[0]
@@ -63,8 +66,8 @@ class test_station():
         testfile1 = self.sta._find_file(self.ts, 'asos', 'raw')
         testfile2 = self.sta._find_file(self.ts, 'wunderground', 'flat')
 
-        knownfile1 = '%s_200101.dat' % self.sta.sta_id
-        knownfile2 = '%s_20010101.csv' % self.sta.sta_id
+        knownfile1 = '%s_201201.dat' % self.sta.sta_id
+        knownfile2 = '%s_20120101.csv' % self.sta.sta_id
 
         assert_equal(testfile1, knownfile1)
         assert_equal(testfile2, knownfile2)
@@ -80,10 +83,10 @@ class test_station():
         testurl2 = self.sta._url_by_date(self.ts, src='asos')
         print((self.ts))
         knownurl1 = "http://www.wunderground.com/history/airport/%s" \
-                    "/2001/01/01/DailyHistory.html?&&theprefset=SHOWMETAR" \
+                    "/2012/01/01/DailyHistory.html?&&theprefset=SHOWMETAR" \
                     "&theprefvalue=1&format=1" % self.sta.sta_id
         knownurl2 = "ftp://ftp.ncdc.noaa.gov/pub/data/asos-fivemin" \
-                    "/6401-2001/64010%s200101.dat" % self.sta.sta_id
+                    "/6401-2012/64010%s201201.dat" % self.sta.sta_id
 
         assert_equal(testurl1, knownurl1)
         assert_equal(testurl2, knownurl2)
@@ -94,14 +97,14 @@ class test_station():
         testfile2 = self.sta._make_data_file(self.ts, 'asos', 'raw')
 
         if os.path.sep == '/':
-            knownfile1 = 'data/%s/wunderground/flat/%s_20010101.csv' % \
+            knownfile1 = 'data/%s/wunderground/flat/%s_20120101.csv' % \
                 (self.sta.sta_id, self.sta.sta_id)
-            knownfile2 = 'data/%s/asos/raw/%s_200101.dat' % \
+            knownfile2 = 'data/%s/asos/raw/%s_201201.dat' % \
                 (self.sta.sta_id, self.sta.sta_id)
         else:
-            knownfile1 = 'data\\%s\\wunderground\\flat\\%s_20010101.csv' % \
+            knownfile1 = 'data\\%s\\wunderground\\flat\\%s_20120101.csv' % \
                 (self.sta.sta_id, self.sta.sta_id)
-            knownfile2 = 'data\\%s\\asos\\raw\\%s_200101.dat' % \
+            knownfile2 = 'data\\%s\\asos\\raw\\%s_201201.dat' % \
                 (self.sta.sta_id, self.sta.sta_id)
 
         assert_equal(testfile1, knownfile1)
@@ -109,8 +112,8 @@ class test_station():
         pass
 
     def test_fetch_data(self):
-        status_asos = self.sta._fetch_data(self.ts, src='asos')
-        status_wund = self.sta._fetch_data(self.ts, src='wunderground')
+        status_asos = self.sta._fetch_data(self.ts, 1, src='asos')
+        status_wund = self.sta._fetch_data(self.ts, 1, src='wunderground')
         known_statuses = ['ok', 'bad', 'not there']
         assert_in(status_asos, known_statuses)
         assert_in(status_wund, known_statuses)
@@ -126,18 +129,18 @@ class test_station():
         status_fail, attempt3 = self.sta._attempt_download(self.ts2, src='asos')
         assert_equal(status_fail, 'not there')
 
-        assert_less_equal(attempt1, 10)
-        assert_less_equal(attempt2, 10)
-        assert_equal(attempt3, 10)
+        assert_less_equal(attempt1, self.max_attempts)
+        assert_less_equal(attempt2, self.max_attempts)
+        assert_equal(attempt3, self.max_attempts)
         pass
 
     def test_process_file_asos(self):
         filename, status = self.sta._process_file(self.ts, 'asos')
 
         if os.path.sep == '/':
-            knownfile = 'data/%s/asos/flat/%s_200101.csv' % (self.sta.sta_id, self.sta.sta_id)
+            knownfile = 'data/%s/asos/flat/%s_201201.csv' % (self.sta.sta_id, self.sta.sta_id)
         else:
-            knownfile = 'data\\%s\\asos\\flat\\%s_200101.csv' % (self.sta.sta_id, self.sta.sta_id)
+            knownfile = 'data\\%s\\asos\\flat\\%s_201201.csv' % (self.sta.sta_id, self.sta.sta_id)
 
         assert_equal(filename, knownfile)
         known_statuses = ['ok', 'bad', 'not there']
@@ -148,9 +151,9 @@ class test_station():
         filename, status = self.sta._process_file(self.ts, 'wunderground')
 
         if os.path.sep == '/':
-            knownfile = 'data/%s/wunderground/flat/%s_20010101.csv' % (self.sta.sta_id, self.sta.sta_id)
+            knownfile = 'data/%s/wunderground/flat/%s_20120101.csv' % (self.sta.sta_id, self.sta.sta_id)
         else:
-            knownfile = 'data\\%s\\wunderground\\flat\\%s_20010101.csv' % (self.sta.sta_id, self.sta.sta_id)
+            knownfile = 'data\\%s\\wunderground\\flat\\%s_20120101.csv' % (self.sta.sta_id, self.sta.sta_id)
 
         assert_equal(filename, knownfile)
         known_statuses = ['ok', 'bad', 'not there']
