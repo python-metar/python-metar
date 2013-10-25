@@ -12,5 +12,6 @@ def suite():
     return alltests
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+	pass
+    #unittest.main(defaultTest='suite')
 
