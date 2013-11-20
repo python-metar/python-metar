@@ -35,7 +35,7 @@ install:
     - sudo apt-get install $PYTHON-dateutil
     #- sudo apt-get install python3-pip
     - sudo easy_install3 -U distribute
-    - sudo easy_install3 -U matplotlib
+    - sudo easy_install3 -U matplotlib==1.3.0
     - sudo apt-get --no-install-recommends install $PYTHON-pandas
     - sudo apt-get --no-install-recommends install $PYTHON-pandas-lib
     - sudo easy_install3 -U patsy
@@ -44,22 +44,5 @@ install:
     - if [ "${PYSUF}" != "3" ]; then sudo pip install coverage; fi
     - if [ "${PYSUF}" != "3" ]; then sudo pip install coveralls; fi
 script:
-    #pwd
-    #ls -al
     - python3 -c "import metar; metar.test()"
 
-    #- SRCDIR=$PWD
-    #- sudo $PYTHON setup.py install
-    ## Ubuntu 12.04 installs statsmodels under the wrong path for Python 3
-    #- if [ "${PYSUF}" == "3" ]; then
-    #     sudo mv /usr/local/lib/python3.3/dist-packages/statsmodels-*/statsmodels /usr/local/lib/python3.3/dist-packages/statsmodels ;
-    #     sudo rm -rf /usr/lib/python3.3/dist-packages/statsmodels-* ;
-    #  fi
-    ## statsmodels was installed "system-wide" thus cd under dedicated
-    ## travis-test/ directory to not try using local version without built extensions
-    #- mkdir -p "${SRCDIR}/travis-test"; cd "${SRCDIR}/travis-test"
-    ## Compose a script to run testing with coverage
-    #- echo 'import statsmodels as sm; a=sm.test(); import sys; sys.exit((len(a.failures)+len(a.errors))>0)' > test.py
-    #- if [ "${PYSUF}" != "3" ]; then coverage run --rcfile=${SRCDIR}/.travis_coveragerc test.py; else $PYTHON test.py; fi
-#after_success:
-#    - if [ "${PYSUF}" != "3" ]; then coveralls; fi
