@@ -125,7 +125,7 @@ class test_station():
         known_statuses = ['ok', 'bad', 'not there']
         assert_in(status_asos, known_statuses)
         assert_in(status_wund, known_statuses)
-        self.ts2 = pandas.DatetimeIndex(start='1999-1-1', freq='D', periods=1)[0]
+        self.ts2 = pandas.DatetimeIndex(start='2012-1-1', freq='D', periods=1)[0]
         status_fail, attempt3 = self.sta._attempt_download(self.ts2, src='asos')
         assert_equal(status_fail, 'not there')
 

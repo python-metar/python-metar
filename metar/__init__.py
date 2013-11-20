@@ -63,6 +63,7 @@ from numpy.testing.noseclasses import NumpyTestProgram
 
 from .station import *
 from .graphics import *
+from .exporters import *
 
 def _show_package_info(package, name):
     print("%s version %s" % (name, package.__version__))

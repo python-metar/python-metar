@@ -5,7 +5,7 @@ import matplotlib.dates as dates
 import pandas
 
 __all__ = ['hyetograph', 'rainClock', 'windRose', 'psychromograph',
-           'temperaturePlot', 'dumpSWMMFormat']
+           'temperaturePlot']
 
 
 def _resampler(dataframe, col, freq, how='sum', fillna=None):
@@ -43,39 +43,6 @@ def _resampler(dataframe, col, freq, how='sum', fillna=None):
     return data, rule, plotkind
 
 
-def dumpSWMMFormat(dataframe, stationid, col='Precip', freq='hourly', dropzeros=True,
-                   filename=None, sep='\t'):
-    # resample the `col` column of `dataframe`, returns a series
-    data, rule, plotkind = _resampler(dataframe, col, freq=freq, how='sum')
-
-    # set the precip column's name and make the series a dataframe
-    data.name = col.lower()
-    data = pandas.DataFrame(data)
-
-    # add all of the data/time columns
-    data['station'] = stationid
-    data['year'] = data.index.year
-    data['month'] = data.index.month
-    data['day'] = data.index.day
-    data['hour'] = data.index.hour
-    data['minute'] = data.index.minute
-
-    # drop the zeros if we need to
-    if dropzeros:
-        data = data[data['precip'] > 0]
-
-    # make a file name if not provided
-    if filename is None:
-        filename = "{0}_{1}.dat".format(stationid, freq)
-
-    # force the order of columns that we need
-    data = data[['station', 'year', 'month', 'day', 'hour', 'minute', 'precip']]
-
-    # export and return the data
-    data.to_csv(filename, index=False, sep=sep)
-    return data
-
-
 def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
              ax=None, downward=False, fname=None, fillna=None):
 
@@ -107,28 +74,28 @@ def _plotter(dataframe, col, ylabel, freq='hourly', how='sum',
         fig.tight_layout()
         fig.savefig(fname, dpi=300, bbox_inches='tight')
 
-    return fig, ax
+    return fig
 
 
 def hyetograph(dataframe, freq='hourly', ax=None, downward=True, col='Precip', fname=None):
     ylabel = '%s Rainfall Depth (in)' % freq.title()
-    fig, ax = _plotter(dataframe, col, ylabel, freq=freq, fillna=0,
+    fig = _plotter(dataframe, col, ylabel, freq=freq, fillna=0,
                        how='sum', ax=ax, downward=downward, fname=fname)
-    return fig, ax
+    return fig
 
 
 def psychromograph(dataframe, freq='hourly', ax=None, col='AtmPress', fname=None):
     ylabel = '%s Barometric Pressure (in Hg)' % freq.title()
-    fig, ax = _plotter(dataframe, col, ylabel, freq=freq,
+    fig = _plotter(dataframe, col, ylabel, freq=freq,
                        how='mean', ax=ax, fname=fname)
-    return fig, ax
+    return fig
 
 
 def temperaturePlot(dataframe, freq='hourly', ax=None, col='Temp', fname=None):
     ylabel = '%s Temperature (\xB0C)' % freq.title()
-    fig, ax = _plotter(dataframe, col, ylabel, freq=freq,
+    fig = _plotter(dataframe, col, ylabel, freq=freq,
                        how='mean', ax=ax, fname=fname)
-    return fig, ax
+    return fig
 
 
 def rainClock(dataframe, raincol='Precip', fname=None):
@@ -171,7 +138,7 @@ def rainClock(dataframe, raincol='Precip', fname=None):
         fig.tight_layout()
         fig.savefig(fname, dpi=300, bbox_inches='tight')
 
-    return fig, (ax1, ax2)
+    return fig
 
 
 def windRose(dataframe, speedcol='WindSpd', dircol='WindDir', mph=False,
@@ -232,7 +199,7 @@ def windRose(dataframe, speedcol='WindSpd', dircol='WindDir', mph=False,
         fig.tight_layout()
         fig.savefig(fname, dpi=300, bbox_inches='tight')
 
-    return fig, ax1
+    return fig
 
 
 def _get_wind_counts(dataframe, maxSpeed, speedcol, dircol, factor=1):
