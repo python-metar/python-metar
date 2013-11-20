@@ -45,7 +45,7 @@ install:
 script:
     #pwd
     #ls -al
-    python3 tester.py
+    - python3 -c "import metar; metar.test()"
 
     #- SRCDIR=$PWD
     #- sudo $PYTHON setup.py install
