@@ -6,8 +6,10 @@
 
 # std lib stuff
 import datetime
-import urllib.request, urllib.error, urllib.parse
-import http.cookiejar
+from six.moves.urllib import request
+from six.moves.urllib import error
+from six.moves.urllib import parse
+from six.moves import http_cookiejar
 import os
 import pdb
 import codecs
@@ -93,9 +95,9 @@ class WeatherStation(object):
         input:
             *src* : 'asos' or 'wunderground' or 'wunder_nonairport'
         '''
-        jar = http.cookiejar.CookieJar()
-        handler = urllib.request.HTTPCookieProcessor(jar)
-        opener = urllib.request.build_opener(handler)
+        jar = http_cookiejar.CookieJar()
+        handler = request.HTTPCookieProcessor(jar)
+        opener = request.build_opener(handler)
         try:
             if src.lower() == 'wunderground':
                 url1 = 'http://www.wunderground.com/history/airport/%s/2011/12/4/DailyHistory.html?' % self.sta_id
@@ -114,7 +116,7 @@ class WeatherStation(object):
                 url = 'http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=MEGKO3&day=1&year=2013&month=1&graphspan=day&format=1'
                 opener.open(url)
 
-        except urllib.error.URLError:
+        except error.URLError:
             print(('connection to %s not available. working locally' % src))
 
         return opener
