@@ -40,6 +40,7 @@ install:
     - sudo apt-get --no-install-recommends install $PYTHON-pandas-lib
     - sudo easy_install3 -U patsy
     - sudo easy_install3 -U openpyxl
+    - sudo easy_install3 -U six
     - if [ "${PYSUF}" != "3" ]; then sudo pip install coverage; fi
     - if [ "${PYSUF}" != "3" ]; then sudo pip install coveralls; fi
 script:
