@@ -112,19 +112,23 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     data = pandas.DataFrame(data[data.Precip > 0])
     data['Date'] = data.index.date
     data['Hour'] = data.index.hour
+    data['Hour'] += 1
     data = data.reset_index().set_index(['Date', 'Hour'])[[col]]
     data = data.unstack(level='Hour')[col]
 
-    def makeNCDCRow(row):
-        newrow = row.dropna()
-        newrow = newrow.append(pandas.Series(row.sum(), index=[25]))
+    def makeNCDCRow(row, flag=None):
+        if flag is None:
+            flag = " "
+        newrow = row.dropna() * 100
+        newrow = newrow.astype(int)
+        newrow = newrow.append(pandas.Series(newrow.sum(), index=[25]))
 
         precipstrings = ' '.join([
-            '{0:02d}0{1:06d}'.format(hour, int(val*10)) \
+            '{0:02d}00{1:06d}{2}'.format(hour, int(val), flag) \
             for hour, val in zip(newrow.index, newrow)
         ])
 
-        ncdcstring = '{0}{1}{2}{3}{4}{5}{6:02d}{7:02d}{8:02d}{9}\n'.format(
+        ncdcstring = '{0}{1:02d}{2}{3}{4}{5}{6:02d}{7:04d}{8:03d}{9} \n'.format(
             RECORDTYPE, STATECODE, coopid,
             ELEMENT, UNITS, row.name.year,
             row.name.month, row.name.day, row.count(),
@@ -138,4 +142,26 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
         with open(filename, 'w') as output:
             output.writelines(data['ncdcstring'].values)
 
+    return data
+
+def hourXtab(dataframe, col, filename=None, flag=None):
+    '''
+    Always resamples to hourly
+    '''
+    # constants
+    data, rule, plotkind = _resampler(dataframe, col, freq='hourly', how='sum')
+    data.index.names = ['Datetime']
+    data.name = col
+    data = pandas.DataFrame(data)
+    #data = pandas.DataFrame(data[data.Precip > 0])
+    data['Year'] = data.index.year
+    data['Month'] = data.index.month
+    data['Day'] = data.index.day
+    data['Hour'] = data.index.hour
+    data['Hour'] += 1
+    data = data.reset_index().set_index(['Year', 'Month', 'Day', 'Hour'])[[col]]
+    data = data.unstack(level='Hour')[col]
+    data[25] = data.sum(axis=1)
+    if filename is not None:
+        data.to_csv(filename)
     return data
