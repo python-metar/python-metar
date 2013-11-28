@@ -90,6 +90,7 @@ def SWMM5Format(dataframe, stationid, col='Precip', freq='hourly', dropzeros=Tru
 
     # force the order of columns that we need
     data = data[['station', 'year', 'month', 'day', 'hour', 'minute', 'precip']]
+    data.precip = np.round(data.precip, 2)
 
     # export and return the data
     data.to_csv(filename, index=False, sep=sep)
@@ -109,7 +110,7 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     data.index.names = ['Datetime']
     data.name = col
     data = pandas.DataFrame(data)
-    data = pandas.DataFrame(data[data.Precip > 0])
+    data = pandas.DataFrame(data[data[col] > 0])
     data['Date'] = data.index.date
     data['Hour'] = data.index.hour
     data['Hour'] += 1
