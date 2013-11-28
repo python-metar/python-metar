@@ -25,9 +25,6 @@ class test_exporter():
         with open('test/known_hourly_ncdc.dat', 'r') as f:
             self.known_hourly_ncdc = f.read()
 
-    def teardown(self):
-        plt.close('all')
-
     def test_dumpSWMM5Format_form(self):
         data = exporters.SWMM5Format(
             self.fivemin,
