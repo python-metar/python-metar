@@ -4,6 +4,7 @@ from metar import graphics
 import datetime as dt
 import pandas
 import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 class test_graphics():
