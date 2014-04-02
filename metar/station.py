@@ -387,12 +387,16 @@ class WeatherStation(object):
         except KeyError:
             raise ValueError('source must be either "ASOS" or "wunderground"')
 
+        progress = metar.ProgressBar(timestamps, labels=timestamps)
+
         data = None
-        for ts in timestamps:
+        for n, ts in enumerate(timestamps):
             if data is None:
                 data = self._read_csv(ts, source)
             else:
                 data = data.append(self._read_csv(ts, source))
+
+            progress.animate(n+1)
 
         # add a row number to each row
         data['rownum'] = list(range(data.shape[0]))

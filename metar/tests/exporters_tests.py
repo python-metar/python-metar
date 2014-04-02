@@ -5,24 +5,32 @@ import datetime as dt
 import pandas
 import matplotlib
 import matplotlib.pyplot as plt
+from six import StringIO
 
 class test_exporter():
     def setup(self):
-        self.sta = station.WeatherStation('KCEZ', city='Portland', state='OR',
-                                     country='Cascadia', lat=999, lon=999)
-        self.start = dt.datetime(2001, 1, 1)
-        self.ts = pandas.DatetimeIndex(start=self.start, freq='D', periods=1)[0]
-        self.sta.getASOSData('2009-1-1', '2009-2-1')
+        self.fivemin = pandas.read_csv('test/data_for_tests.csv', parse_dates=True, index_col=0)
+        self.hourly = self.fivemin.resample('1H', how='sum')
 
-    def teardown(self):
-        plt.close('all')
+        self.known_fivemin_swmm5_file = 'test/known_fivemin_swmm5.dat'
+        self.known_hourly_swmm5_file = 'test/known_hourly_swmm5.dat'
+        self.knwon_hourly_ncdc_file= 'test/known_hourly_ncdc.dat'
+
+        with open('test/known_fivemin_swmm5.dat', 'r') as f:
+            self.known_fivemin_swmm5 = f.read()
+
+        with open('test/known_hourly_swmm5.dat', 'r') as f:
+            self.known_hourly_swmm = f.read()
+
+        with open('test/known_hourly_ncdc.dat', 'r') as f:
+            self.known_hourly_ncdc = f.read()
 
     def test_dumpSWMM5Format_form(self):
         data = exporters.SWMM5Format(
-            self.sta.data['asos'],
+            self.fivemin,
             'Test-Station',
-            col='Precip',
-            freq='hourly',
+            col='precip',
+            freq='5min',
             dropzeros=True,
             filename='test/test_dumpSWMM.dat'
         )
@@ -31,14 +39,13 @@ class test_exporter():
             data.columns.tolist(),
             ['station', 'year', 'month', 'day', 'hour', 'minute', 'precip']
         )
-        assert_equal(data[data.precip == 0].shape[0], 0)
 
     def test_dumpSWMM5Format_DropZeros(self):
         data = exporters.SWMM5Format(
-            self.sta.data['asos'],
+            self.fivemin,
             'Test-Station',
-            col='Precip',
-            freq='hourly',
+            col='precip',
+            freq='5min',
             dropzeros=True,
             filename='test/test_dumpSWMM_withoutZeros.dat'
         )
@@ -46,19 +53,65 @@ class test_exporter():
 
     def test_dumpSWMM5Format_KeepZeros(self):
         data = exporters.SWMM5Format(
-            self.sta.data['asos'],
+            self.fivemin,
             'Test-Station',
-            col='Precip',
-            freq='hourly',
+            col='precip',
+            freq='5min',
             dropzeros=False,
             filename='test/test_dumpSWMM_withZeros.dat'
         )
         assert_greater(data[data.precip == 0].shape[0], 0)
 
-    def test_dumpNCDCFormat(self):
-        data = exporters.NCDCFormat(
-            self.sta.data['asos'],
-            '056318',
-            'Oregon',
-            filename='test/test_dumpNCDCFormat.dat'
+    def test_dumpSWMM5Format_Result5min(self):
+        testfilename = 'test/test_dumpSWMM_fivemin.dat'
+        data = exporters.SWMM5Format(
+            self.fivemin,
+            'Test-Station',
+            col='precip',
+            freq='5min',
+            dropzeros=True,
+            filename=testfilename
         )
+        with open(self.known_fivemin_swmm5_file, 'r') as f:
+            known_data = f.read()
+
+        with open(testfilename, 'r') as f:
+            test_data = f.read()
+
+        assert_equal(known_data, test_data)
+
+    def test_dumpSWMM5Format_ResultHourly(self):
+        testfilename = 'test/test_dumpSWMM_hourly.dat'
+        data = exporters.SWMM5Format(
+            self.fivemin,
+            'Test-Station',
+            col='precip',
+            freq='hourly',
+            dropzeros=False,
+            filename=testfilename
+        )
+        with open(self.known_hourly_swmm5_file, 'r') as f:
+            known_data = f.read()
+
+        with open(testfilename, 'r') as f:
+            test_data = f.read()
+
+        assert_equal(known_data, test_data)
+
+    def test_dumpNCDCFormat(self):
+        testfilename = 'test/test_dumpNCDCFormat.dat'
+        data = exporters.NCDCFormat(
+            self.hourly,
+            '041685',
+            'California',
+            col='precip',
+            filename=testfilename
+        )
+
+        with open(self.knwon_hourly_ncdc_file, 'r') as f:
+            known_data = f.read()
+
+        with open(testfilename, 'r') as f:
+            test_data = f.read()
+
+        assert_equal(known_data, test_data)

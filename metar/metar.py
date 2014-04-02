@@ -1,3 +1,11 @@
+from __future__ import print_function
+
+import re
+import sys
+import datetime
+import string
+from .datatypes import *
+
 #!/usr/bin/env python
 #
 #  A python package for interpreting METAR and SPECI weather reports.
@@ -38,31 +46,42 @@ __LICENSE__ = """
 Copyright (c) 2004, %s
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
 
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+Redistributions in binary form must reproduce the above copyright notice, this
+list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """ % __author__
 
-import re
-import datetime
-import string
-from .datatypes import *
-
 ## Exceptions
-
 class ParserError(Exception):
-  """Exception raised when an unparseable group is found in body of the report."""
-  pass
+    """
+    Exception raised when an unparseable group is
+    found in body of the report.
+    """
+
+    pass
 
 ## regular expressions to decode various groups of the METAR code
 
 MISSING_RE = re.compile(r"^[M/]+$")
 
-TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI)\s+")
+TYPE_RE = re.compile(r"^(?P<type>METAR|SPECI)\s+")
 
 STATION_RE =  re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
 
@@ -1394,3 +1413,43 @@ class Metar(object):
         """
         return sep.join(self._remarks)
 
+class ProgressBar:
+    def __init__(self, sequence, width=50, labels=None, labelfxn=None):
+        self.sequence = sequence
+        self.iterations = len(sequence)
+        self.labels = labels
+        self.labelfxn = labelfxn
+        self.prog_bar = '[]'
+        self.fill_char = '*'
+        self.width = width
+        self.__update_amount(0)
+
+    def animate(self, iter):
+        print('\r', self, end='')
+        sys.stdout.flush()
+        self.update_iteration(iter + 1)
+
+    def update_iteration(self, elapsed_iter):
+        self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
+        if self.labels is None and self.labelfxn is None:
+            self.prog_bar += '  %d of %s complete' % (elapsed_iter, self.iterations)
+        elif elapsed_iter <= self.iterations:
+            if self.labels is None:
+                label = self.labelfxn(self.sequence[elapsed_iter-1])
+            else:
+                label = self.labels[elapsed_iter-1]
+
+            self.prog_bar += '  %d of %s (%s)' % (elapsed_iter, self.iterations, label)
+
+    def __update_amount(self, new_amount):
+        percent_done = int(round((new_amount / 100.0) * 100.0))
+        all_full = self.width - 2
+        num_hashes = int(round((percent_done / 100.0) * all_full))
+        self.prog_bar = '[' + self.fill_char * num_hashes + ' ' * (all_full - num_hashes) + ']'
+        pct_place = (len(self.prog_bar) // 2) - len(str(percent_done))
+        pct_string = '%d%%' % percent_done
+        self.prog_bar = self.prog_bar[0:pct_place] + \
+            (pct_string + self.prog_bar[pct_place + len(pct_string):])
+
+    def __str__(self):
+        return str(self.prog_bar)

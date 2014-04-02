@@ -20,6 +20,11 @@ def _resampler(dataframe, col, freq, how='sum', fillna=None):
         '15-min': ('15Min', 'line'),
         '15 minute': ('15Min', 'line'),
         '15-minute': ('15Min', 'line'),
+        '30min': ('30Min', 'line'),
+        '30 min': ('30Min', 'line'),
+        '30-min': ('30Min', 'line'),
+        '30 minute': ('30Min', 'line'),
+        '30-minute': ('30Min', 'line'),
         'hour': ('H', 'line'),
         'hourly': ('H', 'line'),
         'day': ('D', 'line'),
@@ -217,3 +222,16 @@ def _convert_dir_to_left_radian(directions):
     barDir = directions * np.pi/180. - np.pi/N
     barWidth = [2 * np.pi / N]*N
     return barDir, barWidth
+
+def degrees2radians(degrees):
+    return degrees * np.pi / 180.0
+
+def radians2degrees(radians):
+    return radians * 180 / np.pi
+
+def avgDirection(directions):
+    radians = degrees2radians(directions)
+    cos = np.cos(radians).sum()
+    sin = np.sin(radians).sum()
+    degree = radians2degrees(np.arctan2(sin, cos))
+    return degree if degree > 0 else degree + 360

@@ -90,6 +90,7 @@ def SWMM5Format(dataframe, stationid, col='Precip', freq='hourly', dropzeros=Tru
 
     # force the order of columns that we need
     data = data[['station', 'year', 'month', 'day', 'hour', 'minute', 'precip']]
+    data.precip = np.round(data.precip, 2)
 
     # export and return the data
     data.to_csv(filename, index=False, sep=sep)
@@ -101,7 +102,7 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     '''
     # constants
     RECORDTYPE = 'HPD'
-    ELEMENT = 'HPCP'
+    ELEMENT = '00HPCP'
     UNITS = 'HI'
     STATECODE = states[statename]
 
@@ -109,22 +110,27 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     data.index.names = ['Datetime']
     data.name = col
     data = pandas.DataFrame(data)
-    data = pandas.DataFrame(data[data.Precip > 0])
+    data = pandas.DataFrame(data[data[col] > 0])
     data['Date'] = data.index.date
     data['Hour'] = data.index.hour
+    data['Hour'] += 1
     data = data.reset_index().set_index(['Date', 'Hour'])[[col]]
     data = data.unstack(level='Hour')[col]
 
-    def makeNCDCRow(row):
-        newrow = row.dropna()
-        newrow = newrow.append(pandas.Series(row.sum(), index=[25]))
+    def makeNCDCRow(row, flags=None):
+        newrow = row.dropna() * 100
+        newrow = newrow.astype(int)
+        newrow = newrow.append(pandas.Series(newrow.sum(), index=[25]))
+
+        if flags is None:
+            flags = [" "] * len(newrow)
 
         precipstrings = ' '.join([
-            '{0:02d}0{1:06d}'.format(hour, int(val*10)) \
-            for hour, val in zip(newrow.index, newrow)
+            '{0:02d}00 {1:05d}{2}'.format(hour, int(val), flag) \
+            for hour, val, flag in zip(newrow.index, newrow, flags)
         ])
 
-        ncdcstring = '{0}{1}{2}{3}{4}{5}{6:02d}{7:02d}{8:02d}{9}\n'.format(
+        ncdcstring = '{0}{1:02d}{2}{3}{4}{5}{6:02d}{7:04d}{8:03d}{9} \n'.format(
             RECORDTYPE, STATECODE, coopid,
             ELEMENT, UNITS, row.name.year,
             row.name.month, row.name.day, row.count(),
@@ -138,4 +144,26 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
         with open(filename, 'w') as output:
             output.writelines(data['ncdcstring'].values)
 
+    return data
+
+def hourXtab(dataframe, col, filename=None, flag=None):
+    '''
+    Always resamples to hourly
+    '''
+    # constants
+    data, rule, plotkind = _resampler(dataframe, col, freq='hourly', how='sum')
+    data.index.names = ['Datetime']
+    data.name = col
+    data = pandas.DataFrame(data)
+    #data = pandas.DataFrame(data[data.Precip > 0])
+    data['Year'] = data.index.year
+    data['Month'] = data.index.month
+    data['Day'] = data.index.day
+    data['Hour'] = data.index.hour
+    data['Hour'] += 1
+    data = data.reset_index().set_index(['Year', 'Month', 'Day', 'Hour'])[[col]]
+    data = data.unstack(level='Hour')[col]
+    data[25] = data.sum(axis=1)
+    if filename is not None:
+        data.to_csv(filename)
     return data
