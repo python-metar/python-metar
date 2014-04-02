@@ -32,12 +32,12 @@ def makeFakeRainData():
 class test_station():
     def setup(self):
         self.max_attempts = 3
-        self.sta = station.WeatherStation('KCEZ', city='Portland', state='OR',
+        self.sta = station.WeatherStation('KPDX', city='Portland', state='OR',
                                           country='Cascadia', lat=999, lon=999,
                                           max_attempts=self.max_attempts)
         self.sta2 = station.WeatherStation('MWPKO3', max_attempts=self.max_attempts)
         self.start = dt.datetime(2012, 1, 1)
-        self.end = dt.datetime(2012, 9, 1)
+        self.end = dt.datetime(2012, 3, 1)
         self.sta.getASOSData(self.start, self.end)
         self.sta.getWundergroundData(self.start, self.end)
         self.ts = pandas.DatetimeIndex(start=self.start, freq='D', periods=1)[0]

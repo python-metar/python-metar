@@ -9,21 +9,25 @@ from six import StringIO
 
 class test_exporter():
     def setup(self):
-        self.fivemin = pandas.read_csv('test/data_for_tests.csv', parse_dates=True, index_col=0)
+        self.fivemin = pandas.read_csv('test/data_for_tests.csv',
+                                       parse_dates=True, index_col=0)
         self.hourly = self.fivemin.resample('1H', how='sum')
 
         self.known_fivemin_swmm5_file = 'test/known_fivemin_swmm5.dat'
         self.known_hourly_swmm5_file = 'test/known_hourly_swmm5.dat'
-        self.knwon_hourly_ncdc_file= 'test/known_hourly_ncdc.dat'
+        self.knwon_hourly_ncdc_file = 'test/known_hourly_NCDC.dat'
 
-        with open('test/known_fivemin_swmm5.dat', 'r') as f:
+        with open(self.known_fivemin_swmm5_file, 'r') as f:
             self.known_fivemin_swmm5 = f.read()
 
-        with open('test/known_hourly_swmm5.dat', 'r') as f:
+        with open(self.known_hourly_swmm5_file, 'r') as f:
             self.known_hourly_swmm = f.read()
 
-        with open('test/known_hourly_ncdc.dat', 'r') as f:
+        with open(self.knwon_hourly_ncdc_file, 'r') as f:
             self.known_hourly_ncdc = f.read()
+
+        self.known_columns = ['station', 'year', 'month', 'day',
+                              'hour', 'minute', 'precip']
 
     def test_dumpSWMM5Format_form(self):
         data = exporters.SWMM5Format(
@@ -37,7 +41,7 @@ class test_exporter():
         assert_true(isinstance(data, pandas.DataFrame))
         assert_list_equal(
             data.columns.tolist(),
-            ['station', 'year', 'month', 'day', 'hour', 'minute', 'precip']
+            self.known_columns
         )
 
     def test_dumpSWMM5Format_DropZeros(self):
