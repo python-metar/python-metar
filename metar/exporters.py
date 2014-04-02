@@ -102,7 +102,7 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     '''
     # constants
     RECORDTYPE = 'HPD'
-    ELEMENT = 'HPCP'
+    ELEMENT = '00HPCP'
     UNITS = 'HI'
     STATECODE = states[statename]
 
@@ -117,16 +117,17 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     data = data.reset_index().set_index(['Date', 'Hour'])[[col]]
     data = data.unstack(level='Hour')[col]
 
-    def makeNCDCRow(row, flag=None):
-        if flag is None:
-            flag = " "
+    def makeNCDCRow(row, flags=None):
         newrow = row.dropna() * 100
         newrow = newrow.astype(int)
         newrow = newrow.append(pandas.Series(newrow.sum(), index=[25]))
 
+        if flags is None:
+            flags = [" "] * len(newrow)
+
         precipstrings = ' '.join([
-            '{0:02d}00{1:06d}{2}'.format(hour, int(val), flag) \
-            for hour, val in zip(newrow.index, newrow)
+            '{0:02d}00 {1:05d}{2}'.format(hour, int(val), flag) \
+            for hour, val, flag in zip(newrow.index, newrow, flags)
         ])
 
         ncdcstring = '{0}{1:02d}{2}{3}{4}{5}{6:02d}{7:04d}{8:03d}{9} \n'.format(
