@@ -9,7 +9,8 @@ from six import StringIO
 
 class test_exporter():
     def setup(self):
-        self.fivemin = pandas.read_csv('test/data_for_tests.csv', parse_dates=True, index_col=0)
+        self.fivemin = pandas.read_csv('test/data_for_tests.csv',
+                                       parse_dates=True, index_col=0)
         self.hourly = self.fivemin.resample('1H', how='sum')
 
         self.known_fivemin_swmm5_file = 'test/known_fivemin_swmm5.dat'

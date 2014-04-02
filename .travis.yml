@@ -5,7 +5,7 @@ python:
 
 install:
   - conda update conda --yes
-  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION matplotlib ipython-notebook pandas pip six nose openpyxl
+  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION matplotlib pandas pip six nose openpyxl
   - conda update conda --yes
   - source activate testenv
   - pip install .
