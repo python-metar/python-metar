@@ -1,5 +1,12 @@
-Relase Notes - metar-1.4.0
+Relase Notes - metar-2.0
 --------------------------
+
+Python-metar v2.0 expands on Tom Pollard's giant effort. Most notably, the
+`station` object can now grab time series of data from NCDC's ASOS ftp
+(5-minute data) or hourly data from wunderground.com
+
+Paul Hobson
+pmhobson@gmail.com
 
 Python-metar v1.4 incorporates a handful of bug fixes and enhancements
 made over the last couple of years.  Notably, Toby White contributed code to 
