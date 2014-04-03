@@ -94,35 +94,35 @@ Thanks to Toby White for making me aware of github.
 
 
 ## Contents (way out of date)
+```
+README  ............. this file
 
-README  ............... this file
+parse_metar.py  ..... a simple commandline driver for the METAR parser
 
-parse_metar.py  ....... a simple commandline driver for the METAR parser
+get_report.py ....... a script to download and decode the current reports
+                      for one or more stations.
 
-get_report.py ......... a script to download and decode the current reports
-                        for one or more stations.
+sample.py  .......... a simple script showing how the decoded data
+                      can be accessed. (see metar/*.py sources and the
+                      test/test_*.py scripts for more examples.)
 
-sample.py  ............ a simple script showing how the decoded data
-                        can be accessed. (see metar/*.py sources and the
-                        test/test_*.py scripts for more examples.)
-
-sample.metar  ......... a sample METAR report (longer than most).  Try
-                        feeding this to the parse_metar.py script...
+sample.metar  ....... a sample METAR report (longer than most).  Try
+                      feeding this to the parse_metar.py script...
 metar/
-    Metar.py  ......... the implementation of the Metar class.  This class
-                        parses and represents a single METAR report.
+    Metar.py  ....... the implementation of the Metar class.  This class
+                      parses and represents a single METAR report.
 
-    Datatypes.py  ..... a support module that defines classes representing
-                        different types of meteorological data, including
-                        temperature, pressure, speed, distance, direction
-                        and position.
+    Datatypes.py  ... a support module that defines classes representing
+                      different types of meteorological data, including
+                      temperature, pressure, speed, distance, direction
+                      and position.
 test/
-    all_tests.py  ..... a master test driver, which invokes all of the unit tests
+    all_tests.py  ... a master test driver, which invokes all of the unit tests
 
-    test_*.py  ........ individual test modules
+    test_*.py  ...... individual test modules
 
-setup.py  ............. installation script
-
+setup.py  ........... installation script
+```
 
 ## Example
 
