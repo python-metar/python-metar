@@ -72,6 +72,15 @@ install via pip:
     git clone https://github.com/phobson/python-metar.git
     cd python-metar
     source activate metar33 # omit `source` on Windows
+
+The standard pip command to install would be:
+
+    pip install .
+
+However, if you're gonna modify the source code (for whatever reason), pass in
+the `-e` flag. That way, you can just restart your python interpreter after
+altering the source to test your changes.
+
     pip install -e .
 
 There's a small, annoyingly slow test suite that can be run by saying
