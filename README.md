@@ -129,9 +129,10 @@ setup.py  ........... installation script
 See the sample.py script for an annonated demonstration of the use
 of this code.  Just as an appetizer, here's an interactive example...
 
->>> from metar import Metar
->>> obs = Metar.Metar('METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040CB BKN065 OVC200 22/22 A2987 RMK AO2 PK WND 29028/1817 WSHFT 1812 TSB05RAB22 SLP114 FRQ LTGICCCCG TS OHD AND NW -N-E MOV NE P0013 T02270215')
->>> print obs.string()
+    from metar import Metar
+    obs = Metar.Metar('METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040CB BKN065 OVC200 22/22 A2987 RMK AO2 PK WND 29028/1817 WSHFT 1812 TSB05RAB22 SLP114 FRQ LTGICCCCG TS OHD AND NW -N-E MOV NE P0013 T02270215')
+    print obs.string()
+```
 station: KEWR
 type: routine report, cycle 19 (automatic report)
 time: Tue Jan 11 18:51:00 2005
@@ -157,8 +158,7 @@ remarks:
 - thunderstorm overhead and NW
 - TSB05RAB22 -N-E MOV NE
 METAR: METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040CB BKN065 OVC200 22/22 A2987 RMK AO2 PK WND 29028/1817 WSHFT 1812 TSB05RAB22 SLP114 FRQ LTGICCCCG TS OHD AND NW -N-E MOV NE P0013 T02270215
->>>>
-
+```
 
 ## LICENSE
 
