@@ -1,12 +1,13 @@
 from nose.tools import *
-from metar import station
-from metar import metar
 import numpy as np
 import datetime as dt
 import os
 import pandas
-import urllib.request, urllib.error, urllib.parse
+from six.moves.urllib import request
 import matplotlib.dates as mdates
+
+from metar import station
+from metar import metar
 
 class fakeClass(object):
     def value(self):
@@ -37,9 +38,7 @@ class test_station():
                                           max_attempts=self.max_attempts)
         self.sta2 = station.WeatherStation('MWPKO3', max_attempts=self.max_attempts)
         self.start = dt.datetime(2012, 1, 1)
-        self.end = dt.datetime(2012, 3, 1)
-        self.sta.getASOSData(self.start, self.end)
-        self.sta.getWundergroundData(self.start, self.end)
+        self.end = dt.datetime(2012, 2, 28)
         self.ts = pandas.DatetimeIndex(start=self.start, freq='D', periods=1)[0]
 
         self.dates, self.fakeprecip = makeFakeRainData()
@@ -74,8 +73,8 @@ class test_station():
         pass
 
     def test_set_cookies(self):
-        assert_true(isinstance(self.sta.asos, urllib.request.OpenerDirector))
-        assert_true(isinstance(self.sta.wunderground, urllib.request.OpenerDirector))
+        assert_true(isinstance(self.sta.asos, request.OpenerDirector))
+        assert_true(isinstance(self.sta.wunderground, request.OpenerDirector))
         pass
 
     def test_url_by_date(self):
@@ -182,11 +181,13 @@ class test_station():
         known_columns = ['Sta', 'Date', 'Precip', 'Temp',
                          'DewPnt', 'WindSpd', 'WindDir',
                          'AtmPress', 'SkyCover']
+        self.sta.getASOSData(self.start, self.end)
         for col in self.sta.data['asos'].columns:
             assert_in(col, known_columns)
         pass
 
     def test_getASOSData_index(self):
+        self.sta.getASOSData(self.start, self.end)
         assert_true(self.sta.data['asos'].index.is_unique)
         pass
 
@@ -194,11 +195,13 @@ class test_station():
         known_columns = ['Sta', 'Date', 'Precip', 'Temp',
                          'DewPnt', 'WindSpd', 'WindDir',
                          'AtmPress', 'SkyCover']
+        self.sta.getWundergroundData(self.start, self.end)
         for col in self.sta.data['wunder'].columns:
             assert_in(col, known_columns)
         pass
 
     def test_getWundergroundData_index(self):
+        self.sta.getWundergroundData(self.start, self.end)
         assert_true(self.sta.data['wunder'].index.is_unique)
         pass
 
