@@ -160,7 +160,7 @@ class test_station():
         pass
 
     def test_read_csv_asos(self):
-        data = self.sta._read_csv(self.ts, 'asos')
+        data, status = self.sta._read_csv(self.ts, 'asos')
         known_columns = ['Sta', 'Date', 'Precip', 'Temp',
                          'DewPnt', 'WindSpd', 'WindDir',
                          'AtmPress', 'SkyCover']
@@ -169,7 +169,7 @@ class test_station():
         pass
 
     def test_read_csv_wunderground(self):
-        data = self.sta._read_csv(self.ts, 'wunderground')
+        data, status = self.sta._read_csv(self.ts, 'wunderground')
         known_columns = ['Sta', 'Date', 'Precip', 'Temp',
                          'DewPnt', 'WindSpd', 'WindDir',
                          'AtmPress', 'SkyCover']
