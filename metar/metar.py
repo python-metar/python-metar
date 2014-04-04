@@ -1424,18 +1424,18 @@ class ProgressBar:
         self.width = width
         self.__update_amount(0)
 
-    def animate(self, iter):
+    def animate(self, iter, *args):
         print('\r', self, end='')
         sys.stdout.flush()
-        self.update_iteration(iter + 1)
+        self.update_iteration(iter + 1, *args)
 
-    def update_iteration(self, elapsed_iter):
+    def update_iteration(self, elapsed_iter, *args):
         self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
         if self.labels is None and self.labelfxn is None:
             self.prog_bar += '  %d of %s complete' % (elapsed_iter, self.iterations)
         elif elapsed_iter <= self.iterations:
             if self.labels is None:
-                label = self.labelfxn(self.sequence[elapsed_iter-1])
+                label = self.labelfxn(self.sequence[elapsed_iter-1], *args)
             else:
                 label = self.labels[elapsed_iter-1]
 
