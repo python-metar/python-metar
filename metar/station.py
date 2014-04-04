@@ -45,11 +45,31 @@ class WeatherStation(object):
         else:
             self.name = self.city
 
-        self.wunderground = self._set_cookies(src='wunderground')
-        self.wunder_nonairport = self._set_cookies(src='wunder_nonairport')
-        self.asos = self._set_cookies(src='asos')
         self.errorfile = 'data/%s_errors.log' % (sta_id,)
         self.data = {}
+
+        self._wunderground = None
+        self._wunder_nonairport = None
+        self._asos = None
+
+
+    @property
+    def wunderground(self):
+        if self._wunderground is None:
+            self._wunderground = self._set_cookies(src='wunderground')
+        return self._wunderground
+
+    @property
+    def wunder_nonairport(self):
+        if self._wunder_nonairport is None:
+            self._wunder_nonairport = self._set_cookies(src='wunder_nonairport')
+        return self._wunder_nonairport
+
+    @property
+    def asos(self):
+        if self._asos is None:
+            self._asos = self._set_cookies(src='asos')
+        return self._asos
 
     def _find_dir(self, src, step):
         '''
@@ -207,8 +227,8 @@ class WeatherStation(object):
                                 outfile.write(line.strip() + '\n')
 
             except Exception as e:
-                print(e)
-                print('error on: {0} (attempt {1})'.format(url, attempt))
+                #print(e)
+                #print('error on: {0} (attempt {1})'.format(url, attempt))
                 outfile.close()
                 os.remove(outname)
                 errorfile.write('error on: %s\n' % (url,))
@@ -356,8 +376,9 @@ class WeatherStation(object):
 
         else:
             data = None
+            flatstatus = 'missing'
 
-        return data
+        return data, flatstatus
 
     def _get_data(self, startdate, enddate, source, filename):
         '''
@@ -387,16 +408,20 @@ class WeatherStation(object):
         except KeyError:
             raise ValueError('source must be either "ASOS" or "wunderground"')
 
-        progress = metar.ProgressBar(timestamps, labels=timestamps)
+        labelfxn = lambda ts, status: '{} {}: {}'.format(
+            self.sta_id, ts.strftime('%Y.%m.%d'), status
+        )
+        progress = metar.ProgressBar(timestamps, labelfxn=labelfxn)
 
         data = None
         for n, ts in enumerate(timestamps):
             if data is None:
-                data = self._read_csv(ts, source)
+                data, status = self._read_csv(ts, source)
             else:
-                data = data.append(self._read_csv(ts, source))
+                newdata, status = self._read_csv(ts, source)
+                data = data.append(newdata)
 
-            progress.animate(n+1)
+            progress.animate(n+1, status)
 
         # add a row number to each row
         data['rownum'] = list(range(data.shape[0]))
