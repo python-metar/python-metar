@@ -410,7 +410,7 @@ class Metar(object):
                           code = pattern.sub("",code,1)
                           break
 
-      except Exception, err:
+      except Exception as err:
           raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
           raise err
       if self._unparsed_groups:
