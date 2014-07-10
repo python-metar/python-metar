@@ -337,7 +337,7 @@ class direction(object):
       if degrees == 360.0:
         self._compass = "N"
       else:
-        for name, d in direction.compass_dirs.iteritems():
+        for name, d in direction.compass_dirs.items():
           if d == degrees:
             self._compass = name
             break
