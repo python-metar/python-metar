@@ -34,5 +34,5 @@ fh.close()
 
 if __name__ == "__main__":
   for id in [ 'KEWR', 'KIAD', 'KIWI', 'EKRK' ]:
-    print id, stations[id].name, stations[id].country
+    print(id, stations[id].name, stations[id].country)
 

@@ -295,9 +295,9 @@ REPORT_TYPE = { "METAR":"routine report",
 def _report_match(handler,match):
   """Report success or failure of the given handler function. (DEBUG)"""
   if match:
-      print handler.__name__," matched '"+match+"'"
+      print(handler.__name__," matched '"+match+"'")
   else:
-      print handler.__name__," didn't match..."
+      print(handler.__name__," didn't match...")
       
 def _unparsedGroup( self, d ):
     """
@@ -372,7 +372,7 @@ class Metar(object):
           ifailed = -1
           while igroup < ngroup and code: 
               pattern, handler, repeatable = Metar.handlers[igroup]
-              if debug: print handler.__name__,":",code
+              if debug: print(handler.__name__,":",code)
               m = pattern.match(code)
               while m:
                   ifailed = -1
@@ -383,15 +383,15 @@ class Metar(object):
                       code = self._do_trend_handlers(code)
                   if not repeatable: break
                   
-                  if debug: print handler.__name__,":",code
+                  if debug: print(handler.__name__,":",code)
                   m = pattern.match(code)
               if not m and ifailed < 0:
                   ifailed = igroup
               igroup += 1
               if igroup == ngroup and not m:
-                  # print "** it's not a main-body group **"
+                  # print("** it's not a main-body group **")
                   pattern, handler = (UNPARSED_RE, _unparsedGroup)
-                  if debug: print handler.__name__,":",code
+                  if debug: print(handler.__name__,":",code)
                   m = pattern.match(code)
                   if debug: _report_match(handler,m.group())
                   handler(self,m.groupdict())
@@ -402,7 +402,7 @@ class Metar(object):
           if pattern == REMARK_RE or self.press:
               while code:
                   for pattern, handler in Metar.remark_handlers:
-                      if debug: print handler.__name__,":",code
+                      if debug: print(handler.__name__,":",code)
                       m = pattern.match(code)
                       if m:
                           if debug: _report_match(handler,m.group())
@@ -419,7 +419,7 @@ class Metar(object):
 
   def _do_trend_handlers(self, code):
       for pattern, handler, repeatable in Metar.trend_handlers:
-          if debug: print handler.__name__,":",code
+          if debug: print(handler.__name__,":",code)
           m = pattern.match(code)
           while m:
               if debug: _report_match(handler, m.group())
