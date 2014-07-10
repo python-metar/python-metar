@@ -309,7 +309,7 @@ class direction(object):
                    "W":270.0, "WNW":292.5, "NW":315.0, "NNW":337.5 }
 
   def __init__( self, d ):
-    if direction.compass_dirs.has_key(d):
+    if d in direction.compass_dirs:
       self._compass = d
       self._degrees = direction.compass_dirs[d]
     else:

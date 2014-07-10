@@ -720,7 +720,7 @@ class Metar(object):
       """
       Parse (and ignore) the trend groups.
       """
-      if d.has_key('trend'):
+      if 'trend' in d:
           self._trend_groups.append(d['trend'])
       self._trend = True
       
@@ -1002,14 +1002,14 @@ class Metar(object):
       """
       if self.type == None:
           text = "unknown report type"
-      elif REPORT_TYPE.has_key(self.type):
+      elif self.type in REPORT_TYPE:
           text  = REPORT_TYPE[self.type]
       else:
           text = self.type+" report"
       if self.cycle:
           text += ", cycle %d" % self.cycle
       if self.mod:
-          if REPORT_TYPE.has_key(self.mod):
+          if self.mod in REPORT_TYPE:
               text += " (%s)" % REPORT_TYPE[self.mod]
           else:
               text += " (%s)" % self.mod
@@ -1142,7 +1142,7 @@ class Metar(object):
               code_parts.append(otheri)
               text_parts.append(WEATHER_OTHER[otheri])
           code = string.join(code_parts)
-          if WEATHER_SPECIAL.has_key(code):
+          if code in WEATHER_SPECIAL:
               text_list.append(WEATHER_SPECIAL[code])
           else:
               text_list.append(string.join(text_parts," "))
