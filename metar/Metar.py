@@ -49,7 +49,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 import re
 import datetime
-import string
 from metar.Datatypes import *
 
 ## Exceptions
@@ -411,7 +410,7 @@ class Metar(object):
                           break
 
       except Exception as err:
-          raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
+          raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+" ".join(err.args))
           raise err
       if self._unparsed_groups:
           code = ' '.join(self._unparsed_groups)
@@ -423,7 +422,7 @@ class Metar(object):
           m = pattern.match(code)
           while m:
               if debug: _report_match(handler, m.group())
-              self._trend_groups.append(string.strip(m.group()))
+              self._trend_groups.append(m.group().strip())
               handler(self,m.groupdict())
               code = code[m.end():]
               if not repeatable: break
@@ -863,10 +862,10 @@ class Metar(object):
           while group:
               ltg_types.append(LIGHTNING_TYPE[group[:2]])
               group = group[2:]
-          parts.append("("+string.join(ltg_types,",")+")")
+          parts.append("("+",".join(ltg_types)+")")
       if d['loc']:
           parts.append(xlate_loc(d['loc']))
-      self._remarks.append(string.join(parts," "))
+      self._remarks.append(" ".join(parts))
           
   def _handleTSLocRemark( self, d ):
       """
@@ -994,7 +993,7 @@ class Metar(object):
       if self._unparsed_remarks:
           lines.append("- "+' '.join(self._unparsed_remarks))
       lines.append("METAR: "+self.code)
-      return string.join(lines,"\n")
+      return "\n".join(lines)
 
   def report_type( self ):
       """
@@ -1098,7 +1097,7 @@ class Metar(object):
               lines.append("on runway %s, from %d to %s" % (name, low.value(units), high.string(units)))
           else:
               lines.append("on runway %s, %s" % (name, low.string(units)))
-      return string.join(lines,"; ")
+      return "; ".join(lines)
   
   def present_weather( self ):
       """
@@ -1141,12 +1140,12 @@ class Metar(object):
           if otheri:
               code_parts.append(otheri)
               text_parts.append(WEATHER_OTHER[otheri])
-          code = string.join(code_parts)
+          code = " ".join(code_parts)
           if code in WEATHER_SPECIAL:
               text_list.append(WEATHER_SPECIAL[code])
           else:
-              text_list.append(string.join(text_parts," "))
-      return string.join(text_list,"; ")
+              text_list.append(" ".join(text_parts))
+      return "; ".join(text_list)
   
   def sky_conditions( self, sep="; " ):
       """
@@ -1170,7 +1169,7 @@ class Metar(object):
               else:
                   text_list.append("%s%s at %s" % 
                           (SKY_COVER[cover],what,str(height)))
-      return string.join(text_list,sep)
+      return sep.join(text_list)
           
   def trend( self ):
       """
@@ -1182,5 +1181,5 @@ class Metar(object):
       """
       Return the decoded remarks.
       """
-      return string.join(self._remarks,sep)
+      return sep.join(self._remarks)
 
