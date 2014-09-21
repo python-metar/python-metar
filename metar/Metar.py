@@ -994,7 +994,6 @@ class Metar(object):
       if self._unparsed_remarks:
           lines.append("- "+' '.join(self._unparsed_remarks))
       if metar_code:
-          # If metar_code=False 
           lines.append("METAR: "+self.code)
       
       return string.join(lines,"\n")
