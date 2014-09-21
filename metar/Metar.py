@@ -314,7 +314,7 @@ class Metar(object):
   
   def __init__( self, metarcode, month=None, year=None, utcdelta=None):
       """Parse raw METAR code."""
-      self.code = metarcode              # original METAR code
+      self.code = metarcode.strip()      # original METAR code with leading and trailing whitespace removed
       self.type = 'METAR'                # METAR (routine) or SPECI (special)
       self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
       self.station_id = None             # 4-character ICAO station code
