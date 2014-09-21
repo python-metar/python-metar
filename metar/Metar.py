@@ -940,7 +940,7 @@ class Metar(object):
   
   ## functions that return text representations of conditions for output
 
-  def string( self ):
+  def string( self, metar_code=True ):
       """
       Return a human-readable version of the decoded report.
       """
@@ -993,7 +993,10 @@ class Metar(object):
           lines.append("- "+self.remarks("\n- "))
       if self._unparsed_remarks:
           lines.append("- "+' '.join(self._unparsed_remarks))
-      lines.append("METAR: "+self.code)
+      if metar_code:
+          # If metar_code=False 
+          lines.append("METAR: "+self.code)
+      
       return string.join(lines,"\n")
 
   def report_type( self ):
