@@ -341,7 +341,7 @@ class direction(object):
           if d == degrees:
             self._compass = name
             break
-    return "%s degrees (%s)" % (d, self._compass)
+    return "%s degrees (%s)" % (self.value(), self._compass)
 
 
 class precipitation(object):
