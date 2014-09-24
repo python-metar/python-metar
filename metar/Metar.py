@@ -316,7 +316,7 @@ class Metar(object):
       """Parse raw METAR code."""
       self.code = metarcode.strip()      # original METAR code with leading and trailing whitespace removed
       self.type = 'METAR'                # METAR (routine) or SPECI (special)
-      self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
+      self.mod = 'AUTO'                  # AUTO (automatic) or COR (corrected)
       self.station_id = None             # 4-character ICAO station code
       self.time = None                   # observation time [datetime]
       self.cycle = None                  # observation cycle (0-23) [int]
@@ -739,9 +739,9 @@ class Metar(object):
           value += 1000
       else: 
           value += 900
-      if not self.press:
-          self.press = pressure(value,"MB")
-      self.press_sea_level = pressure(value,"MB")
+      #if not self.press:
+          #self.press = pressure(value,"MB")
+      self._remarks.append('sea pressure level: %s' % (pressure(value,"MB")))
               
   def _handlePrecip24hrRemark( self, d ):
       """
@@ -750,16 +750,16 @@ class Metar(object):
       value = float(d['precip'])/100.0
       if d['type'] == "6":
           if self.cycle == 3 or self.cycle == 9 or self.cycle == 15 or self.cycle == 21:
-              self.precip_3hr = precipitation(value,"IN")
+              self._remarks.append('precip_3hr: %s' % (precipitation(value,"IN")))
           else:
-              self.precip_6hr = precipitation(value,"IN")
+              self._remarks.append('precip_6hr: %s' % (precipitation(value,"IN")))
       else:
-          self.precip_24hr = precipitation(value,"IN")
+          self._remarks.append('precip_24hr: %s' % (precipitation(value,"IN")))
               
   def _handlePrecip1hrRemark( self, d ):
       """Parse an hourly precipitation remark group."""
       value = float(d['precip'])/100.0
-      self.precip_1hr = precipitation(value,"IN")
+      self._remarks.append('precip_1hr: %s' % (precipitation(value,"IN")))
                               
   def _handleTemp1hrRemark( self, d ):
       """
@@ -769,11 +769,11 @@ class Metar(object):
       """
       value = float(d['temp'])/10.0
       if d['tsign'] == "1": value = -value
-      self.temp = temperature(value)
+      self._remarks.append('temperature: %s' % (temperature(value)))
       if d['dewpt']:
           value2 = float(d['dewpt'])/10.0
           if d['dsign'] == "1": value2 = -value2
-          self.dewpt = temperature(value2)
+          self._remarks.append('dew point: %s' % (temperature(value2)))
                               
   def _handleTemp6hrRemark( self, d ):
       """
@@ -782,9 +782,9 @@ class Metar(object):
       value = float(d['temp'])/10.0
       if d['sign'] == "1": value = -value
       if d['type'] == "1":
-          self.max_temp_6hr = temperature(value,"C")
+          self._remarks.append('max_temp_6hr: %s' % (temperature(value,"C")))
       else:
-          self.min_temp_6hr = temperature(value,"C")
+          self._remarks.append('min_temp_6hr: %s' % (temperature(value,"C")))
       
   def _handleTemp24hrRemark( self, d ):
       """
@@ -794,8 +794,8 @@ class Metar(object):
       if d['smaxt'] == "1": value = -value
       value2 = float(d['mint'])/10.0
       if d['smint'] == "1": value2 = -value2
-      self.max_temp_24hr = temperature(value,"C")
-      self.min_temp_24hr = temperature(value2,"C")
+      self._remarks.append('max_temp_24hr: %s' % (temperature(value,"C")))
+      self._remarks.append('min_temp_24hr: %s' % (temperature(value2,"C")))
                       
   def _handlePress3hrRemark( self, d ):
       """
@@ -993,8 +993,10 @@ class Metar(object):
           lines.append("- "+self.remarks("\n- "))
       if self._unparsed_remarks:
           lines.append("- "+' '.join(self._unparsed_remarks))
+      if self._trend:
+          lines.append("Trend: " + self.trend())
       if metar_code:
-          lines.append("METAR: "+self.code)
+          lines.append("METAR: " + self.code)
       
       return string.join(lines,"\n")
 
@@ -1178,7 +1180,12 @@ class Metar(object):
       """
       Return the trend forecast groups
       """
-      return " ".join(self._trend_groups)
+      if 'NOSIG' in self._trend_groups:
+          self._trend_groups[self._trend_groups.index('NOSIG')] = 'No significant change is expected'
+          trend_str = " ".join(self._trend_groups)
+      else:
+          trend_str = " ".join(self._trend_groups)
+      return trend_str
 
   def remarks( self, sep="; "):
       """
