@@ -1183,7 +1183,7 @@ class Metar(object):
       Return the trend forecast groups
       """
       if 'NOSIG' in self._trend_groups:
-          self._trend_groups[self._trend_groups.index('NOSIG')] = 'No significant change is expected'
+          self._trend_groups[self._trend_groups.index('NOSIG')] = 'No significant changes is expected'
           trend_str = " ".join(self._trend_groups)
       else:
           trend_str = " ".join(self._trend_groups)
