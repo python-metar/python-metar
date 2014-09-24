@@ -990,9 +990,11 @@ class Metar(object):
           lines.append("24-hour precipitation: %s" % str(self.precip_24hr))
       if self._remarks:
           lines.append("remarks:")
-          lines.append("- "+self.remarks("\n- "))
+          lines.append(" - "+self.remarks("\n - "))
       if self._unparsed_remarks:
-          lines.append("- "+' '.join(self._unparsed_remarks))
+          if not self._remarks:
+              lines.append("remarks:")
+          lines.append(" - "+' '.join(self._unparsed_remarks))
       if self._trend:
           lines.append("Trend: " + self.trend())
       if metar_code:
