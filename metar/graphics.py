@@ -36,7 +36,8 @@ def _resampler(dataframe, col, freq, how='sum', fillna=None):
     }
 
     if freq not in list(rules.keys()):
-        m = "freq should be in ['5-min', '15-'min', hourly', 'daily', 'weekly, 'monthly']"
+        m = ("freq should be in ['5-min', '15-min', 'hourly', 'daily',"
+             "'weekly', 'monthly']")
         raise ValueError(m)
 
     rule = rules[freq.lower()][0]
@@ -223,11 +224,14 @@ def _convert_dir_to_left_radian(directions):
     barWidth = [2 * np.pi / N]*N
     return barDir, barWidth
 
+
 def degrees2radians(degrees):
     return degrees * np.pi / 180.0
 
+
 def radians2degrees(radians):
     return radians * 180 / np.pi
+
 
 def avgDirection(directions):
     radians = degrees2radians(directions)

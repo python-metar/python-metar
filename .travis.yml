@@ -8,6 +8,7 @@ install:
   - conda update conda --yes
   - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION matplotlib pandas pip six nose openpyxl
   - source activate testenv
+  - pip install coveralls
   - pip install .
   - cp test/matplotlibrc .
 
@@ -17,4 +18,8 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/anaconda/bin:$PATH
 
-script: nosetests --verbose --with-id
+script:
+  - nosetests --verbose --with-id --with-coverage --cover-package=metar
+
+after_success:
+  - coveralls

@@ -63,8 +63,9 @@ states = {
     'Pacific Islands': 91
 }
 
+
 def SWMM5Format(dataframe, stationid, col='Precip', freq='hourly', dropzeros=True,
-                    filename=None, sep='\t'):
+                filename=None, sep='\t'):
     # resample the `col` column of `dataframe`, returns a series
     data, rule, plotkind = _resampler(dataframe, col, freq=freq, how='sum')
 
@@ -95,6 +96,7 @@ def SWMM5Format(dataframe, stationid, col='Precip', freq='hourly', dropzeros=Tru
     # export and return the data
     data.to_csv(filename, index=False, sep=sep)
     return data
+
 
 def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     '''
@@ -145,6 +147,7 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
             output.writelines(data['ncdcstring'].values)
 
     return data
+
 
 def hourXtab(dataframe, col, filename=None, flag=None):
     '''
