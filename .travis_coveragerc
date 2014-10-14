@@ -2,10 +2,14 @@
 [run]
 source = metar
 branch = True
-include = */metar/*
-omit = *test*.py
+include = */metar/*.py
+omit = */metar/tests/*
 
 [report]
+include = */metar/*.py
+omit = */metar/tests/*,
+ignore_errors = True
+
 # Regexes for lines to exclude from consideration
 exclude_lines =
     # Have to re-enable the standard pragma
@@ -16,6 +20,3 @@ exclude_lines =
     except NotImplementedError
     # Ignore pass
     pass
-include = */mater/*
-omit = *test*.py,*/compat/*,*recursions.py
-ignore_errors = True

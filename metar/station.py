@@ -282,8 +282,8 @@ class WeatherStation(object):
 
             if src.lower() in ['asos', 'wunderground']:
 
-                headers = 'Sta,Date,Precip,Temp,DewPnt,' \
-                          'WindSpd,WindDir,AtmPress,SkyCover\n'
+                headers = ('Sta,Date,Precip,Temp,DewPnt,'
+                           'WindSpd,WindDir,AtmPress,SkyCover\n')
                 dataout.write(headers)
 
                 dates = []
@@ -333,10 +333,12 @@ class WeatherStation(object):
                     dataout.write('%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % row)
 
             else:
-                headers = 'Time,TemperatureC,DewpointC,PressurehPa,WindDirection,' \
-                           'WindDirectionDegrees,WindSpeedKMH,WindSpeedGustKMH,' \
-                           'Humidity,HourlyPrecipMM,Conditions,Clouds,dailyrainMM,' \
-                           'SolarRadiationWatts/m^2,SoftwareType,DateUTC\n'
+                headers = (
+                    'Time,TemperatureC,DewpointC,PressurehPa,WindDirection,'
+                    'WindDirectionDegrees,WindSpeedKMH,WindSpeedGustKMH,'
+                    'Humidity,HourlyPrecipMM,Conditions,Clouds,dailyrainMM,'
+                    'SolarRadiationWatts/m^2,SoftwareType,DateUTC\n'
+                )
 
                 #dataout.write(headers)
                 dataout.write(datain.read())
