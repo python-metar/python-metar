@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/phobson/python-metar.png?branch=master)](https://travis-ci.org/phobson/python-metar)
-[![Coverage Status](https://img.shields.io/coveralls/phobson/python-metar.svg)](https://coveralls.io/r/phobson/python-metar?branch=coverage)
+[![Coverage Status](https://img.shields.io/coveralls/phobson/python-metar.svg)](https://coveralls.io/r/phobson/python-metar?branch=master)
 
 # The metar library
 
