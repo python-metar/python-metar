@@ -12,13 +12,13 @@ class UnitsError(Exception):
     """Exception raised when unrecognized units are used."""
     pass
 
+
 ## regexp to match fractions (used by distance class)
 ## [Note: numerator of fraction must be single digit.]
-
 FRACTION_RE = re.compile(r"^((?P<int>\d+)\s*)?(?P<num>\d)/(?P<den>\d+)$")
 
-## classes representing dimensioned values in METAR reports
 
+## classes representing dimensioned values in METAR reports
 class temperature(object):
     """A class representing a temperature value."""
     legal_units = [ "F", "C", "K" ]
@@ -75,6 +75,7 @@ class temperature(object):
         elif units == "K":
             return "%.1f K" % val
 
+
 class pressure(object):
     """A class representing a barometric pressure value."""
     legal_units = [ "MB", "HPA", "IN" ]
@@ -124,6 +125,7 @@ class pressure(object):
             return "%.1f hPa" % val
         elif units == "IN":
             return "%.2f inches" % val
+
 
 class speed(object):
     """A class representing a wind speed value."""

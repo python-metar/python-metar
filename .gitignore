@@ -7,6 +7,12 @@
 *.o
 *.so
 *.pyc
+*.egg-info*
+
+# Test Output #
+###############
+.noseids
+.coverage
 
 # Packages #
 ############
@@ -28,6 +34,7 @@ ipython*log.*
 *.sql
 *.sqlite
 *.err
+.ipynb_checkpoints/*
 
 # OS generated files #
 ######################
@@ -42,10 +49,11 @@ Thumbs.db
 *.swp
 
 # big files #
-############# 
+#############
 output
 data
 test/test_*.png
+JUNK/*
 
 # tex files #
 ############
