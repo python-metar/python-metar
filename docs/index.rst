@@ -8,9 +8,15 @@ python-metar's documentation
 
 .. image:: https://travis-ci.org/phobson/python-metar.svg?branch=master
     :target: https://travis-ci.org/phobson/python-metar
+    :alt: Build Status
 
 .. image:: https://coveralls.io/repos/phobson/python-metar/badge.png?branch=master
     :target: https://coveralls.io/r/phobson/python-metar?branch=master
+    :alt: Test Coverage
+    
+.. image:: https://readthedocs.org/projects/python-metar/badge/?version=latest
+    :target: https://readthedocs.org/projects/python-metar/?badge=latest
+    :alt: Documentation Status
 
 
 ``python-metar`` is a library suited to parsing weather data in the METAR
