@@ -5,9 +5,11 @@ get_report.py
 parse_metar.py
 sample.py
 setup.py
-metar/Datatypes.py
-metar/Metar.py
-metar/Station.py
+metar/graphics.py
+metar/exporters.py
+metar/datatypes.py
+metar/metar.py
+metar/station.py
 metar/__init__.py
 test/all_tests.py
 test/test_direction.py
