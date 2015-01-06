@@ -525,7 +525,7 @@ class Metar(object):
             if errorfile is not None:
                 errorfile.write(msg)
             elif allexceptions:
-                raise ParserError("Unparsed groups in body: "+code)
+                raise ParserError(msg)
             else:
                 print(msg)
 
