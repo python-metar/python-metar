@@ -3,65 +3,66 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import matplotlib.dates as dates
 import pandas
+import datetime
 
 from .graphics import _resampler
 
-states = {
-    'Alabama': 1,
-    'New Jersey': 28,
-    'Arizona': 2,
-    'New Mexico': 29,
-    'Arkansas': 3,
-    'New York': 30,
-    'California': 4,
-    'North Carolina': 31,
-    'Colorado': 5,
-    'North Dakota': 32,
-    'Connecticut': 6,
-    'Ohio': 33,
-    'Delaware': 7,
-    'Oklahoma': 34,
-    'Florida': 8,
-    'Oregon': 35,
-    'Georgia': 9,
-    'Pennsylvania': 36,
-    'Idaho': 10,
-    'Rhode Island': 37,
-    'Illinois': 11,
-    'South Carolina': 38,
-    'Indiana': 12,
-    'South Dakota': 39,
-    'Iowa': 13,
-    'Tennessee': 40,
-    'Kansas': 14,
-    'Texas': 41,
-    'Kentucky': 15,
-    'Utah': 42,
-    'Louisiana': 16,
-    'Vermont': 43,
-    'Maine': 17,
-    'Virginia': 44,
-    'Maryland': 18,
-    'Washington': 45,
-    'Massachusetts': 19,
-    'West Virginia': 46,
-    'Michigan': 20,
-    'Wisconsin': 47,
-    'Minnesota': 21,
-    'Wyoming': 48,
-    'Mississippi': 22,
-    'Not Used': 49,
-    'Missouri': 23,
-    'Alaska': 50,
-    'Montana': 24,
-    'Hawaii': 51,
-    'Nebraska': 25,
-    'Puerto Rico': 66,
-    'Nevada': 26,
-    'Virgin Islands': 67,
-    'New Hampshire': 27,
-    'Pacific Islands': 91
-}
+states = [
+    {'name': 'Alabama', 'code': 1},
+    {'name': 'New Jersey', 'code': 28},
+    {'name': 'Arizona', 'code': 2},
+    {'name': 'New Mexico', 'code': 29},
+    {'name': 'Arkansas', 'code': 3},
+    {'name': 'New York', 'code': 30},
+    {'name': 'California', 'code': 4},
+    {'name': 'North Carolina', 'code': 31},
+    {'name': 'Colorado', 'code': 5},
+    {'name': 'North Dakota', 'code': 32},
+    {'name': 'Connecticut', 'code': 6},
+    {'name': 'Ohio', 'code': 33},
+    {'name': 'Delaware', 'code': 7},
+    {'name': 'Oklahoma', 'code': 34},
+    {'name': 'Florida', 'code': 8},
+    {'name': 'Oregon', 'code': 35},
+    {'name': 'Georgia', 'code': 9},
+    {'name': 'Pennsylvania', 'code': 36},
+    {'name': 'Idaho', 'code': 10},
+    {'name': 'Rhode Island', 'code': 37},
+    {'name': 'Illinois', 'code': 11},
+    {'name': 'South Carolina', 'code': 38},
+    {'name': 'Indiana', 'code': 12},
+    {'name': 'South Dakota', 'code': 39},
+    {'name': 'Iowa', 'code': 13},
+    {'name': 'Tennessee', 'code': 40},
+    {'name': 'Kansas', 'code': 14},
+    {'name': 'Texas', 'code': 41},
+    {'name': 'Kentucky', 'code': 15},
+    {'name': 'Utah', 'code': 42},
+    {'name': 'Louisiana', 'code': 16},
+    {'name': 'Vermont', 'code': 43},
+    {'name': 'Maine', 'code': 17},
+    {'name': 'Virginia', 'code': 44},
+    {'name': 'Maryland', 'code': 18},
+    {'name': 'Washington', 'code': 45},
+    {'name': 'Massachusetts', 'code': 19},
+    {'name': 'West Virginia', 'code': 46},
+    {'name': 'Michigan', 'code': 20},
+    {'name': 'Wisconsin', 'code': 47},
+    {'name': 'Minnesota', 'code': 21},
+    {'name': 'Wyoming', 'code': 48},
+    {'name': 'Mississippi', 'code': 22},
+    {'name': 'Not Used', 'code': 49},
+    {'name': 'Missouri', 'code': 23},
+    {'name': 'Alaska', 'code': 50},
+    {'name': 'Montana', 'code': 24},
+    {'name': 'Hawaii', 'code': 51},
+    {'name': 'Nebraska', 'code': 25},
+    {'name': 'Puerto Rico', 'code': 66},
+    {'name': 'Nevada', 'code': 26},
+    {'name': 'Virgin Islands', 'code': 67},
+    {'name': 'New Hampshire', 'code': 27},
+    {'name': 'Pacific Islands', 'code': 91}
+]
 
 
 def SWMM5Format(dataframe, stationid, col='Precip', freq='hourly', dropzeros=True,
@@ -106,7 +107,8 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
     RECORDTYPE = 'HPD'
     ELEMENT = '00HPCP'
     UNITS = 'HI'
-    STATECODE = states[statename]
+    _statecode = filter(lambda x: x['name'] == statename, states)
+    STATECODE = [sc for sc in _statecode][0]['code']
 
     data, rule, plotkind = _resampler(dataframe, col, freq='hourly', how='sum')
     data.index.names = ['Datetime']
@@ -170,3 +172,90 @@ def hourXtab(dataframe, col, filename=None, flag=None):
     if filename is not None:
         data.to_csv(filename)
     return data
+
+
+def NCDCtoCSV(ncdc, csv):
+    """Convert NCDC format files to csv
+
+    Parameters
+    ----------
+    ncdc : filepath to raw NCDC format
+    csv : filepath to output CSV file
+
+    """
+
+    csvrows = []
+    with open("input/45114_LAX.NCD", 'r') as fin:
+        for row in fin:
+            csvrows.extend(_obs_from_row(row))
+
+    with open("output/045114_LAX.csv", 'w') as fout:
+        fout.writelines(csvrows)
+
+
+def _pop_many(mylist, N, side='left'):
+    index_map = {
+        'left': 0,
+        'right': -1
+    }
+    index = index_map[side.lower()]
+    popped = ''.join([mylist.pop(index) for _ in range(N)])
+    if index == -1:
+        popped = popped[::-1]
+    return popped
+
+
+def _parse_obs(obs, units='HI'):
+    conversions = {
+        'HI': 0.01,
+    }
+    hour = int(_pop_many(obs, 2)) - 1
+    minute = int(_pop_many(obs, 2))
+    precip = int(_pop_many(obs, 6))
+    if precip == 99999:
+        precip = None
+    else:
+        precip *= conversions[units]
+    flag = ''.join(obs)
+    return hour, minute, precip, flag
+
+
+def _write_obs(rowheader, year, month, day, obs):
+    hour, minute, precip, flag = obs
+    if hour < 24 and precip is not None:
+        date = datetime.datetime(year, month, day, hour, minute)
+        rowstring = ','.join([
+            rowheader,
+            date.strftime('%Y-%m-%d %H:%M'),
+            '{:.2f}'.format(precip),
+            flag
+        ])
+        return rowstring + '\n'
+
+def _obs_from_row(row):
+    values = row.strip().split()
+    header = list(values.pop(0))
+    recordtype = _pop_many(header, 3)
+    state_coopid = _pop_many(header, 6)
+    element = _pop_many(header, 6)
+    units = _pop_many(header, 2)
+    year = int(_pop_many(header, 4))
+    month = int(_pop_many(header, 2))
+    day = int(_pop_many(header, 4))
+
+    _count = int(_pop_many(header, 3))
+
+    observations = [''.join(header)]
+    observations.extend(values)
+    parsedObs = [_parse_obs(list(obs), units=units) for obs in observations]
+
+    rowheader = ','.join([
+        state_coopid, recordtype, element, units
+    ])
+
+    rows = [_write_obs(rowheader, year, month, day, obs) for obs in parsedObs]
+
+    return [r for r in filter(lambda r: r is not None, rows)]
+
+
+

@@ -1,4 +1,4 @@
-from nose.tools import *
+import nose.tools as ntools
 from metar import station
 from metar import exporters
 import datetime as dt
@@ -7,7 +7,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from six import StringIO
 
-class test_exporter():
+class test_exporter(object):
     def setup(self):
         self.fivemin = pandas.read_csv('test/data_for_tests.csv',
                                        parse_dates=True, index_col=0)
@@ -38,8 +38,8 @@ class test_exporter():
             dropzeros=True,
             filename='test/test_dumpSWMM.dat'
         )
-        assert_true(isinstance(data, pandas.DataFrame))
-        assert_list_equal(
+        ntools.assert_true(isinstance(data, pandas.DataFrame))
+        ntools.assert_list_equal(
             data.columns.tolist(),
             self.known_columns
         )
@@ -53,7 +53,7 @@ class test_exporter():
             dropzeros=True,
             filename='test/test_dumpSWMM_withoutZeros.dat'
         )
-        assert_equal(data[data.precip == 0].shape[0], 0)
+        ntools.assert_equal(data[data.precip == 0].shape[0], 0)
 
     def test_dumpSWMM5Format_KeepZeros(self):
         data = exporters.SWMM5Format(
@@ -64,7 +64,7 @@ class test_exporter():
             dropzeros=False,
             filename='test/test_dumpSWMM_withZeros.dat'
         )
-        assert_greater(data[data.precip == 0].shape[0], 0)
+        ntools.assert_greater(data[data.precip == 0].shape[0], 0)
 
     def test_dumpSWMM5Format_Result5min(self):
         testfilename = 'test/test_dumpSWMM_fivemin.dat'
@@ -82,7 +82,7 @@ class test_exporter():
         with open(testfilename, 'r') as f:
             test_data = f.read()
 
-        assert_equal(known_data, test_data)
+        ntools.assert_equal(known_data, test_data)
 
     def test_dumpSWMM5Format_ResultHourly(self):
         testfilename = 'test/test_dumpSWMM_hourly.dat'
@@ -100,7 +100,7 @@ class test_exporter():
         with open(testfilename, 'r') as f:
             test_data = f.read()
 
-        assert_equal(known_data, test_data)
+        ntools.assert_equal(known_data, test_data)
 
     def test_dumpNCDCFormat(self):
         testfilename = 'test/test_dumpNCDCFormat.dat'
@@ -118,4 +118,115 @@ class test_exporter():
         with open(testfilename, 'r') as f:
             test_data = f.read()
 
-        assert_equal(known_data, test_data)
+        ntools.assert_equal(known_data, test_data)
+
+
+class test__pop_many(object):
+    def setup(self):
+        self.x = list('12345678')
+        self.known_L1 = '1'
+        self.known_L3 = '123'
+        self.known_R1 = '8'
+        self.known_R4 = '5678'
+
+    def test_left1(self):
+        popped = exporters._pop_many(self.x, 1)
+        ntools.assert_equal(popped, self.known_L1)
+
+    def test_left3(self):
+        popped = exporters._pop_many(self.x, 3)
+        ntools.assert_equal(popped, self.known_L3)
+
+    def test_right1(self):
+        popped = exporters._pop_many(self.x, 1, side='riGHt')
+        ntools.assert_equal(popped, self.known_R1)
+
+    def test_right4(self):
+        popped = exporters._pop_many(self.x, 4, side='riGHt')
+        ntools.assert_equal(popped, self.known_R4)
+
+
+class _baseParseWriteObsMixin(object):
+    def test_parse(self):
+        parsed_obs = exporters._parse_obs(list(self.obs))
+        ntools.assert_tuple_equal(parsed_obs, self.known_parsed)
+
+    def test__write(self):
+        row = exporters._write_obs('testheader', 2012, 5, 16, self.known_parsed)
+        ntools.assert_equal(row, self.known_row)
+
+
+class testParseWrite_ZeroWithFlag(_baseParseWriteObsMixin):
+    def setup(self):
+        self.obs = '1300000000M'
+        self.known_parsed = (12, 00, 0.00, 'M')
+        self.known_row = 'testheader,2012-05-16 12:00,0.00,M\n'
+
+
+class testParseWrite_ZeroWithoutFlag(_baseParseWriteObsMixin):
+    def setup(self):
+        self.obs = '1300000000'
+        self.known_parsed = (12, 00, 0.00, '')
+        self.known_row = 'testheader,2012-05-16 12:00,0.00,\n'
+
+
+class testParseWrite_Invalid(_baseParseWriteObsMixin):
+    def setup(self):
+        self.obs = '2200099999M'
+        self.known_parsed = (21, 00, None, 'M')
+        self.known_row = None
+
+
+class testParseWrite_NonZeroWithFlag(_baseParseWriteObsMixin):
+    def setup(self):
+        self.obs = '0300000012A'
+        self.known_parsed = (2, 00, 0.12, 'A')
+        self.known_row = 'testheader,2012-05-16 02:00,0.12,A\n'
+
+
+class testParseWrite_NonZeroWithoutFlag(_baseParseWriteObsMixin):
+    def setup(self):
+        self.obs = '0300000145'
+        self.known_parsed = (2, 00, 1.45, '')
+        self.known_row = 'testheader,2012-05-16 02:00,1.45,\n'
+
+
+class testParseWrite_EndOfDay(_baseParseWriteObsMixin):
+    def setup(self):
+        self.obs = '2500000005I'
+        self.known_parsed = (24, 00, 0.05, 'I')
+        self.known_row = None
+
+
+class _baseObsFromRow(object):
+    def test_basic(self):
+        obs = exporters._obs_from_row(self.row)
+        ntools.assert_list_equal(obs, self.known_obs)
+
+
+class testObsFromRow_Baseline(_baseObsFromRow):
+    def setup(self):
+        self.row = (
+            'HPD04511406HPCPHI19480700010040100000000  '
+            '1300000000M 2400000000M 2500000000I '
+        )
+        self.known_obs = [
+            '045114,HPD,06HPCP,HI,1948-07-01 00:00,0.00,\n',
+            '045114,HPD,06HPCP,HI,1948-07-01 12:00,0.00,M\n',
+            '045114,HPD,06HPCP,HI,1948-07-01 23:00,0.00,M\n'
+        ]
+
+
+class testObsFromRow_WithInvalids(_baseObsFromRow):
+    def setup(self):
+        self.row = (
+            'HPD04511406HPCPHI19480700010040100000000  '
+            '0800000185A 0900099999M 1300000000M 2400000000M '
+            '2500000000I '
+        )
+        self.known_obs = [
+            '045114,HPD,06HPCP,HI,1948-07-01 00:00,0.00,\n',
+            '045114,HPD,06HPCP,HI,1948-07-01 07:00,1.85,A\n',
+            '045114,HPD,06HPCP,HI,1948-07-01 12:00,0.00,M\n',
+            '045114,HPD,06HPCP,HI,1948-07-01 23:00,0.00,M\n'
+        ]
