@@ -1,15 +1,18 @@
 .. py:currentmodule:: metar.station
 
-Primary API
------------
+:mod:`metar.station`
+====================
+
 
 WeatherStation
-==============
+---------------
 
-.. autofunction:: metar.station.WeatherStation
+.. autoclass:: metar.station.WeatherStation
+               :members:
+
 
 Helper Functions
-================
+----------------
 
 .. autofunction:: metar.station.getAllStations
 .. autofunction:: metar.station.getStationByID
