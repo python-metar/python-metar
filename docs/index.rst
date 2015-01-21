@@ -3,14 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-<<<<<<< HEAD
-Welcome to python-metar's documentation!
-========================================
 
-Contents:
-=======
 python-metar's documentation
-========================================
+============================
 
 .. image:: https://travis-ci.org/phobson/python-metar.svg?branch=master
     :target: https://travis-ci.org/phobson/python-metar
@@ -96,7 +91,7 @@ Tests are run via ``nose``. Run them all with: ::
 
 You can get fancy with: ::
 
-    python -c "import metar; metar.test(verbose=True, packageinfo=True, coverage=True)"
+    python -c "import metar; metar.test(verbose=2, packageinfo=True, coverage=True)"
 
 Contents:
 ---------
