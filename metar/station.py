@@ -30,9 +30,26 @@ matplotlib.rcParams['timezone'] = 'UTC'
 
 
 class WeatherStation(object):
-    """An object representing a weather station."""
+    """An object representing a weather station.
 
-    def __init__(self, sta_id, city=None, state=None, country=None, lat=None, lon=None, max_attempts=10):
+    Parameters
+    ----------
+
+    sta_id : string
+        The handles of the station. For airports, these are prefixed
+        with a "K" (e.g., KPDX for the Portland International Airport)
+    city, state, country : optional strings or None (default)
+        The administrative location of the station.
+    lat, lon : optional floats or None (default)
+        The geographic coordinates (x, y) of the station.
+    max_attempts : optional int (default = 10)
+        The upper limit to the number of times the downloaders will
+        try to retrieve a file from the web.
+
+    """
+
+    def __init__(self, sta_id, city=None, state=None, country=None,
+                 lat=None, lon=None, max_attempts=10):
         self.sta_id = sta_id
         self.city = city
         self.state = state
