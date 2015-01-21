@@ -690,15 +690,17 @@ def _process_precip(dateval, p1):
 
 
 def _process_sky_cover(obs):
-    coverdict = {'CLR': 0.0000,
-                 'SKC': 0.0000,
-                 'NSC': 0.0000,
-                 'NCD': 0.0000,
-                 'FEW': 0.1785,
-                 'SCT': 0.4375,
-                 'BKN': 0.7500,
-                 'VV': 0.9900,
-                 'OVC': 1.0000}
+    coverdict = {
+        'CLR': 0.0000,
+        'SKC': 0.0000,
+        'NSC': 0.0000,
+        'NCD': 0.0000,
+        'FEW': 0.1785,
+        'SCT': 0.4375,
+        'BKN': 0.7500,
+        'VV': 0.9900,
+        'OVC': 1.0000
+    }
     coverlist = []
     for sky in obs.sky:
         coverval = coverdict[sky[0]]
