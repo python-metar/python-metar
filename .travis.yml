@@ -20,7 +20,10 @@ install:
   - cp test/matplotlibrc .
 
 script:
-  - nosetests --verbose --with-id --with-coverage --cover-package=metar
+  - cd ~
+  - source activate testenv
+  - python -c "import metar; metar.test()"
+  #- nosetests --verbose --with-id --with-coverage --cover-package=metar
 
 after_success:
   - coveralls

@@ -1,21 +1,30 @@
+import os
+import sys
+
 import nose.tools as ntools
-from metar import station
-from metar import exporters
 import datetime as dt
 import pandas
 import matplotlib
 import matplotlib.pyplot as plt
 from six import StringIO
 
+from metar import station
+from metar import exporters
+
+
+@ntools.nottest
+def getTestFile(filename):
+    return os.path.join(sys.prefix, 'metar_data', 'test_data', filename)
+
 class test_exporter(object):
     def setup(self):
-        self.fivemin = pandas.read_csv('test/data_for_tests.csv',
+        self.fivemin = pandas.read_csv(getTestFile('data_for_tests.csv'),
                                        parse_dates=True, index_col=0)
         self.hourly = self.fivemin.resample('1H', how='sum')
 
-        self.known_fivemin_swmm5_file = 'test/known_fivemin_swmm5.dat'
-        self.known_hourly_swmm5_file = 'test/known_hourly_swmm5.dat'
-        self.knwon_hourly_ncdc_file = 'test/known_hourly_NCDC.dat'
+        self.known_fivemin_swmm5_file = getTestFile('known_fivemin_swmm5.dat')
+        self.known_hourly_swmm5_file = getTestFile('known_hourly_swmm5.dat')
+        self.knwon_hourly_ncdc_file = getTestFile('known_hourly_NCDC.dat')
 
         with open(self.known_fivemin_swmm5_file, 'r') as f:
             self.known_fivemin_swmm5 = f.read()
@@ -36,7 +45,7 @@ class test_exporter(object):
             col='precip',
             freq='5min',
             dropzeros=True,
-            filename='test/test_dumpSWMM.dat'
+            filename=getTestFile('test_dumpSWMM.dat')
         )
         ntools.assert_true(isinstance(data, pandas.DataFrame))
         ntools.assert_list_equal(
@@ -51,7 +60,7 @@ class test_exporter(object):
             col='precip',
             freq='5min',
             dropzeros=True,
-            filename='test/test_dumpSWMM_withoutZeros.dat'
+            filename=getTestFile('test_dumpSWMM_withoutZeros.dat')
         )
         ntools.assert_equal(data[data.precip == 0].shape[0], 0)
 
@@ -62,12 +71,12 @@ class test_exporter(object):
             col='precip',
             freq='5min',
             dropzeros=False,
-            filename='test/test_dumpSWMM_withZeros.dat'
+            filename=getTestFile('test_dumpSWMM_withZeros.dat')
         )
         ntools.assert_greater(data[data.precip == 0].shape[0], 0)
 
     def test_dumpSWMM5Format_Result5min(self):
-        testfilename = 'test/test_dumpSWMM_fivemin.dat'
+        testfilename = getTestFile('test_dumpSWMM_fivemin.dat')
         data = exporters.SWMM5Format(
             self.fivemin,
             'Test-Station',
@@ -85,7 +94,7 @@ class test_exporter(object):
         ntools.assert_equal(known_data, test_data)
 
     def test_dumpSWMM5Format_ResultHourly(self):
-        testfilename = 'test/test_dumpSWMM_hourly.dat'
+        testfilename = getTestFile('test_dumpSWMM_hourly.dat')
         data = exporters.SWMM5Format(
             self.fivemin,
             'Test-Station',
@@ -103,7 +112,7 @@ class test_exporter(object):
         ntools.assert_equal(known_data, test_data)
 
     def test_dumpNCDCFormat(self):
-        testfilename = 'test/test_dumpNCDCFormat.dat'
+        testfilename = getTestFile('test_dumpNCDCFormat.dat')
         data = exporters.NCDCFormat(
             self.hourly,
             '041685',

@@ -3,20 +3,33 @@
 #
 # Usage: python setup.py install
 #
-from distutils.core import setup
+import os
+from setuptools import setup, find_packages
 
-try:
-    # add download_url syntax to distutils
-    from distutils.dist import DistributionMetadata
-    DistributionMetadata.classifiers = None
-    DistributionMetadata.download_url = None
-except:
-    pass
+def getDataFiles(submodule, folder):
+    datadir = os.path.join('.', submodule, folder)
+    files = [d for d in map(
+        lambda x: os.path.join(datadir, x),
+        os.listdir(datadir)
+    )]
+    return files
+
+DATA_FILES = [
+    ('metar_data/test_data', getDataFiles('.',  'test')),
+    ('metar_data/reference', getDataFiles('.', 'reference')),
+    #('pybmp_data/nsqd', getDataFiles('nsqd', 'data')),
+]
+
+PACKAGE_DATA = {
+    'metar/reference': ['reference/*'],
+    'metar/testing': ['test/*']
+}
 
 DESCRIPTION="Metar - a package to parse METAR coded weather reports"
 
 LONG_DESCRIPTION="""
-Metar is a python package for interpreting METAR and SPECI weather reports.
+Metar is a python package for interpreting METAR and SPECI weather
+reports.
 
 METAR is an international format for reporting weather observations.
 The standard specification for the METAR and SPECI codes is given
@@ -42,10 +55,12 @@ setup(
     url="http://python-metar.sourceforge.net/",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
+    package_data=PACKAGE_DATA,
+    data_files=DATA_FILES,
     download_url="http://sourceforge.net/project/platformdownload.php?group_id=134052",
     license="MIT",
-    packages=["metar"],
-    platforms="Python 2.6 and later.",
+    packages=find_packages(exclude=[]),
+    platforms="Python 2.7 and later.",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: MIT License",
