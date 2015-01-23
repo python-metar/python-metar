@@ -24,7 +24,6 @@ class test_exporter(object):
 
         self.known_fivemin_swmm5_file = getTestFile('known_fivemin_swmm5.dat')
         self.known_hourly_swmm5_file = getTestFile('known_hourly_swmm5.dat')
-        self.knwon_hourly_ncdc_file = getTestFile('known_hourly_NCDC.dat')
         self.known_hourly_ncdc_file = getTestFile('known_hourly_NCDC.dat')
 
         with open(self.known_fivemin_swmm5_file, 'r') as f:

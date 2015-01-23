@@ -29,7 +29,7 @@ install:
   - source activate testenv
   - pip install coveralls
   - pip install .
-  - cp test/matplotlibrc .
+  - cp test/matplotlibrc ~/matplotlibrc
 
 script:
   - cd ~
