@@ -25,6 +25,7 @@ class test_exporter(object):
         self.known_fivemin_swmm5_file = getTestFile('known_fivemin_swmm5.dat')
         self.known_hourly_swmm5_file = getTestFile('known_hourly_swmm5.dat')
         self.knwon_hourly_ncdc_file = getTestFile('known_hourly_NCDC.dat')
+        self.known_hourly_ncdc_file = getTestFile('known_hourly_NCDC.dat')
 
         with open(self.known_fivemin_swmm5_file, 'r') as f:
             self.known_fivemin_swmm5 = f.read()
@@ -32,7 +33,7 @@ class test_exporter(object):
         with open(self.known_hourly_swmm5_file, 'r') as f:
             self.known_hourly_swmm = f.read()
 
-        with open(self.knwon_hourly_ncdc_file, 'r') as f:
+        with open(self.known_hourly_ncdc_file, 'r') as f:
             self.known_hourly_ncdc = f.read()
 
         self.known_columns = ['station', 'year', 'month', 'day',
@@ -121,7 +122,7 @@ class test_exporter(object):
             filename=testfilename
         )
 
-        with open(self.knwon_hourly_ncdc_file, 'r') as f:
+        with open(self.known_hourly_ncdc_file, 'r') as f:
             known_data = f.read()
 
         with open(testfilename, 'r') as f:

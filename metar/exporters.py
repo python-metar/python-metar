@@ -137,7 +137,7 @@ def NCDCFormat(dataframe, coopid, statename, col='Precip', filename=None):
         ncdcstring = '{0}{1:02d}{2}{3}{4}{5}{6:02d}{7:04d}{8:03d}{9} \n'.format(
             RECORDTYPE, STATECODE, coopid,
             ELEMENT, UNITS, row.name.year,
-            row.name.month, row.name.day, row.count(),
+            row.name.month, row.name.day, row.count() + 1,
             precipstrings
         )
         return ncdcstring
