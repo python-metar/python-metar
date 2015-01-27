@@ -1,6 +1,7 @@
 import shutil
 import datetime as dt
 import os
+import sys
 
 import nose.tools as ntools
 import numpy as np
@@ -11,10 +12,12 @@ import matplotlib.dates as mdates
 from metar import station
 from metar import metar
 
+@ntools.nottest
 class fakeClass(object):
     def value(self):
         return 'item2'
 
+@ntools.nottest
 def makeFakeRainData():
     tdelta = dt.datetime(2001, 1, 1, 1, 5) - dt.datetime(2001, 1, 1, 1, 0)
     start = dt.datetime(2001, 1, 1, 12, 0)
@@ -30,6 +33,11 @@ def makeFakeRainData():
     ]
 
     return daterange, rain_raw
+
+
+@ntools.nottest
+def getTestFile(filename):
+    return os.path.join(sys.prefix, 'metar_data', 'test_data', filename)
 
 
 class test_station():
@@ -225,9 +233,10 @@ class test_station():
         ntools.assert_raises(ValueError, station._check_step, 'fart')
 
     def test_check_file(self):
-        ntools.assert_equal(station._check_file('test/testfile1'), 'bad')
-        ntools.assert_equal(station._check_file('test/testfile2'), 'ok')
-        ntools.assert_equal(station._check_file('test/testfile3'), 'not there')
+        known_results = ['bad', 'ok', 'not there']
+        for n, known_result in enumerate(known_results, 1):
+            fn = getTestFile('testfile{:d}'.format(n))
+            ntools.assert_equal(station._check_file(fn), known_result)
 
     def test_check_dirs(self):
         pass

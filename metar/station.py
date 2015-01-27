@@ -6,11 +6,8 @@
 
 # std lib stuff
 import datetime
-from six.moves.urllib import request
-from six.moves.urllib import error
-from six.moves.urllib import parse
-from six.moves import http_cookiejar
 import os
+import sys
 import pdb
 import codecs
 
@@ -19,6 +16,12 @@ import numpy as np
 import matplotlib
 import matplotlib.dates as mdates
 import pandas
+
+#compat
+from six.moves.urllib import request
+from six.moves.urllib import error
+from six.moves.urllib import parse
+from six.moves import http_cookiejar
 
 # metar stuff
 from . import metar
@@ -49,13 +52,14 @@ class WeatherStation(object):
     """
 
     def __init__(self, sta_id, city=None, state=None, country=None,
-                 lat=None, lon=None, max_attempts=10):
+                 lat=None, lon=None, max_attempts=10, show_progress=False):
         self.sta_id = sta_id
         self.city = city
         self.state = state
         self.country = country
         self.position = datatypes.position(lat, lon)
-        self.max_attempts = max_attempts
+        self._max_attempts = max_attempts
+        self._show_progress = show_progress
 
         if self.state:
             self.name = "%s, %s" % (self.city, self.state)
@@ -69,6 +73,19 @@ class WeatherStation(object):
         self._wunder_nonairport = None
         self._asos = None
 
+    @property
+    def show_progress(self):
+        return self._show_progress
+    @show_progress.setter
+    def show_progress(self, value):
+        self._show_progress = value
+
+    @property
+    def max_attempts(self):
+        return self._max_attempts
+    @max_attempts.setter
+    def max_attempts(self, value):
+        self._max_attempts = value
 
     @property
     def wunderground(self):
@@ -430,7 +447,9 @@ class WeatherStation(object):
         labelfxn = lambda ts, status: '{} {}: {}'.format(
             self.sta_id, ts.strftime('%Y.%m.%d'), status
         )
-        progress = metar.ProgressBar(timestamps, labelfxn=labelfxn)
+
+        if self.show_progress:
+            progress = metar.ProgressBar(timestamps, labelfxn=labelfxn)
 
         data = None
         for n, ts in enumerate(timestamps):
@@ -440,7 +459,8 @@ class WeatherStation(object):
                 newdata, status = self._read_csv(ts, source)
                 data = data.append(newdata)
 
-            progress.animate(n+1, status)
+            if self.show_progress:
+                progress.animate(n+1, status)
 
         # add a row number to each row
         data['rownum'] = list(range(data.shape[0]))
@@ -715,16 +735,13 @@ def _process_sky_cover(obs):
 
 
 def getAllStations():
-    station_file_name = "reference/nsd_cccc.txt"
-    #station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
+    stationfile = os.path.join(sys.prefix, 'metar_data', 'reference', 'nsd_cccc.txt')
     stations = {}
 
-    fh = open(station_file_name, 'r')
-    for line in fh:
-        f = line.strip().split(";")
-        stations[f[0]] = (f[0], f[3], f[4], f[5], f[7], f[8])
-
-    fh.close()
+    with open(stationfile, 'r') as fh:
+        for line in fh:
+            f = line.strip().split(";")
+            stations[f[0]] = (f[0], f[3], f[4], f[5], f[7], f[8])
 
     return stations
 
