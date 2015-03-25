@@ -12,7 +12,6 @@ import itertools
 import sys
 
 # third-party modules
-from IPython.display import HTML
 import numpy as np
 
 import matplotlib as mpl
