@@ -25,7 +25,7 @@ before_install:
 
 install:
   - conda update conda --yes
-  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION matplotlib pandas pip six nose openpyxl
+  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION seaborn pandas pip six nose openpyxl
   - source activate testenv
   - pip install coveralls
   - pip install .
