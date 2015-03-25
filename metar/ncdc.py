@@ -121,7 +121,7 @@ def waterYear(dateval):
 
 
 def summarizeStorms(stormdata, stormcol='storm', units='in',
-                    avgintensityfactor=1, datename=None):
+                    intensityfactor=1, datename=None):
     def timediff(row, t2, t1, asdays=False):
         secperhr = 60. * 60.
         hrperday = 24
@@ -176,8 +176,10 @@ def summarizeStorms(stormdata, stormcol='storm', units='in',
         )
 
         summary['Avg Inten.'] = (
-            summary['Total'] / summary['Duration Hours'] * avgintensityfactor
+            summary['Total'] / summary['Duration Hours'] * intensityfactor
         )
+
+        summary.loc[:, 'Max Inten.'] = summary['Max Inten.'] * intensityfactor
 
         # keep only our favorite columns
         final_columns = [
