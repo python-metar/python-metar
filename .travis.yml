@@ -13,7 +13,7 @@ env:
 matrix:
   fast_finish: true
   include:
-  - python: 3.4
+  - python: 2.7
     env:
     - COVERAGE=true
 
@@ -25,7 +25,7 @@ before_install:
 
 install:
   - conda update conda --yes
-  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION matplotlib pandas pip six nose openpyxl
+  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION seaborn pandas pip six nose openpyxl
   - source activate testenv
   - pip install coveralls
   - pip install .
