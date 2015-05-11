@@ -1402,7 +1402,7 @@ class Metar(object):
                     text_list.append("%s%s at %s" %
                           (SKY_COVER[cover],what,str(height)))
 
-        return sep.join(self.text_list)
+        return sep.join(text_list)
 
     def trend(self):
         """
