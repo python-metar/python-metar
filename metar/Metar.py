@@ -62,7 +62,7 @@ class ParserError(Exception):
 
 MISSING_RE = re.compile(r"^[M/]+$")
 
-TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI)\s+")
+TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI)(\s*COR)?\s+")
 STATION_RE =  re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
 TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           (?P<hour>\d\d)
@@ -316,7 +316,7 @@ class Metar(object):
       """Parse raw METAR code."""
       self.code = metarcode.strip()      # original METAR code with leading and trailing whitespace removed
       self.type = 'METAR'                # METAR (routine) or SPECI (special)
-      self.mod = 'AUTO'                  # AUTO (automatic) or COR (corrected)
+      self.mod = None                    # AUTO (automatic) or COR (corrected)
       self.station_id = None             # 4-character ICAO station code
       self.time = None                   # observation time [datetime]
       self.cycle = None                  # observation cycle (0-23) [int]
