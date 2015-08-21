@@ -14,7 +14,8 @@ from metar import exporters
 
 @ntools.nottest
 def getTestFile(filename):
-    return os.path.join(sys.prefix, 'metar_data', 'test_data', filename)
+    current_dir, _ = os.path.split(__file__)
+    return os.path.join(current_dir, 'data', filename)
 
 class test_exporter(object):
     def setup(self):
