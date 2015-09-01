@@ -14,15 +14,8 @@ def getDataFiles(submodule, folder):
     )]
     return files
 
-DATA_FILES = [
-    ('metar_data/test_data', getDataFiles('.',  'test')),
-    ('metar_data/reference', getDataFiles('.', 'reference')),
-    #('pybmp_data/nsqd', getDataFiles('nsqd', 'data')),
-]
-
 PACKAGE_DATA = {
-    'metar/reference': ['reference/*'],
-    'metar/testing': ['test/*']
+    'metar.data': ['*.txt'],
 }
 
 DESCRIPTION="Metar - a package to parse METAR coded weather reports"
@@ -56,7 +49,6 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     package_data=PACKAGE_DATA,
-    data_files=DATA_FILES,
     download_url="http://sourceforge.net/project/platformdownload.php?group_id=134052",
     license="MIT",
     packages=find_packages(exclude=[]),

@@ -50,10 +50,10 @@ Thumbs.db
 
 # big files #
 #############
-output
-data
-test/test_*.png
-JUNK/*
+/output
+/data
+/tests/data/test_*.png
+/JUNK/*
 
 # tex files #
 ############

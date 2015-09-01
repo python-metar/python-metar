@@ -10,6 +10,9 @@ import os
 import sys
 import pdb
 import codecs
+from contextlib import closing
+from io import TextIOWrapper
+from pkg_resources import resource_string
 
 # math stuff
 import numpy as np
@@ -735,13 +738,13 @@ def _process_sky_cover(obs):
 
 
 def getAllStations():
-    stationfile = os.path.join(sys.prefix, 'metar_data', 'reference', 'nsd_cccc.txt')
     stations = {}
 
-    with open(stationfile, 'r') as fh:
-        for line in fh:
-            f = line.strip().split(";")
-            stations[f[0]] = (f[0], f[3], f[4], f[5], f[7], f[8])
+    lines = resource_string('metar.data', 'nsd_cccc.txt').decode('UTF-8').splitlines()
+
+    for line in lines:
+        f = line.strip().split(";")
+        stations[f[0]] = (f[0], f[3], f[4], f[5], f[7], f[8])
 
     return stations
 
