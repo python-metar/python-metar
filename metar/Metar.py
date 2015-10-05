@@ -1004,6 +1004,71 @@ class Metar(object):
       
       return string.join(lines,"\n")
 
+  def json( self, metar_code=True ):
+    json = {"station":"", "type":"", "time":"", "temperature":"", "dew point":"", 
+            "wind":"", "peak wind":"", "wind shift":"", "visibility":"", 
+            "visual range":"", "pressure":"", "weather": "", "sky":"",
+            "sea-level pressure":"","6-hour max temp":"", "6-hour min temp":"",
+            "24-hour max temp":"", "24-hour min temp":"", "1-hour precipitation":"",
+            "3-hour precipitation":"", "6-hour precipitation":"", "24-hour precipitation":"",
+            "remarks":"","Trend":"", "unparsed code":"", "unparsed remarks":"", "METAR":""}
+    
+    json["station"] = self.station_id
+    if self.type:
+        json["type"] = self.report_type()
+    if self.time:
+        json["time"] = self.time.ctime()
+    if self.temp:
+        json["temperature"] = self.temp.string("C")
+    if self.dewpt:
+        json["dew point"] = self.dewpt.string("C")
+    if self.wind_speed:
+        json["wind"] = self.wind()
+    if self.wind_speed_peak:
+        json["peak wind"] = self.peak_wind()
+    if self.wind_shift_time:
+        json["wind shift"] = self.wind_shift()
+    if self.vis:
+        json["visibility"] = self.visibility()
+    if self.runway:
+        json["visual range"] = self.runway_visual_range()
+    if self.press:
+        json["pressure"] = self.press.string("mb")
+    if self.weather:
+        json["weather"] = self.present_weather()
+    if self.sky:
+        json["sky"] = self.sky_conditions("\n")
+    if self.press_sea_level:
+        json["sea-level pressure"] = self.press_sea_level.string("mb")
+    if self.max_temp_6hr:
+        json["6-hour max temp"] = str(self.max_temp_6hr)
+    if self.max_temp_6hr:
+        json["6-hour min temp"] = str(self.min_temp_6hr)
+    if self.max_temp_24hr:
+        json["24-hour max temp"] = str(self.max_temp_24hr)
+    if self.max_temp_24hr:
+        json["24-hour min temp"] = str(self.min_temp_24hr)
+    if self.precip_1hr:
+        json["1-hour precipitation"] = str(self.precip_1hr)
+    if self.precip_3hr:
+        json["3-hour precipitation"] = str(self.precip_3hr)
+    if self.precip_6hr:
+        json["6-hour precipitation"] =  str(self.precip_6hr)
+    if self.precip_24hr:
+        json["24-hour precipitation"] = str(self.precip_24hr)
+    if self._remarks:
+        json["remarks"] = " - "+self.remarks("\n - ")
+    if self._trend:
+        json["Trend"] = self.trend()
+    if self._unparsed_groups:
+        json["unparsed code"] = ' '.join(self._unparsed_groups)
+    if self._unparsed_remarks:
+        json["unparsed remarks"] = ' '.join(self._unparsed_remarks)
+    if metar_code:
+        json["METAR"] = self.code
+
+    return json
+
   def report_type( self ):
       """
       Return a textual description of the report type.
