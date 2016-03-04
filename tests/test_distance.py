@@ -56,6 +56,9 @@ class DistanceTest(unittest.TestCase):
     
     self.assertAlmostEqual( distance("1 1/2","SM").value("FT"), 7920.0, 2 )
     self.assertAlmostEqual( distance("1/4","SM").value("FT"), 1320.0, 2 )
+
+    self.assertAlmostEqual( distance("10.5","IN").value("M"), 0.27, 2 )
+    self.assertAlmostEqual( distance("0.066","KM").value("IN"), 2598.43, 2 )
     
     self.assertEqual( distance("1 1/2","SM").string("SM"), "1 1/2 miles" )
     self.assertEqual( distance("3/16","SM").string("SM"), "3/16 miles" )

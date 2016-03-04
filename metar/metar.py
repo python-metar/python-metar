@@ -226,6 +226,7 @@ TS_LOC_RE = re.compile(r"""TS(\s+(?P<loc>( OHD | VC | DSNT\s+ | \s+AND\s+ |
                                           ( \s+MOV\s+(?P<dir>[NSEW][EW]?) )?\s+""",
                            re.VERBOSE)
 
+SNOWDEPTH_RE = re.compile(r"""^4/(?P<snowdepth>\d\d\d)\s+""")
 ## translation of weather location codes
 
 loc_terms = [ ("OHD", "overhead"),
@@ -431,6 +432,7 @@ class Metar(object):
         self.precip_3hr = None             # precipitation over the last 3 hours
         self.precip_6hr = None             # precipitation over the last 6 hours
         self.precip_24hr = None            # precipitation over the last 24 hours
+        self.snowdepth = None              # snow depth [distance]
         self._trend = False                # trend groups present (bool)
         self._trend_groups = []            # trend forecast groups
         self._remarks = []                 # remarks (list of strings)
@@ -1066,6 +1068,13 @@ class Metar(object):
         elif d['type'] == "2":
             self._remarks.append("Automated station (type 2)")
 
+    def _handleSnowDepthRemark(self, d):
+        """
+        Parse the 4/ group snowdepth report
+        """
+        self.snowdepth = distance(float(d['snowdepth']), 'IN')
+        self._remarks.append(" snowdepth %s" % (self.snowdepth, ))
+                            
     def _unparsedRemark(self, d):
         """
         Handle otherwise unparseable remark groups.
@@ -1119,6 +1128,7 @@ class Metar(object):
         (PRESS_3HR_RE,    _handlePress3hrRemark),
         (TEMP_6HR_RE,     _handleTemp6hrRemark),
         (TEMP_24HR_RE,    _handleTemp24hrRemark),
+        (SNOWDEPTH_RE,    _handleSnowDepthRemark),
         (UNPARSED_RE,     _unparsedRemark)
     ]
 
