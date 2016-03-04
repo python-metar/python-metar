@@ -6,27 +6,30 @@ matrix:
 
     - python: 2.7
       env:
-        - COVERAGE=true
+        - COVERAGE=false
     - python: 3.3
       env:
         - COVERAGE=false
     - python: 3.4
       env:
         - COVERAGE=false
+    - python: 3.5
+      env:
+        - COVERAGE=true
 
 before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
+  - ./miniconda.sh -b -p $HOME/miniconda
+  - export PATH=$HOME/miniconda/bin:$PATH
+  - conda update conda --yes  
+  - cp tests/data/matplotlibrc .
 
 install:
-  - conda update conda --yes
   - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION seaborn pandas pip six nose openpyxl
   - source activate testenv
   - pip install coveralls
   - pip install .
-  - cp tests/data/matplotlibrc .
 
 script:
   - nosetests --with-coverage --cover-package=metar --verbose
