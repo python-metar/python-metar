@@ -4,13 +4,6 @@ import datetime
 import sys
 import os
 
-import pandas
-import seaborn
-
-import datetime
-import itertools
-import sys
-
 # third-party modules
 import numpy as np
 
@@ -22,7 +15,6 @@ import matplotlib.gridspec as gridspec
 import matplotlib.colorbar as colorbar
 
 import pandas
-import seaborn
 
 
 def getPctAvail(grid, coopid):
@@ -214,8 +206,13 @@ def availabilityByStation(stationdata, stationname, coopid, baseyear=1947):
     ax = fig.add_subplot(gs[0])
     cax = fig.add_subplot(gs[1])
 
-    #fig, ax = plt.subplots(figsize=(9, 10))
-    mycolors = seaborn.color_palette(name='cubehelix_r', n_colors=4)
+    mycolors = [
+        (0.75871830080126179, 0.79220693354743377, 0.95438612219134034),
+        (0.81462453291982828, 0.49548316572322215, 0.57525259364168568),
+        (0.32927729263408284, 0.47628455565843819, 0.18371555497583281),
+        (0.086056336005814082, 0.23824692404211989, 0.30561236308077167)
+    ]
+    #mycolors = seaborn.color_palette(name='cubehelix_r', n_colors=4)
     cmap = mpl.colors.ListedColormap(mycolors)
     cmap.set_bad(mycolors[-1])
     bounds = [-0.5, 0.5, 1.5, 2.5, 3.5]
@@ -250,9 +247,21 @@ def availabilityByStation(stationdata, stationname, coopid, baseyear=1947):
 
 
 def dataAvailabilityHeatmap(data):
-    cmapname = 'Blues'
+
     bounds = np.arange(10., 101.0, 10.0)
-    mycolors = seaborn.color_palette(name=cmapname, n_colors=bounds.shape[0])
+    mycolors = [
+        (0.89788543476777916, 0.93903883485233086, 0.97736255421357998),
+        (0.8288812097381143, 0.89376394327949071, 0.95472510842715996),
+        (0.75063438625896683, 0.84784314632415769, 0.92821223034578215),
+        (0.63252597346025352, 0.79764707088470455, 0.88687428586623251),
+        (0.49176471712542513, 0.72196849023594578, 0.85477893983616549),
+        (0.36159939310129952, 0.64273742998347561, 0.81657825007158169),
+        (0.24816610374871423, 0.56189160382046421, 0.77098040580749516),
+        (0.15072665197007795, 0.4644521408221301, 0.72078433036804201),
+        (0.074817382149836603, 0.37325644738533914, 0.65520955534542313),
+        (0.031372550874948502, 0.28161477242030347, 0.55826222487524446)
+    ]
+    #mycolors = seaborn.color_palette(name=cmapname, n_colors=bounds.shape[0])
     cmap = mpl.colors.ListedColormap(mycolors)
     cmap.set_under('1.0')
     cmap.set_bad('1.0')
