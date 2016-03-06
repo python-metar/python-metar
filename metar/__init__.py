@@ -48,28 +48,17 @@ Redistributions of source code must retain the above copyright notice, this list
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """ % __author__
 
-#import Datatypes
-#import Metar
-#import Station
-#import Graphics
 
-import sys
-import os
-from warnings import simplefilter
-
-from numpy import errstate
 import numpy.testing as nptest
-from numpy.testing.noseclasses import NumpyTestProgram
 
-from .station import *
-from .graphics import *
-from .exporters import *
-from . import ncdc
+from .metar import Metar
+
 
 def _show_package_info(package, name):
     print("%s version %s" % (name, package.__version__))
     packagedir = os.path.dirname(package.__file__)
     print("%s is installed in %s" % (name, packagedir))
+
 
 class NoseWrapper(nptest.Tester):
     '''
@@ -80,6 +69,13 @@ class NoseWrapper(nptest.Tester):
     that are passed to numpy.errstate to suppress floating point warnings.
     '''
 
+
+    import sys
+    import os
+    from warnings import simplefilter
+
+    from numpy import errstate
+    from numpy.testing.noseclasses import NumpyTestProgram
 
     def _show_system_info(self):
         import nose
