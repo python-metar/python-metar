@@ -200,7 +200,7 @@ class speed(object):
 
 class distance(object):
     """A class representing a distance value."""
-    legal_units = [ "SM", "MI", "M", "KM", "FT" ]
+    legal_units = [ "SM", "MI", "M", "KM", "FT", "IN" ]
     legal_gtlt = [ ">", "<" ]
 
     def __init__( self, value, units=None, gtlt=None ):
@@ -255,6 +255,8 @@ class distance(object):
             m_value = self._value*1609.344
         elif self._units == "FT":
             m_value = self._value/3.28084
+        elif self._units == "IN":
+            m_value = self._value/39.3701
         elif self._units == "KM":
             m_value = self._value*1000
         else:
@@ -263,6 +265,8 @@ class distance(object):
             return m_value/1609.344
         elif units == "FT":
             return m_value*3.28084
+        elif units == "IN":
+            return m_value*39.3701
         elif units == "KM":
             return m_value/1000
         elif units == "M":
@@ -295,6 +299,8 @@ class distance(object):
             text += " km"
         elif units == "FT":
             text += " feet"
+        elif units == "IN":
+            text += " inches"
         if self._gtlt == ">":
             text = "greater than "+text
         elif self._gtlt == "<":
