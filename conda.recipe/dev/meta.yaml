@@ -33,7 +33,7 @@ test:
 about:
   home: https://github.com/phobson/python-metar.git
   license:  MIT
-  summary: 'Parse METAR weather observation coxes'
+  summary: 'Parse METAR weather observation codes'
 
 # See
 # http://docs.continuum.io/conda/build.html for
