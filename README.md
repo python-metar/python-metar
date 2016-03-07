@@ -2,6 +2,8 @@
 [![Coverage Status](https://img.shields.io/coveralls/phobson/python-metar.svg)](https://coveralls.io/r/phobson/python-metar?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/python-metar/badge/?version=latest)](http://python-metar.readthedocs.org/en/latest/)
 
+## Note: downloading and visualizing data have moved to [cloudside](https://github.com/phobson/cloudside)
+
 # The metar library
 
 Python-metar is a python package for interpreting METAR and SPECI coded
