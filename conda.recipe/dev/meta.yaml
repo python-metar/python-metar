@@ -1,0 +1,40 @@
+package:
+  name: metar
+  version: 2.0.0
+
+source:
+  path: ../../
+#  patches:
+   # List any patch files here
+   # - fix.patch
+
+build:
+  number: 1
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+
+  run:
+    - python
+
+test:
+  imports:
+    - metar
+
+  # commands:
+  #   - python -c "import metar; metar.test()"
+
+  requires:
+    - nose
+
+about:
+  home: https://github.com/phobson/python-metar.git
+  license:  MIT
+  summary: 'Parse METAR weather observation coxes'
+
+# See
+# http://docs.continuum.io/conda/build.html for
+# more information about meta.yaml/configure

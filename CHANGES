@@ -3,7 +3,7 @@ Change Log
 
 metar 2.0
 ---------
-*) Station object can now grab chunks of data from wunderground.com and the NCDC ASOS dataset
+*) Updated for python 3 compatibility
 
 
 metar 1.4.1
@@ -21,7 +21,7 @@ metar 1.4
    (Requested by Daryl Herzmann.)
 
 *) Changed the date-handling code to avoid automatic month/year adjustment
-   if the month or year are specified explicitly.  
+   if the month or year are specified explicitly.
    (Thanks to Scott McKuen for reporting this.)
 
 *) Only allow single-digit numerator in fractional visibility values, to avoid
@@ -33,7 +33,7 @@ metar 1.4
 
 *) Added tests for the visibility, trend, and runway state parsers.
 
-*) Added tests to verify that automatic month/year adjustment of the observation 
+*) Added tests to verify that automatic month/year adjustment of the observation
    date were being done correctly.
 
 *) Updated links to METAR resources in the README
@@ -42,7 +42,7 @@ metar 1.4
 metar 1.3
 ---------
 
-*) The datatype classes now have __str__ methods, so you can user the 
+*) The datatype classes now have __str__ methods, so you can user the
    generic str() function to get their string representation.
 
 *) 'MMM' is now accepted to represent missing data in the wind group.
@@ -114,7 +114,7 @@ metar 1.2
 
 *) Moved regexp matching out of the _parse* methods and into the __init__
    method.  This lets me avoid unnecessary method calls and removes a bunch
-   of previously duplicated code.  It gives a 10-15% speedup.  The ability to 
+   of previously duplicated code.  It gives a 10-15% speedup.  The ability to
    ignore trend groups has been temporarily lost as a result of this change.
 
 *) The date parsing code will assume we're in the previous month if the day
