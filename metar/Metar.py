@@ -49,8 +49,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 import re
 import datetime
-import string
-from Datatypes import *
+from metar.Datatypes import *
 
 ## Exceptions
 
@@ -295,9 +294,9 @@ REPORT_TYPE = { "METAR":"routine report",
 def _report_match(handler,match):
   """Report success or failure of the given handler function. (DEBUG)"""
   if match:
-      print handler.__name__," matched '"+match+"'"
+      print(handler.__name__," matched '"+match+"'")
   else:
-      print handler.__name__," didn't match..."
+      print(handler.__name__," didn't match...")
       
 def _unparsedGroup( self, d ):
     """
@@ -372,7 +371,7 @@ class Metar(object):
           ifailed = -1
           while igroup < ngroup and code: 
               pattern, handler, repeatable = Metar.handlers[igroup]
-              if debug: print handler.__name__,":",code
+              if debug: print(handler.__name__,":",code)
               m = pattern.match(code)
               while m:
                   ifailed = -1
@@ -383,15 +382,15 @@ class Metar(object):
                       code = self._do_trend_handlers(code)
                   if not repeatable: break
                   
-                  if debug: print handler.__name__,":",code
+                  if debug: print(handler.__name__,":",code)
                   m = pattern.match(code)
               if not m and ifailed < 0:
                   ifailed = igroup
               igroup += 1
               if igroup == ngroup and not m:
-                  # print "** it's not a main-body group **"
+                  # print("** it's not a main-body group **")
                   pattern, handler = (UNPARSED_RE, _unparsedGroup)
-                  if debug: print handler.__name__,":",code
+                  if debug: print(handler.__name__,":",code)
                   m = pattern.match(code)
                   if debug: _report_match(handler,m.group())
                   handler(self,m.groupdict())
@@ -402,7 +401,7 @@ class Metar(object):
           if pattern == REMARK_RE or self.press:
               while code:
                   for pattern, handler in Metar.remark_handlers:
-                      if debug: print handler.__name__,":",code
+                      if debug: print(handler.__name__,":",code)
                       m = pattern.match(code)
                       if m:
                           if debug: _report_match(handler,m.group())
@@ -410,8 +409,8 @@ class Metar(object):
                           code = pattern.sub("",code,1)
                           break
 
-      except Exception, err:
-          raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+string.join(err.args))
+      except Exception as err:
+          raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+" ".join(err.args))
           raise err
       if self._unparsed_groups:
           code = ' '.join(self._unparsed_groups)
@@ -419,11 +418,11 @@ class Metar(object):
 
   def _do_trend_handlers(self, code):
       for pattern, handler, repeatable in Metar.trend_handlers:
-          if debug: print handler.__name__,":",code
+          if debug: print(handler.__name__,":",code)
           m = pattern.match(code)
           while m:
               if debug: _report_match(handler, m.group())
-              self._trend_groups.append(string.strip(m.group()))
+              self._trend_groups.append(m.group().strip())
               handler(self,m.groupdict())
               code = code[m.end():]
               if not repeatable: break
@@ -720,7 +719,7 @@ class Metar(object):
       """
       Parse (and ignore) the trend groups.
       """
-      if d.has_key('trend'):
+      if 'trend' in d:
           self._trend_groups.append(d['trend'])
       self._trend = True
       
@@ -863,10 +862,10 @@ class Metar(object):
           while group:
               ltg_types.append(LIGHTNING_TYPE[group[:2]])
               group = group[2:]
-          parts.append("("+string.join(ltg_types,",")+")")
+          parts.append("("+",".join(ltg_types)+")")
       if d['loc']:
           parts.append(xlate_loc(d['loc']))
-      self._remarks.append(string.join(parts," "))
+      self._remarks.append(" ".join(parts))
           
   def _handleTSLocRemark( self, d ):
       """
@@ -994,7 +993,7 @@ class Metar(object):
       if self._unparsed_remarks:
           lines.append("- "+' '.join(self._unparsed_remarks))
       lines.append("METAR: "+self.code)
-      return string.join(lines,"\n")
+      return "\n".join(lines)
 
   def report_type( self ):
       """
@@ -1002,14 +1001,14 @@ class Metar(object):
       """
       if self.type == None:
           text = "unknown report type"
-      elif REPORT_TYPE.has_key(self.type):
+      elif self.type in REPORT_TYPE:
           text  = REPORT_TYPE[self.type]
       else:
           text = self.type+" report"
       if self.cycle:
           text += ", cycle %d" % self.cycle
       if self.mod:
-          if REPORT_TYPE.has_key(self.mod):
+          if self.mod in REPORT_TYPE:
               text += " (%s)" % REPORT_TYPE[self.mod]
           else:
               text += " (%s)" % self.mod
@@ -1098,7 +1097,7 @@ class Metar(object):
               lines.append("on runway %s, from %d to %s" % (name, low.value(units), high.string(units)))
           else:
               lines.append("on runway %s, %s" % (name, low.string(units)))
-      return string.join(lines,"; ")
+      return "; ".join(lines)
   
   def present_weather( self ):
       """
@@ -1141,12 +1140,12 @@ class Metar(object):
           if otheri:
               code_parts.append(otheri)
               text_parts.append(WEATHER_OTHER[otheri])
-          code = string.join(code_parts)
-          if WEATHER_SPECIAL.has_key(code):
+          code = " ".join(code_parts)
+          if code in WEATHER_SPECIAL:
               text_list.append(WEATHER_SPECIAL[code])
           else:
-              text_list.append(string.join(text_parts," "))
-      return string.join(text_list,"; ")
+              text_list.append(" ".join(text_parts))
+      return "; ".join(text_list)
   
   def sky_conditions( self, sep="; " ):
       """
@@ -1170,7 +1169,7 @@ class Metar(object):
               else:
                   text_list.append("%s%s at %s" % 
                           (SKY_COVER[cover],what,str(height)))
-      return string.join(text_list,sep)
+      return sep.join(text_list)
           
   def trend( self ):
       """
@@ -1182,5 +1181,5 @@ class Metar(object):
       """
       Return the decoded remarks.
       """
-      return string.join(self._remarks,sep)
+      return sep.join(self._remarks)
 
