@@ -7,7 +7,7 @@ import string
 import urllib
 from metar import Metar
 
-BASE_URL = "http://weather.noaa.gov/pub/data/observations/metar/stations"
+BASE_URL = "http://tgftp.nws.noaa.gov/data/observations/metar/stations"
 
 def usage():
   program = os.path.basename(sys.argv[0])
