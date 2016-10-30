@@ -6,7 +6,7 @@ import getopt
 import datetime
 import urllib
 
-BASE_URL = "http://weather.noaa.gov/pub/data/observations/metar/stations"
+BASE_URL = "http://tgftp.nws.noaa.gov/data/observations/metar/stations"
 
 def usage():
   print "Usage:  $0 "
