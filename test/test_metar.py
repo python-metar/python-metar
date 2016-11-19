@@ -262,6 +262,12 @@ class MetarTest(unittest.TestCase):
       """(Macro) Return Metar object for a report containing the given visibility group."""
       return Metar.Metar(sta_time+"09010KT "+vis_group)
 
+    def report_nowind(vis_group):
+      """(Macro) Return Metar object for a report containing the given
+      visibility group, without a preceeding wind group.
+      """
+      return Metar.Metar(sta_time+vis_group)
+
     self.assertEqual( report("10SM").vis.value(), 10 )
     self.assertEqual( report("10SM").vis_dir, None )
     self.assertEqual( report("10SM").max_vis, None )
@@ -284,6 +290,10 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("5000").vis_dir, None )
     self.assertEqual( report("5000").visibility(), "5000 meters" )
     self.assertEqual( report("5000M").visibility(), "5000 meters" )
+
+    self.assertEqual( report_nowind("5000").vis.value(), 5000 )
+    self.assertEqual( report_nowind("1000W 3000").vis.value(), 1000 )
+    self.assertEqual( report_nowind("1000 3000NE").vis.value(), 1000 )
 
     self.assertEqual( report("CAVOK").vis.value(), 10000 )
     self.assertEqual( report("CAVOK").vis_dir, None )

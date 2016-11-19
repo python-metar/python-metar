@@ -35,7 +35,7 @@ __email__ = "pollard@alum.mit.edu"
 __version__ = "1.2"
 
 __LICENSE__ = """
-Copyright (c) 2004, %s
+Copyright (c) 2004-2016, %s
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -69,25 +69,18 @@ TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           re.VERBOSE)
 MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|FINO|NIL|TEST|CORR?|RTD|CC[A-G])\s+")
 WIND_RE = re.compile(r"""^(?P<dir>[\dO]{3}|[0O]|///|MMM|VRB)
-                          (?P<speed>P?[\dO]{2,3}|[0O]+|[/M]{2,3})
+                          (?P<speed>P?[\dO]{2,3}|[/M]{2,3})
                         (G(?P<gust>P?(\d{1,3}|[/M]{1,3})))?
                           (?P<units>KTS?|LT|K|T|KMH|MPS)?
                       (\s+(?P<varfrom>\d\d\d)V
                           (?P<varto>\d\d\d))?\s+""",
                           re.VERBOSE)
-# VISIBILITY_RE =   re.compile(r"""^(?P<vis>(?P<dist>M?(\d\s+)?\d/\d\d?|M?\d+)
-#                                     ( \s*(?P<units>SM|KM|M|U) | NDV |
-#                                          (?P<dir>[NSEW][EW]?) )? |
-#                                    CAVOK )\s+""",
-#                                    re.VERBOSE)
-# start patch
 VISIBILITY_RE = re.compile(r"""^(?P<vis>(?P<dist>(M|P)?\d\d\d\d|////)
-                                            (?P<dir>[NSEW][EW]? | NDV)? |
+                                        (?P<dir>[NSEW][EW]? | NDV)? |
                                         (?P<distu>(M|P)?(\d+|\d\d?/\d\d?|\d+\s+\d/\d))
-                                           (?P<units>SM|KM|M|U) | 
+                                        (?P<units>SM|KM|M|U) | 
                                         CAVOK )\s+""",
                                  re.VERBOSE)
-# end patch
 RUNWAY_RE = re.compile(r"""^(RVRNO | 
                              R(?P<name>\d\d(RR?|LL?|C)?)/
                               (?P<low>(M|P)?\d\d\d\d)
