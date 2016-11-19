@@ -60,7 +60,7 @@ def process_line(line):
       if not silent:
         print("--------------------")
         print("METAR code: ",line)
-        print(string.join(exc.args,", "))
+        print(", ".join(exc.args))
 
 def process_files(files):
   """Decode METAR lines from the given files."""
