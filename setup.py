@@ -3,17 +3,9 @@
 #
 # Usage: python setup.py install
 #
-from distutils.core import setup
+from setuptools import setup
 
-try:
-    # add download_url syntax to distutils
-    from distutils.dist import DistributionMetadata
-    DistributionMetadata.classifiers = None
-    DistributionMetadata.download_url = None
-except:
-    pass
-
-DESCRIPTION="Metar - a package to parse METAR coded weather reports"
+DESCRIPTION="Metar - a package to parse METAR-coded weather reports"
 
 LONG_DESCRIPTION="""
 Metar is a python package for interpreting METAR and SPECI weather reports.
@@ -36,13 +28,12 @@ in international reports are accepted."""
 
 setup(
     name="metar",
-    version="1.4.0",
+    version="1.5.0",
     author="Tom Pollard",
     author_email="pollard@alum.mit.edu",
-    url="http://python-metar.sourceforge.net/",
+    url="http://github.com/tomp/python-metar",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
-    download_url="http://sourceforge.net/project/platformdownload.php?group_id=134052",
     license="MIT",
     packages=["metar"],
     platforms="Python 2.5 and later.",
