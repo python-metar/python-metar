@@ -1,6 +1,21 @@
-Relase Notes - metar-1.4.0
---------------------------
+Release Notes - metar-1.5.0
+---------------------------
 
+Python-metar v1.5 includes updated documentation and a few minor bug fixes.
+The old sourceforge site is no longer being updated, and so the only authoritative
+source repository is the GitHub repo.  To clone the project from there, use
+
+    git clone https://github.com/tomp/python-metar.git
+
+The best way to submit bug reports is through GitHub. You can reach me directly at either
+pollard@alum.mit.edu or pollard.tom@gmail.com
+
+Tom Pollard
+Dec 18, 2016
+
+
+Release Notes - metar-1.4.0
+---------------------------
 Python-metar v1.4 incorporates a handful of bug fixes and enhancements
 made over the last couple of years.  Notably, Toby White contributed code to 
 let the parser recognize and ignore trend forecasts and runway-state groups.
@@ -20,4 +35,3 @@ to e-mail me at pollard@alum.mit.edu.
 
 Tom Pollard
 May 2, 2009
-
