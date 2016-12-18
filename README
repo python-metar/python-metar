@@ -79,10 +79,10 @@ Current sources
 ---------------
 You can always obtain the most recent version of this package using git, via
 
-    git clone git://github.com/tomp/python-metar.git
+    git clone https://github.com/tomp/python-metar.git
 
 This is a public copy of the code repository I use for development.
-Thanks to Toby White for making me aware of github.
+Thanks to Toby White for making me aware of GitHub.
 
 ------------------------------------------------------------------------
 Contents
@@ -173,7 +173,7 @@ LICENSE
 ------------------------------------------------------------------------
 The metar library is
 
-Copyright (c) 2004-2009, Tom Pollard
+Copyright (c) 2004-2017, Tom Pollard
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
