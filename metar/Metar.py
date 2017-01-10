@@ -1096,8 +1096,20 @@ class Metar(object):
       """
       Return a textual description of the present weather.
       """
+      return self._weather( self.weather )
+
+  def recent_weather( self ):
+      """
+      Return a textual description of the recent weather.
+      """
+      return self._weather( self.recent )
+  
+  def _weather( self, weather ):
+      """
+      Return a textual description of weather.
+      """
       text_list = []
-      for weatheri in self.weather:
+      for weatheri in weather:
           (inteni,desci,preci,obsci,otheri) = weatheri
           text_parts = []
           code_parts = []
