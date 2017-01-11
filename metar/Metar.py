@@ -1164,7 +1164,7 @@ class Metar(object):
           else:
               if cloud:
                   what = CLOUD_TYPE[cloud]
-              elif cover != "OVC":
+              elif SKY_COVER[cover].endswith(" "):
                   what = "clouds"
               else: 
                   what = ""
