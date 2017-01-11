@@ -420,7 +420,6 @@ class MetarTest(unittest.TestCase):
       sample_metar = "{} 14005KT 6000 {} M05/M10 Q1018".format(sta_time, sky_conditions)
       return Metar.Metar(sample_metar)
 
-    print report('NSC')
     self.assertEqual( report('SCT030').sky_conditions(), 'scattered clouds at 3000 feet' )
     self.assertEqual( report('BKN001').sky_conditions(), 'broken clouds at 100 feet' )
     self.assertEqual( report('OVC008').sky_conditions(), 'overcast at 800 feet' )
