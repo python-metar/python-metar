@@ -412,6 +412,26 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report('TEMPO 0306 RMK 402500072').trend(), 'TEMPO 0306' )
     self.assertEqual( report('TEMPO 0306 RMK 402500072').max_temp_24hr.value(), 25.0 )
 
+  def test_310_parse_sky_conditions(self):
+    """Check parsing of sky conditions"""
+
+    def report(sky_conditions):
+      """(Macro) Return Metar object for a report containing the given sky conditions"""
+      sample_metar = "{} 14005KT 6000 {} M05/M10 Q1018".format(sta_time, sky_conditions)
+      return Metar.Metar(sample_metar)
+
+    print report('NSC')
+    self.assertEqual( report('SCT030').sky_conditions(), 'scattered clouds at 3000 feet' )
+    self.assertEqual( report('BKN001').sky_conditions(), 'broken clouds at 100 feet' )
+    self.assertEqual( report('OVC008').sky_conditions(), 'overcast at 800 feet' )
+    self.assertEqual( report('SCT020TCU').sky_conditions(), 'scattered towering cumulus at 2000 feet' )
+    self.assertEqual( report('BKN015CB').sky_conditions(), 'broken cumulonimbus at 1500 feet' )
+    self.assertEqual( report('FEW030').sky_conditions(), 'a few clouds at 3000 feet' )
+    self.assertEqual( report('VV001').sky_conditions(), 'indefinite ceilingclouds, vertical visibility to 100 feet' )
+    self.assertEqual( report('SKC').sky_conditions(), 'clear' )
+    self.assertEqual( report('CLR').sky_conditions(), 'clear' )
+    self.assertEqual( report('NSC').sky_conditions(), 'clear' )
+
 if __name__=='__main__':
   unittest.main( )
 

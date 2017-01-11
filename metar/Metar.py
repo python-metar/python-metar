@@ -1159,7 +1159,7 @@ class Metar(object):
       text_list = []
       for skyi in self.sky:
           (cover,height,cloud) = skyi
-          if cover == "SKC" or cover == "CLR":
+          if cover in ["SKC", "CLR", "NSC"]:
               text_list.append(SKY_COVER[cover])
           else:
               if cloud:
@@ -1169,7 +1169,7 @@ class Metar(object):
               else: 
                   what = ""
               if cover == "VV":
-                  text_list.append("%s%s, visibility to %s" % 
+                  text_list.append("%s%s, vertical visibility to %s" % 
                           (SKY_COVER[cover],what,str(height)))
               else:
                   text_list.append("%s%s at %s" % 
