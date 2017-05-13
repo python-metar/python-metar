@@ -49,6 +49,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 import re
 import datetime
+import warnings
+
 from metar.Datatypes import *
 
 ## Exceptions
@@ -304,7 +306,7 @@ debug = False
 class Metar(object):
   """METAR (aviation meteorology report)"""
   
-  def __init__( self, metarcode, month=None, year=None, utcdelta=None):
+  def __init__( self, metarcode, month=None, year=None, utcdelta=None, drop_unsupported_observations=False):
       """Parse raw METAR code."""
       self.code = metarcode              # original METAR code
       self.type = 'METAR'                # METAR (routine) or SPECI (special)
@@ -407,7 +409,13 @@ class Metar(object):
           raise err
       if self._unparsed_groups:
           code = ' '.join(self._unparsed_groups)
-          raise ParserError("Unparsed groups in body: "+code)
+          message = "Unparsed groups in body '"+code+"' while processing '"+metarcode+"'"
+          if drop_unsupported_observations:
+              warnings.warn(message, RuntimeWarning)
+          else:
+              raise ParserError(message)
+              
+
 
   def _do_trend_handlers(self, code):
       for pattern, handler, repeatable in Metar.trend_handlers:
@@ -703,7 +711,7 @@ class Metar(object):
   def _handleRunwayState( self, d ):
       """
       Parse (and ignore) the runway state.
-
+      
       The following attributes are set:
       """
       pass
@@ -1187,4 +1195,3 @@ class Metar(object):
       Return the decoded remarks.
       """
       return sep.join(self._remarks)
-
