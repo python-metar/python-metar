@@ -5,7 +5,8 @@ import unittest
 
 def suite():
     modules = ( "test_metar", "test_pressure", "test_speed", 
-                "test_temperature", "test_direction", "test_distance")
+                "test_temperature", "test_direction", "test_distance",
+                "test_precipitation")
     alltests = unittest.TestSuite()
     for module in map(__import__, modules):
         alltests.addTest(unittest.findTestCases(module))

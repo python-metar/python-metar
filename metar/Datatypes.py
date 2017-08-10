@@ -376,6 +376,8 @@ class precipitation(object):
       raise ValueError("unrecognized greater-than/less-than symbol: '"+gtlt+"'")
     self._gtlt = gtlt
     self._value = float(value)
+    # In METAR world, a string of four zeros denotes trace
+    self._istrace = (value == "0000")
 
   def __str__(self):
     return self.string()
@@ -407,6 +409,9 @@ class precipitation(object):
       if not units.upper() in precipitation.legal_units:
         raise UnitsError("unrecognized precipitation unit: '"+units+"'")
       units = units.upper()
+    # A trace is a trace in any units
+    if self._istrace:
+      return "Trace"
     text = "%.2f" % self.value(units)
     if units == "CM":
       text += "cm"
@@ -417,6 +422,10 @@ class precipitation(object):
     elif self._gtlt == "<":
       text = "less than "+text
     return text
+
+  def istrace(self):
+    """Return a boolean on if this precipitation was a trace"""
+    return self._istrace
 
 
 class position(object):
