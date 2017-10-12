@@ -1,4 +1,6 @@
 import unittest
+import warnings
+
 from metar import Metar
 
 # METAR fragments used in tests, below
@@ -11,9 +13,6 @@ today = datetime.utcnow()
 tomorrow = today + timedelta(days=1)
 
 class MetarTest(unittest.TestCase):
-
-  def raisesParserError(self, code):
-    self.assertRaises(Metar.ParserError, Metar.Metar, code )
 
   def raisesParserError(self, code):
     self.assertRaises(Metar.ParserError, Metar.Metar, code )
@@ -46,6 +45,7 @@ class MetarTest(unittest.TestCase):
   def test_030_parseTime_legal(self):
     """Check parsing of the time stamp."""
     report =  Metar.Metar("KEWR 101651Z")
+    assert report.decode_completed
     self.assertEqual( report.time.day, 10 )
     self.assertEqual( report.time.hour, 16 )
     self.assertEqual( report.time.minute, 51 )
@@ -59,6 +59,7 @@ class MetarTest(unittest.TestCase):
     other_year = 2003
 
     report =  Metar.Metar("KEWR 101651Z", year=other_year)
+    assert report.decode_completed
     self.assertEqual( report.time.year, other_year )
 
   def test_032_parseTime_specify_month(self):
@@ -67,6 +68,7 @@ class MetarTest(unittest.TestCase):
     last_year = today.year - 1
 
     report =  Metar.Metar("KEWR 101651Z", month=last_month)
+    assert report.decode_completed
     self.assertEqual( report.time.month, last_month )
 
   def test_033_parseTime_auto_month(self):
@@ -78,6 +80,7 @@ class MetarTest(unittest.TestCase):
 
         timestr = "%02d1651Z" % (next_day)
         report =  Metar.Metar("KEWR " + timestr)
+        assert report.decode_completed
         self.assertEqual( report.time.day, next_day )
         self.assertEqual( report.time.month, last_month )
         if today.month > 1:
@@ -91,6 +94,7 @@ class MetarTest(unittest.TestCase):
     last_year = today.year - 1
 
     report =  Metar.Metar("KEWR 101651Z", month=next_month)
+    assert report.decode_completed
     self.assertEqual( report.time.month, next_month )
     if next_month > 1:
         self.assertEqual( report.time.year, last_year )
@@ -106,6 +110,7 @@ class MetarTest(unittest.TestCase):
 
         timestr = "%02d1651Z" % (next_day)
         report =  Metar.Metar("KEWR " + timestr, month=1)
+        assert report.decode_completed
         self.assertEqual( report.time.day, next_day )
         self.assertEqual( report.time.month, 1 )
         if today.month > 1:
@@ -152,6 +157,7 @@ class MetarTest(unittest.TestCase):
   def test_140_parseWind(self):
     """Check parsing of wind groups."""
     report = Metar.Metar(sta_time+"09010KT" )
+    assert report.decode_completed
     self.assertEqual( report.wind_dir.value(), 90 )
     self.assertEqual( report.wind_speed.value(), 10 )
     self.assertEqual( report.wind_gust, None )
@@ -160,6 +166,7 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report.wind(), "E at 10 knots" )
 
     report = Metar.Metar(sta_time+"09010MPS" )
+    assert report.decode_completed
     self.assertEqual( report.wind_speed.value(), 10 )
     self.assertEqual( report.wind_speed.value("KMH"), 36 )
     self.assertEqual( report.wind(), "E at 19 knots" )
@@ -167,28 +174,34 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report.wind("KMH"), "E at 36 km/h" )
 
     report = Metar.Metar(sta_time+"09010KMH" )
+    assert report.decode_completed
     self.assertEqual( report.wind_speed.value(), 10 )
     self.assertEqual( report.wind(), "E at 5 knots" )
     self.assertEqual( report.wind('KMH'), "E at 10 km/h" )
 
     report = Metar.Metar(sta_time+"090010KT" )
+    assert report.decode_completed
     self.assertEqual( report.wind_dir.value(), 90 )
     self.assertEqual( report.wind_speed.value(), 10 )
 
     report = Metar.Metar(sta_time+"000000KT" )
+    assert report.decode_completed
     self.assertEqual( report.wind_dir.value(), 0 )
     self.assertEqual( report.wind_speed.value(), 0 )
     self.assertEqual( report.wind(), "calm" )
 
     report = Metar.Metar(sta_time+"VRB03KT" )
+    assert report.decode_completed
     self.assertEqual( report.wind_dir, None )
     self.assertEqual( report.wind_speed.value(), 3 )
     self.assertEqual( report.wind(), "variable at 3 knots" )
 
     report = Metar.Metar(sta_time+"VRB00KT" )
+    assert report.decode_completed
     self.assertEqual( report.wind(), "calm" )
 
     report = Metar.Metar(sta_time+"VRB03G40KT" )
+    assert report.decode_completed
     self.assertEqual( report.wind_dir, None )
     self.assertEqual( report.wind_speed.value(), 3 )
     self.assertEqual( report.wind_gust.value(), 40 )
@@ -197,6 +210,7 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report.wind(), "variable at 3 knots, gusting to 40 knots" )
 
     report = Metar.Metar(sta_time+"21010G30KT" )
+    assert report.decode_completed
     self.assertEqual( report.wind(), "SSW at 10 knots, gusting to 30 knots" )
 
     report = Metar.Metar(sta_time+"21010KT 180V240" )
@@ -439,6 +453,26 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report('SKC').sky_conditions(), 'clear' )
     self.assertEqual( report('CLR').sky_conditions(), 'clear' )
     self.assertEqual( report('NSC').sky_conditions(), 'clear' )
+
+  def test_not_strict_mode(self):
+    # This example metar has an extraneous 'M' in it, but the rest is fine
+    # Let's make sure that we can activate a non-strict mode, and flag that there
+    # are unparsed portions
+    code = 'K9L2 100958Z AUTO 33006KT 10SM CLR M A3007 RMK AO2 SLPNO FZRANO $'
+    self.raisesParserError(code)
+
+    with warnings.catch_warnings(record=True) as w:
+        report = Metar.Metar(code, strict=False)
+    assert len(w) == 1
+
+    assert not report.decode_completed
+    self.assertEqual( report.cycle, 10 )
+    self.assertEqual( report.mod, 'AUTO' )
+    self.assertEqual( report.recent, [] )
+    self.assertEqual( report.station_id, 'K9L2' )
+    self.assertEqual( report.vis.value(), 10 )
+    self.assertEqual( report.sky_conditions(), 'clear' )
+
 
 if __name__=='__main__':
   unittest.main( )
