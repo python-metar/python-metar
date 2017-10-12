@@ -359,11 +359,11 @@ class Metar(object):
       
       code = self.code+" "    # (the regexps all expect trailing spaces...)
       try:
-          ngroup = len(Metar.handlers)
+          ngroup = len(self.handlers)
           igroup = 0
           ifailed = -1
           while igroup < ngroup and code: 
-              pattern, handler, repeatable = Metar.handlers[igroup]
+              pattern, handler, repeatable = self.handlers[igroup]
               if debug: print(handler.__name__,":",code)
               m = pattern.match(code)
               while m:
@@ -393,7 +393,7 @@ class Metar(object):
                                 #  groups, we'll try parsing this group as a remark
           if pattern == REMARK_RE or self.press:
               while code:
-                  for pattern, handler in Metar.remark_handlers:
+                  for pattern, handler in self.remark_handlers:
                       if debug: print(handler.__name__,":",code)
                       m = pattern.match(code)
                       if m:
@@ -410,7 +410,7 @@ class Metar(object):
           raise ParserError("Unparsed groups in body '"+code+"' while processing '"+metarcode+"'")
 
   def _do_trend_handlers(self, code):
-      for pattern, handler, repeatable in Metar.trend_handlers:
+      for pattern, handler, repeatable in self.trend_handlers:
           if debug: print(handler.__name__,":",code)
           m = pattern.match(code)
           while m:
