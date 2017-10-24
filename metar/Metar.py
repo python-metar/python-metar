@@ -103,7 +103,7 @@ SKY_RE= re.compile(r"""^(?P<cover>VV|CLR|SKC|SCK|NSC|NCD|BKN|SCT|FEW|[O0]VC|///)
 TEMP_RE = re.compile(r"""^(?P<temp>(M|-)?\d+|//|XX|MM)/
                           (?P<dewpt>(M|-)?\d+|//|XX|MM)?\s+""",
                           re.VERBOSE)
-PRESS_RE = re.compile(r"""^(?P<unit>A|Q|QNH|SLP)?
+PRESS_RE = re.compile(r"""^(?P<unit>A|Q|QNH)?
                            (?P<press>[\dO]{3,4}|////)
                            (?P<unit2>INS)?\s+""",
                            re.VERBOSE)
@@ -762,8 +762,6 @@ class Metar(object):
           value += 1000
       else: 
           value += 900
-      if not self.press:
-          self.press = pressure(value,"MB")
       self.press_sea_level = pressure(value,"MB")
               
   def _handlePrecip24hrRemark( self, d ):
