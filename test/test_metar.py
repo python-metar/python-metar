@@ -412,6 +412,15 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report('TEMPO 0306 RMK 402500072').trend(), 'TEMPO 0306' )
     self.assertEqual( report('TEMPO 0306 RMK 402500072').max_temp_24hr.value(), 25.0 )
 
+  def test_snowdepth(self):
+    """Check parsing of 4/ group snowdepth"""
+    sample_metar = ("KDOV 040558Z 23004KT 1 1/2SM R01/2800FT -SN BR "
+                    "OVC006 M01/M01 A3015 RMK AO2A SLP213 P0000 4/001 "
+                    "60010 T10071007 10017 "
+                    "21009 55016 VISNO RWY19 CHINO RWY19 $")
+    m = Metar.Metar(sample_metar)
+    self.assertEquals(m.snowdepth.value(), 1)
+
   def test_310_parse_sky_conditions(self):
     """Check parsing of sky conditions"""
 
