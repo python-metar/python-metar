@@ -49,6 +49,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 import re
 import datetime
+import warnings
+
 from metar.Datatypes import *
 
 ## Exceptions
@@ -305,8 +307,23 @@ debug = False
 class Metar(object):
   """METAR (aviation meteorology report)"""
   
-  def __init__( self, metarcode, month=None, year=None, utcdelta=None):
-      """Parse raw METAR code."""
+  def __init__(self, metarcode, month=None, year=None, utcdelta=None,
+               strict=True):
+      """
+      Parse raw METAR code.
+
+      Can also provide a *month* and/or *year* for unambigous date
+      determination. If not provided, then the month and year are
+      guessed from the current date. The *utcdelta* (in hours) is
+      reserved for future use for handling time-zones.
+
+      By default, the constructor will raise a `ParserError` if there are
+      non-remark elements that were left undecoded. However, one can pass
+      *strict=False* keyword argument to suppress raising this
+      exception. One can then detect if decoding is complete by checking
+      the :attr:`decode_completed` attribute.
+
+      """
       self.code = metarcode              # original METAR code
       self.type = 'METAR'                # METAR (routine) or SPECI (special)
       self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
@@ -405,11 +422,23 @@ class Metar(object):
                           break
 
       except Exception as err:
-          raise ParserError(handler.__name__+" failed while processing '"+code+"'\n"+" ".join(err.args))
-          raise err
+          raise ParserError(handler.__name__+" failed while processing '"+
+                            code+"'\n"+" ".join(err.args))
+
       if self._unparsed_groups:
           code = ' '.join(self._unparsed_groups)
-          raise ParserError("Unparsed groups in body '"+code+"' while processing '"+metarcode+"'")
+          message = "Unparsed groups in body '%s' while processing '%s'" % (code, metarcode)
+          if strict:
+              raise ParserError(message)
+          else:
+              warnings.warn(message, RuntimeWarning)
+
+  @property
+  def decode_completed(self):
+      """
+      Indicate whether the decoding was complete for non-remark elements.
+      """
+      return not self._unparsed_groups
 
   def _do_trend_handlers(self, code):
       for pattern, handler, repeatable in self.trend_handlers:
