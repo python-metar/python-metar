@@ -17,6 +17,17 @@ class MetarTest(unittest.TestCase):
   def raisesParserError(self, code):
     self.assertRaises(Metar.ParserError, Metar.Metar, code )
 
+  def test_issue40_runwayunits(self):
+    """Check reported units on runway visual range."""
+    report = Metar.Metar(
+      "METAR KPIT 091955Z COR 22015G25KT 3/4SM R28L/2600FT TSRA OVC010CB "
+      "18/16 A2992 RMK SLP045 T01820159"
+    )
+    res = report.runway_visual_range()
+    self.assertEquals(res, 'on runway 28L, 2600 feet')
+    res = report.runway_visual_range('M')
+    self.assertTrue(res, 'on runway 28L, 792 meters')
+
   def test_010_parseType_default(self):
     """Check default value of the report type."""
     self.assertEqual( Metar.Metar("KEWR").type, "METAR" )
