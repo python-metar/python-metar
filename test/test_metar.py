@@ -457,6 +457,9 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report('SCT030').sky_conditions(), 'scattered clouds at 3000 feet' )
     self.assertEqual( report('BKN001').sky_conditions(), 'broken clouds at 100 feet' )
     self.assertEqual( report('OVC008').sky_conditions(), 'overcast at 800 feet' )
+    self.assertEqual(
+      report('OVC010CB').sky_conditions(), 'overcast cumulonimbus at 1000 feet'
+    )
     self.assertEqual( report('SCT020TCU').sky_conditions(), 'scattered towering cumulus at 2000 feet' )
     self.assertEqual( report('BKN015CB').sky_conditions(), 'broken cumulonimbus at 1500 feet' )
     self.assertEqual( report('FEW030').sky_conditions(), 'a few clouds at 3000 feet' )
