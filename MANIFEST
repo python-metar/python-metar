@@ -1,6 +1,7 @@
 README
 CHANGES
 NOTES
+LICENSE
 get_report.py
 parse_metar.py
 sample.py
