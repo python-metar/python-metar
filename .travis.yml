@@ -27,7 +27,7 @@ before_install:
 install:
   - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION pip six nose
   - source activate testenv
-  - pip install coveralls
+  - pip install coveralls codecov
   - pip install .
 
 script:
@@ -35,3 +35,4 @@ script:
 
 after_success:
   - if [ ${COVERAGE} = true ]; then coveralls; fi
+  - if [ ${COVERAGE} = true ]; then codecov; fi
