@@ -15,6 +15,9 @@ matrix:
         - COVERAGE=false
     - python: 3.5
       env:
+        - COVERAGE=false
+    - python: 3.6
+      env:
         - COVERAGE=true
 
 before_install:

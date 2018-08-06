@@ -138,7 +138,7 @@ Tests
 ------------------------------------------------------------------------
 
 The library is tested against Python 2.6, Python 2.7, Python 3.2, Python 3.3,
-Python 3.4, and Python 3.5. A [tox](https://testrun.org/tox/latest/)
+Python 3.4, Python 3.5, and Python 3.6. A [tox](https://testrun.org/tox/latest/)
 configuration file is included to easily run tests against each of these
 environments. To run tests against all environments, install tox and run:
 
