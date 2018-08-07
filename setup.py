@@ -36,6 +36,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     license="MIT",
     packages=["metar"],
+    package_data={'metar': ['nsd_cccc.txt', ]},
     platforms="Python 2.5 and later.",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
