@@ -587,7 +587,7 @@ class Metar(object):
               self.vis_dir = direction(vis_dir)
           self.vis = distance(vis_dist, vis_units, vis_less)
                           
-  def _handleRunway( self, d ):
+  def _handleRunway(self, d):
       """
       Parse a runway visual range group.
       
@@ -596,15 +596,17 @@ class Metar(object):
           . name  [string]
           . low   [distance]
           . high  [distance]
+          . unit  [string]
       """
-      if d['name']:
-          name = d['name']
-          low = distance(d['low'])
-          if d['high']:
-              high = distance(d['high'])
-          else:
-              high = low
-          self.runway.append((name,low,high))
+      if d['name'] is None:
+          return
+      unit = d['unit'] if d['unit'] is not None else 'FT'
+      low = distance(d['low'], unit)
+      if d['high'] is None:
+          high = low
+      else:
+          high = distance(d['high'], unit)
+      self.runway.append([d['name'], low, high, unit])
                           
   def _handleWeather( self, d ):
       """
@@ -1119,16 +1121,23 @@ class Metar(object):
               text += "; %s" % self.max_vis.string(units)
       return text
   
-  def runway_visual_range( self, units=None ):
+  def runway_visual_range(self, units=None):
       """
       Return a textual description of the runway visual range.
       """
       lines = []
-      for name,low,high in self.runway:
+      for name, low, high, unit in self.runway:
+          reportunits = unit if units is None else units
           if low != high:
-              lines.append("on runway %s, from %d to %s" % (name, low.value(units), high.string(units)))
+              lines.append(
+                  ("on runway %s, from %d to %s"
+                   ) % (name, low.value(reportunits),
+                        high.string(reportunits))
+              )
           else:
-              lines.append("on runway %s, %s" % (name, low.string(units)))
+              lines.append(
+                  "on runway %s, %s" % (name, low.string(reportunits))
+              )
       return "; ".join(lines)
   
   def present_weather( self ):
