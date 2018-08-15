@@ -1216,12 +1216,14 @@ class Metar(object):
                   what = "clouds"
               else: 
                   what = ""
+              label = "%s %s" % (SKY_COVER[cover], what)
+              # HACK here to account for 'empty' entries with above format
+              label = " ".join(label.strip().split())
               if cover == "VV":
-                  text_list.append("%s%s, vertical visibility to %s" % 
-                          (SKY_COVER[cover],what,str(height)))
+                  label += ", vertical visibility to %s" % (str(height), )
               else:
-                  text_list.append("%s%s at %s" % 
-                          (SKY_COVER[cover],what,str(height)))
+                  label += " at %s" % (str(height), )
+              text_list.append(label)
       return sep.join(text_list)
           
   def trend( self ):
