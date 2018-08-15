@@ -1,5 +1,6 @@
 import unittest
 import warnings
+from datetime import datetime, timedelta
 
 from metar import Metar
 
@@ -8,12 +9,11 @@ sta_time = "KEWR 101651Z "
 sta_time_mod = "KEWR 101651Z AUTO "
 sta_time_wind = "KEWR 101651Z 00000KT "
 
-from datetime import datetime, timedelta
 today = datetime.utcnow()
 tomorrow = today + timedelta(days=1)
 
-class MetarTest(unittest.TestCase):
 
+class MetarTest(unittest.TestCase):
   def raisesParserError(self, code):
     self.assertRaises(Metar.ParserError, Metar.Metar, code )
 
@@ -160,7 +160,6 @@ class MetarTest(unittest.TestCase):
 
   def test_043_parseModifier_illegal(self):
     """Check rejection of illegal 'modifier' groups."""
-#    self.raisesParserError( "KEWR AUTO" )
     self.raisesParserError( sta_time+"auto" )
     self.raisesParserError( sta_time+"CCH" )
     self.raisesParserError( sta_time+"MAN" )
@@ -489,5 +488,4 @@ class MetarTest(unittest.TestCase):
 
 
 if __name__=='__main__':
-  unittest.main( )
-
+  unittest.main()

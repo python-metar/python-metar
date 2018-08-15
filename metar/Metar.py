@@ -48,9 +48,13 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 import re
 import datetime
 import warnings
+import logging
 
 from metar import __version__
 from metar.Datatypes import *
+
+## logger
+_logger = logging.getLogger(__name__)
 
 ## Exceptions
 
@@ -286,43 +290,49 @@ REPORT_TYPE = { "METAR":"routine report",
 
 ## Helper functions
 
-def _report_match(handler,match):
+def _report_match(handler, match):
   """Report success or failure of the given handler function. (DEBUG)"""
   if match:
-      print(handler.__name__," matched '"+match+"'")
+      _logger.debug("%s matched '%s'", handler.__name__, match)
   else:
-      print(handler.__name__," didn't match...")
-      
+      _logger.debug("%s didn't match...", handler.__name__)
+
+
 def _unparsedGroup( self, d ):
     """
     Handle otherwise unparseable main-body groups.
     """
     self._unparsed_groups.append(d['group'])
-      
+
 ## METAR report objects
 
 debug = False
 
 class Metar(object):
   """METAR (aviation meteorology report)"""
-  
+
   def __init__(self, metarcode, month=None, year=None, utcdelta=None,
                strict=True):
       """
       Parse raw METAR code.
 
-      Can also provide a *month* and/or *year* for unambigous date
-      determination. If not provided, then the month and year are
-      guessed from the current date. The *utcdelta* (in hours) is
-      reserved for future use for handling time-zones.
-
-      By default, the constructor will raise a `ParserError` if there are
-      non-remark elements that were left undecoded. However, one can pass
-      *strict=False* keyword argument to suppress raising this
-      exception. One can then detect if decoding is complete by checking
-      the :attr:`decode_completed` attribute.
+      Parameters
+      ----------
+      metarcode : str
+      month, year : int, optional
+        Date values to be used when parsing a non-current METAR code. If not
+        provided, then the month and year are guessed from the current date.
+      utcdelta : int or datetime.timedelta, optional
+        An int of hours or a timedelta object used to specify the timezone.
+      strict : bool (default is True) or str {'raise', 'warn', 'log'}
+        When unparsed or unparseable groups exist in a METAR code, a
+        ``ParserError`` will be raised. Setting this to False will suppress that
+        behavior and will use the standard library's logging module to record
+        all supressed errors. One can then detect if decoding is complete by
+        checking the :attr:`decode_completed` attribute.
 
       """
+
       self.code = metarcode              # original METAR code
       self.type = 'METAR'                # METAR (routine) or SPECI (special)
       self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
@@ -374,36 +384,41 @@ class Metar(object):
 
       self._month = month
       self._year = year
-      
+
       code = self.code+" "    # (the regexps all expect trailing spaces...)
       try:
           ngroup = len(self.handlers)
           igroup = 0
           ifailed = -1
-          while igroup < ngroup and code: 
+          while igroup < ngroup and code:
               pattern, handler, repeatable = self.handlers[igroup]
-              if debug: print(handler.__name__,":",code)
+              if debug:
+                  _logger.debug("%s: %s", handler.__name__, code)
               m = pattern.match(code)
               while m:
                   ifailed = -1
-                  if debug: _report_match(handler,m.group())
+                  if debug:
+                      _report_match(handler, m.group())
                   handler(self,m.groupdict())
                   code = code[m.end():]
                   if self._trend:
                       code = self._do_trend_handlers(code)
-                  if not repeatable: break
-                  
-                  if debug: print(handler.__name__,":",code)
+                  if not repeatable:
+                      break
+
+                  if debug:
+                      _logger.debug("%s: %s", handler.__name__, code)
                   m = pattern.match(code)
               if not m and ifailed < 0:
                   ifailed = igroup
               igroup += 1
               if igroup == ngroup and not m:
-                  # print("** it's not a main-body group **")
                   pattern, handler = (UNPARSED_RE, _unparsedGroup)
-                  if debug: print(handler.__name__,":",code)
+                  if debug:
+                      _logger.debug("%s: %s", handler.__name__, code)
                   m = pattern.match(code)
-                  if debug: _report_match(handler,m.group())
+                  if debug:
+                      _report_match(handler, m.group())
                   handler(self,m.groupdict())
                   code = code[m.end():]
                   igroup = ifailed
@@ -412,17 +427,25 @@ class Metar(object):
           if pattern == REMARK_RE or self.press:
               while code:
                   for pattern, handler in self.remark_handlers:
-                      if debug: print(handler.__name__,":",code)
+                      if debug:
+                          _logger.debug("%s: %s", handler.__name__, code)
                       m = pattern.match(code)
                       if m:
-                          if debug: _report_match(handler,m.group())
+                          if debug:
+                              _report_match(handler, m.group())
                           handler(self,m.groupdict())
                           code = pattern.sub("",code,1)
                           break
 
       except Exception as err:
-          raise ParserError(handler.__name__+" failed while processing '"+
-                            code+"'\n"+" ".join(err.args))
+          message = (
+              "%s failed while processing '%s'\n\t%s" % (handler.__name__, code, "\n\t".join(err.args))
+          )
+          if strict:
+              raise ParserError(message)
+          else:
+              _logger.error(message)
+
 
       if self._unparsed_groups:
           code = ' '.join(self._unparsed_groups)
