@@ -32,8 +32,6 @@ __author__ = "Tom Pollard"
 
 __email__ = "pollard@alum.mit.edu"
 
-__version__ = "1.2"
-
 __LICENSE__ = """
 Copyright (c) 2004-2016, %s
 All rights reserved.
@@ -51,6 +49,7 @@ import re
 import datetime
 import warnings
 
+from metar import __version__
 from metar.Datatypes import *
 
 ## Exceptions
