@@ -267,6 +267,13 @@ class MetarTest(unittest.TestCase):
     self.assertEqual( report("MMMMMGMMKT").wind(), "missing" )
     self.assertEqual( report("MMMMMG01KT").wind(), "missing" )
 
+  def test_issue51_strict(self):
+    """Check that setting strict=False prevents a ParserError"""
+    with warnings.catch_warnings(record=True) as w:
+        report = Metar.Metar(sta_time+"90010KT", strict=False)
+    assert len(w) == 1
+    assert report.wind_speed is None
+
   def test_142_parseWind_illegal(self):
     """Check rejection of illegal wind groups."""
     self.raisesParserError( sta_time+"90010KT" )

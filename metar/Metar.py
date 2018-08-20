@@ -324,13 +324,11 @@ class Metar(object):
         provided, then the month and year are guessed from the current date.
       utcdelta : int or datetime.timedelta, optional
         An int of hours or a timedelta object used to specify the timezone.
-      strict : bool (default is True) or str {'raise', 'warn', 'log'}
-        When unparsed or unparseable groups exist in a METAR code, a
-        ``ParserError`` will be raised. Setting this to False will suppress that
-        behavior and will use the standard library's logging module to record
-        all supressed errors. One can then detect if decoding is complete by
-        checking the :attr:`decode_completed` attribute.
-
+      strict : bool (default is True)
+        This option determines if a ``ParserError`` is raised when
+        unparsable groups are found or an unexpected exception is encountered.
+        Setting this to `False` will prevent exceptions from being raised and
+        only generate warning messages.
       """
 
       self.code = metarcode              # original METAR code
@@ -439,9 +437,13 @@ class Metar(object):
 
       except Exception as err:
           message = (
-              "%s failed while processing '%s'\n\t%s" % (handler.__name__, code, "\n\t".join(err.args))
+              ("%s failed while processing '%s'\n\t%s"
+               ) % (handler.__name__, code, "\n\t".join(err.args))
           )
-          raise ParserError(message)
+          if strict:
+              raise ParserError(message)
+          else:
+              warnings.warn(message, RuntimeWarning)
 
       if self._unparsed_groups:
           code = ' '.join(self._unparsed_groups)
