@@ -77,9 +77,6 @@ You can always obtain the most recent version of this package using git, via
 
     git clone https://github.com/python-metar/python-metar.git
 
-This is a public copy of the code repository I use for development.
-Thanks to Toby White for making me aware of GitHub.
-
 Contents
 ------------------------------------------------------------------------
 

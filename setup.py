@@ -1,14 +1,13 @@
-# Setup script for the metar package
-# $Id: setup.py,v 1.3 2006/08/01 16:10:29 pollard Exp $
-#
-# Usage: python setup.py install
-#
+"""Setup script for the metar package.
+
+    Usage: python setup.py install
+"""
 from setuptools import setup
 from metar import __version__
 
-DESCRIPTION="Metar - a package to parse METAR-coded weather reports"
+DESCRIPTION = "Metar - a package to parse METAR-coded weather reports"
 
-LONG_DESCRIPTION="""
+LONG_DESCRIPTION = """
 Metar is a python package for interpreting METAR and SPECI weather reports.
 
 METAR is an international format for reporting weather observations.
@@ -32,7 +31,7 @@ setup(
     version=__version__,
     author="Tom Pollard",
     author_email="pollard@alum.mit.edu",
-    url="http://github.com/tomp/python-metar",
+    url="https://github.com/python-metar/python-metar",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     license="MIT",
@@ -45,8 +44,8 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Intended Audience :: Science/Research",
-#        "Topic :: Formats and Protocols :: Data Formats",
-#        "Topic :: Scientific/Engineering :: Earth Sciences",
-#        "Topic :: Software Development :: Libraries :: Python Modules"
+        # "Topic :: Formats and Protocols :: Data Formats",
+        # "Topic :: Scientific/Engineering :: Earth Sciences",
+        # "Topic :: Software Development :: Libraries :: Python Modules"
         ]
     )
