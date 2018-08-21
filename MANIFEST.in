@@ -1,4 +1,4 @@
 include README.md
-include CHANGES.md
+include CHANGELOG.md
 include LICENSE
 recursive-include test *.py
