@@ -53,7 +53,7 @@ The [Federal Meteorological Handbook No.1. (FMH-1 1995)](http://www.ofcm.gov/pub
 Author
 ------
 
-The `python-metar` library was orignally authored by [Tom Pollard](https://github.com/tomp) on May 2, 2009 and is now maintained by contributers on Github.
+The `python-metar` library was orignally authored by [Tom Pollard](https://github.com/tomp) in January 2005, and is now maintained by contributers on Github.
 
 Installation
 ------------------------------------------------------------------------
