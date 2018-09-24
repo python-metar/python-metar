@@ -66,8 +66,9 @@ class ParserError(Exception):
 
 MISSING_RE = re.compile(r"^[M/]+$")
 
-TYPE_RE =     re.compile(r"^(?P<type>METAR|SPECI)\s+")
-STATION_RE =  re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
+TYPE_RE =    re.compile(r"^(?P<type>METAR|SPECI)\s+")
+COR_RE =     re.compile(r"^(?P<cor>COR)\s+")
+STATION_RE = re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
 TIME_RE = re.compile(r"""^(?P<day>\d\d)
                           (?P<hour>\d\d)
                           (?P<min>\d\d)Z?\s+""",
@@ -333,7 +334,8 @@ class Metar(object):
 
       self.code = metarcode              # original METAR code
       self.type = 'METAR'                # METAR (routine) or SPECI (special)
-      self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected)
+      self.correction = None             # COR (corrected - WMO spec)
+      self.mod = "AUTO"                  # AUTO (automatic) or COR (corrected - US spec)
       self.station_id = None             # 4-character ICAO station code
       self.time = None                   # observation time [datetime]
       self.cycle = None                  # observation cycle (0-23) [int]
@@ -478,12 +480,21 @@ class Metar(object):
 
   def _handleType( self, d ):
       """
-      Parse the code-type group.
+      Parse the report-type group.
 
       The following attributes are set:
           type   [string]
       """
       self.type = d['type']
+
+  def _handleCorrection( self, d ):
+      """
+      Parse the correction group.
+
+      The following attributes are set:
+          correction   [string]
+      """
+      self.correction = d['cor']
 
   def _handleStation( self, d ):
       """
@@ -947,6 +958,7 @@ class Metar(object):
   ## the list of handler functions to use (in order) to process a METAR report
 
   handlers = [ (TYPE_RE, _handleType, False),
+               (COR_RE, _handleCorrection, False),
                (STATION_RE, _handleStation, False),
                (TIME_RE, _handleTime, False),
                (MODIFIER_RE, _handleModifier, False),
@@ -1064,6 +1076,8 @@ class Metar(object):
               text += " (%s)" % REPORT_TYPE[self.mod]
           else:
               text += " (%s)" % self.mod
+      if self.correction:
+          text += ' (%s)' % REPORT_TYPE[self.correction]
       return text
 
   def wind( self, units="KT" ):
