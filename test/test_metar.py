@@ -24,7 +24,7 @@ class MetarTest(unittest.TestCase):
       "18/16 A2992 RMK SLP045 T01820159"
     )
     res = report.runway_visual_range()
-    self.assertEquals(res, 'on runway 28L, 2600 feet')
+    self.assertEqual(res, 'on runway 28L, 2600 feet')
     res = report.runway_visual_range('M')
     self.assertTrue(res, 'on runway 28L, 792 meters')
 
@@ -36,12 +36,15 @@ class MetarTest(unittest.TestCase):
     """Check parsing of the report type."""
     self.assertEqual( Metar.Metar("METAR").type, "METAR" )
     self.assertEqual( Metar.Metar("SPECI").type, "SPECI" )
+    self.assertEqual( Metar.Metar("METAR").correction, None )
+    self.assertEqual( Metar.Metar("METAR COR").correction, "COR" )
     self.raisesParserError("TAF" )
 
   def test_020_parseStation_legal(self):
     """Check parsing of the station code."""
     self.assertEqual( Metar.Metar("KEWR").station_id, "KEWR" )
     self.assertEqual( Metar.Metar("METAR KEWR").station_id, "KEWR" )
+    self.assertEqual( Metar.Metar("METAR COR KEWR").station_id, "KEWR" )
     self.assertEqual( Metar.Metar("BIX1").station_id, "BIX1" )
     self.assertEqual( Metar.Metar("K256").station_id, "K256" )
 
@@ -450,7 +453,7 @@ class MetarTest(unittest.TestCase):
                     "60010 T10071007 10017 "
                     "21009 55016 VISNO RWY19 CHINO RWY19 $")
     m = Metar.Metar(sample_metar)
-    self.assertEquals(m.snowdepth.value(), 1)
+    self.assertEqual(m.snowdepth.value(), 1)
 
   def test_310_parse_sky_conditions(self):
     """Check parsing of sky conditions"""
