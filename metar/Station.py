@@ -3,9 +3,10 @@
 #  Python module to provide station information from the ICAO identifiers
 #
 #  Copyright 2004  Tom Pollard
-# 
+#
+import os
 from math import sin, cos, atan2, sqrt
-from datatypes import position, distance, direction
+from metar.Datatypes import position, distance, direction
 
 class station:
   """An object representing a weather station."""
@@ -20,8 +21,9 @@ class station:
       self.name = "%s, %s" % (self.city, self.state)
     else:
       self.name = self.city
-    
-station_file_name = "nsd_cccc.txt"
+
+current_dir = os.path.dirname(__file__)
+station_file_name = os.path.join(current_dir, "nsd_cccc.txt")
 station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
 
 stations = {}
