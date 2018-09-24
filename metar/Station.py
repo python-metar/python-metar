@@ -22,7 +22,7 @@ class station:
     else:
       self.name = self.city
 
-current_dir = os.path.split(__file__)[0]
+current_dir = os.path.dirname(__file__)
 station_file_name = os.path.join(current_dir, "nsd_cccc.txt")
 station_file_url = "http://www.noaa.gov/nsd_cccc.txt"
 
