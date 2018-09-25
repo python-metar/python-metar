@@ -649,7 +649,7 @@ class Metar(object):
             high = distance(d['high'], unit)
         self.runway.append([d['name'], low, high, unit])
 
-    def _handleWeather( self, d ):
+    def _handleWeather(self, d):
         """
         Parse a present-weather group.
 
@@ -668,7 +668,7 @@ class Metar(object):
         preci = d['prec']
         obsci = d['obsc']
         otheri = d['other']
-        self.weather.append((inteni,desci,preci,obsci,otheri))
+        self.weather.append((inteni, desci, preci, obsci, otheri))
 
     def _handleSky( self, d ):
         """
@@ -1200,7 +1200,7 @@ class Metar(object):
         """
         text_list = []
         for weatheri in weather:
-            (inteni,desci,preci,obsci,otheri) = weatheri
+            (inteni, desci, preci, obsci, otheri) = weatheri
             text_parts = []
             code_parts = []
             if inteni:
@@ -1223,6 +1223,8 @@ class Metar(object):
                     precip_text = WEATHER_PREC[preci[:2]]+", "
                     precip_text += WEATHER_PREC[preci[2:4]]+" and "
                     precip_text += WEATHER_PREC[preci[4:]]
+                else:
+                    precip_text = preci
                 if desci == "TS":
                     text_parts.append("with")
                 text_parts.append(precip_text)
