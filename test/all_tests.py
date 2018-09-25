@@ -4,7 +4,7 @@
 import unittest
 
 def suite():
-    modules = ( "test_metar", "test_pressure", "test_speed", 
+    modules = ( "test_metar", "test_pressure", "test_speed",
                 "test_temperature", "test_direction", "test_distance",
                 "test_precipitation")
     alltests = unittest.TestSuite()
@@ -14,4 +14,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-
