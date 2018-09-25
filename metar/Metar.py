@@ -209,15 +209,25 @@ SKY_COVER = { "SKC":"clear",
               "///":"",
               "VV":"indefinite ceiling" }
 
-CLOUD_TYPE = { "TCU":"towering cumulus",
-               "CU":"cumulus",
-               "CB":"cumulonimbus",
-               "SC":"stratocumulus",
-               "CBMAM":"cumulonimbus mammatus",
-               "ACC":"altocumulus castellanus",
-               "SCSL":"standing lenticular stratocumulus",
-               "CCSL":"standing lenticular cirrocumulus",
-               "ACSL":"standing lenticular altocumulus" }
+
+CLOUD_TYPE = {
+    "AC": "altocumulus",
+    "ACC": "altocumulus castellanus",
+    "ACSL": "standing lenticular altocumulus",
+    "AS": "altostratus",
+    "CB": "cumulonimbus",
+    "CBMAM": "cumulonimbus mammatus",
+    "CCSL": "standing lenticular cirrocumulus",
+    "CC": "cirrocumulus",
+    "CI": "cirrus",
+    "CS": "cirrostratus",
+    "CU": "cumulus",
+    "NS": "nimbostratus",
+    "SC": "stratocumulus",
+    "ST": "stratus",
+    "SCSL": "standing lenticular stratocumulus",
+    "TCU": "towering cumulus",
+}
 
 ## translation of the present-weather codes into english
 
@@ -1243,7 +1253,9 @@ class Metar(object):
                 text_list.append(SKY_COVER[cover])
             else:
                 if cloud:
-                    what = CLOUD_TYPE[cloud]
+                    what = CLOUD_TYPE.get(
+                        cloud, "unknown CLOUD_TYPE of %s" % (cloud, )
+                    )
                 elif SKY_COVER[cover].endswith(" "):
                     what = "clouds"
                 else:
