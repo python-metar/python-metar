@@ -17,6 +17,19 @@ class MetarTest(unittest.TestCase):
     def raisesParserError(self, code):
         self.assertRaises(Metar.ParserError, Metar.Metar, code )
 
+    def test_issue64_cloudkeyerror(self):
+        """Lookup on CLOUD_TYPE should not keyerror."""
+        report = Metar.Metar(
+          "METAR LOXZ 141420Z 08006KT 20KM VCSH FEW025SC SCT040SC BKN090AC "
+          "21/14 Q1015 BECMG SCT090"
+        )
+        res = report.sky_conditions()
+        ans = (
+            "a few stratocumulus at 2500 feet; scattered stratocumulus at "
+            "4000 feet; broken altocumulus at 9000 feet"
+        )
+        self.assertEqual(res, ans)
+
     def test_issue40_runwayunits(self):
         """Check reported units on runway visual range."""
         report = Metar.Metar(
