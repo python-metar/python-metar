@@ -1,23 +1,24 @@
 language: python
 
+env:
+  global:
+    - COVERAGE=false
+    - CONDA_PACKAGES="pip six pytest pytest-runner"
+    - PIP_PACKAGES="coveralls codecov"
+
 matrix:
   fast_finish: true
   include:
-
     - python: 2.7
-      env:
-        - COVERAGE=false
     - python: 3.3
       env:
-        - COVERAGE=false
+        - CONDA_PACKAGES="pip six"
+        - PIP_PACKAGES="pytest pytest-runner"
     - python: 3.4
-      env:
-        - COVERAGE=false
     - python: 3.5
-      env:
-        - COVERAGE=false
     - python: 3.6
       env:
+        - CONDA_PACKAGES="pip six pytest pytest-runner pytest-cov"
         - COVERAGE=true
 
 before_install:
@@ -28,13 +29,21 @@ before_install:
   - conda update conda --yes  
 
 install:
-  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION pip six nose
+  - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION $CONDA_PACKAGES
   - source activate testenv
-  - pip install coveralls codecov
+  - pip install $PIP_PACKAGES
+  # Ugly python3.3 issue
+  - if [ ${TRAVIS_PYTHON_VERSION} == 3.3 ]; then
+      pip install --upgrade --ignore-installed setuptools==27.3;
+    fi
   - pip install .
 
 script:
-  - nosetests --with-coverage --cover-package=metar --verbose
+  - if [ ${COVERAGE} = true ]; then
+      python setup.py test --addopts " --cov=metar ";
+    else
+      python setup.py test;
+    fi;
 
 after_success:
   - if [ ${COVERAGE} = true ]; then coveralls; fi

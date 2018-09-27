@@ -1,7 +1,9 @@
-import unittest
+"""Test the main Metar Library."""
 import warnings
 from datetime import datetime, timedelta
 
+import pytest
+import metar
 from metar import Metar
 
 # METAR fragments used in tests, below
@@ -13,511 +15,552 @@ today = datetime.utcnow()
 tomorrow = today + timedelta(days=1)
 
 
-class MetarTest(unittest.TestCase):
-    def raisesParserError(self, code):
-        self.assertRaises(Metar.ParserError, Metar.Metar, code )
+def raisesParserError(code):
+    """Helper to test the a given code raises a Metar.ParserError."""
+    with pytest.raises(Metar.ParserError):
+        Metar.Metar(code)
 
-    def test_issue64_cloudkeyerror(self):
-        """Lookup on CLOUD_TYPE should not keyerror."""
-        report = Metar.Metar(
-          "METAR LOXZ 141420Z 08006KT 20KM VCSH FEW025SC SCT040SC BKN090AC "
-          "21/14 Q1015 BECMG SCT090"
-        )
-        res = report.sky_conditions()
-        ans = (
-            "a few stratocumulus at 2500 feet; scattered stratocumulus at "
-            "4000 feet; broken altocumulus at 9000 feet"
-        )
-        self.assertEqual(res, ans)
 
-    def test_issue67_precip_text(self):
-        """Check that precip_text is properly defined in present_weather."""
-        report = Metar.Metar(
-            "METAR FSIA 220100Z AUTO 14014KT 120V180 9999 ///////// "
-            "27/23 Q1010"
-        )
-        res = report.present_weather()
-        self.assertEqual(res, "/////////")
+def test_module():
+    """Test that module level things are defined."""
+    assert hasattr(metar, "__version__")
 
-    def test_issue40_runwayunits(self):
-        """Check reported units on runway visual range."""
-        report = Metar.Metar(
-          "METAR KPIT 091955Z COR 22015G25KT 3/4SM R28L/2600FT TSRA OVC010CB "
-          "18/16 A2992 RMK SLP045 T01820159"
-        )
-        res = report.runway_visual_range()
-        self.assertEqual(res, 'on runway 28L, 2600 feet')
-        res = report.runway_visual_range('M')
-        self.assertTrue(res, 'on runway 28L, 792 meters')
 
-    def test_010_parseType_default(self):
-        """Check default value of the report type."""
-        self.assertEqual( Metar.Metar("KEWR").type, "METAR" )
+def test_issue64_cloudkeyerror():
+    """Lookup on CLOUD_TYPE should not keyerror."""
+    report = Metar.Metar(
+        "METAR LOXZ 141420Z 08006KT 20KM VCSH FEW025SC SCT040SC BKN090AC "
+        "21/14 Q1015 BECMG SCT090"
+    )
+    res = report.sky_conditions()
+    ans = (
+        "a few stratocumulus at 2500 feet; scattered stratocumulus at "
+        "4000 feet; broken altocumulus at 9000 feet"
+    )
+    assert res == ans
+    mstring = report.string()
+    assert mstring.find("altocumulus") > -1
 
-    def test_011_parseType_legal(self):
-        """Check parsing of the report type."""
-        self.assertEqual( Metar.Metar("METAR").type, "METAR" )
-        self.assertEqual( Metar.Metar("SPECI").type, "SPECI" )
-        self.assertEqual( Metar.Metar("METAR").correction, None )
-        self.assertEqual( Metar.Metar("METAR COR").correction, "COR" )
-        self.raisesParserError("TAF" )
 
-    def test_020_parseStation_legal(self):
-        """Check parsing of the station code."""
-        self.assertEqual( Metar.Metar("KEWR").station_id, "KEWR" )
-        self.assertEqual( Metar.Metar("METAR KEWR").station_id, "KEWR" )
-        self.assertEqual( Metar.Metar("METAR COR KEWR").station_id, "KEWR" )
-        self.assertEqual( Metar.Metar("BIX1").station_id, "BIX1" )
-        self.assertEqual( Metar.Metar("K256").station_id, "K256" )
+def test_issue67_precip_text():
+    """Check that precip_text is properly defined in present_weather."""
+    report = Metar.Metar(
+        "METAR FSIA 220100Z AUTO 14014KT 120V180 9999 ///////// "
+        "27/23 Q1010"
+    )
+    res = report.present_weather()
+    assert res == "/////////"
 
-    def test_021_parseStation_illegal(self):
-        """Check rejection of illegal station codes."""
-        self.raisesParserError( "1ABC" )
-        self.raisesParserError( "METAR METAR" )
-        self.raisesParserError( "METAR DC" )
-        self.raisesParserError( "METAR A" )
-        self.raisesParserError( "kewr" )
 
-    def test_030_parseTime_legal(self):
-        """Check parsing of the time stamp."""
-        report =  Metar.Metar("KEWR 101651Z")
-        assert report.decode_completed
-        self.assertEqual( report.time.day, 10 )
-        self.assertEqual( report.time.hour, 16 )
-        self.assertEqual( report.time.minute, 51 )
-        if today.day > 10 or (today.hour > 16 and today.day == 10):
-            self.assertEqual( report.time.month, today.month )
-        if today.month > 1 or today.day > 10:
-            self.assertEqual( report.time.year, today.year )
+def test_issue40_runwayunits():
+    """Check reported units on runway visual range."""
+    report = Metar.Metar(
+        "METAR KPIT 091955Z COR 22015G25KT 3/4SM R28L/2600FT TSRA OVC010CB "
+        "18/16 A2992 RMK SLP045 T01820159"
+    )
+    res = report.runway_visual_range()
+    assert res == 'on runway 28L, 2600 feet'
+    res = report.runway_visual_range('M')
+    assert res == 'on runway 28L, 792 meters'
 
-    def test_031_parseTime_specify_year(self):
-        """Check that the year can be specified."""
-        other_year = 2003
 
-        report =  Metar.Metar("KEWR 101651Z", year=other_year)
-        assert report.decode_completed
-        self.assertEqual( report.time.year, other_year )
+def test_010_parseType_default():
+    """Check default value of the report type."""
+    assert Metar.Metar("KEWR").type == "METAR"
 
-    def test_032_parseTime_specify_month(self):
-        """Check that the month can be specified."""
+
+def test_011_parseType_legal():
+    """Check parsing of the report type."""
+    assert Metar.Metar("METAR").type, "METAR"
+    assert Metar.Metar("SPECI").type, "SPECI"
+    assert Metar.Metar("METAR").correction is None
+    assert Metar.Metar("METAR COR").correction == "COR"
+    raisesParserError("TAF")
+
+
+def test_020_parseStation_legal():
+    """Check parsing of the station code."""
+    assert Metar.Metar("KEWR").station_id == "KEWR"
+    assert Metar.Metar("METAR KEWR").station_id == "KEWR"
+    assert Metar.Metar("METAR COR KEWR").station_id == "KEWR"
+    assert Metar.Metar("BIX1").station_id == "BIX1"
+    assert Metar.Metar("K256").station_id == "K256"
+
+
+def test_021_parseStation_illegal():
+    """Check rejection of illegal station codes."""
+    raisesParserError("1ABC")
+    raisesParserError("METAR METAR")
+    raisesParserError("METAR DC")
+    raisesParserError("METAR A")
+    raisesParserError("kewr")
+
+
+def test_030_parseTime_legal():
+    """Check parsing of the time stamp."""
+    report = Metar.Metar("KEWR 101651Z")
+    assert report.decode_completed
+    assert report.time.day == 10
+    assert report.time.hour == 16
+    assert report.time.minute == 51
+    if today.day > 10 or (today.hour > 16 and today.day == 10):
+        assert report.time.month == today.month
+    if today.month > 1 or today.day > 10:
+        assert report.time.year == today.year
+
+
+def test_031_parseTime_specify_year():
+    """Check that the year can be specified."""
+    other_year = 2003
+
+    report = Metar.Metar("KEWR 101651Z", year=other_year)
+    assert report.decode_completed
+    assert report.time.year == other_year
+
+
+def test_032_parseTime_specify_month():
+    """Check that the month can be specified."""
+    last_month = ((today.month - 2) % 12) + 1
+
+    report = Metar.Metar("KEWR 101651Z", month=last_month)
+    assert report.decode_completed
+    assert report.time.month == last_month
+
+
+def test_033_parseTime_auto_month():
+    """Test assignment of time to previous month."""
+    next_day = tomorrow.day
+    if next_day > today.day:
         last_month = ((today.month - 2) % 12) + 1
         last_year = today.year - 1
 
-        report =  Metar.Metar("KEWR 101651Z", month=last_month)
+        timestr = "%02d1651Z" % (next_day)
+        report = Metar.Metar("KEWR " + timestr)
         assert report.decode_completed
-        self.assertEqual( report.time.month, last_month )
+        assert report.time.day == next_day
+        assert report.time.month == last_month
+        if today.month > 1:
+            assert report.time.year == today.year
+        else:
+            assert report.time.year == last_year
 
-    def test_033_parseTime_auto_month(self):
-        """Check that we assign report to previous month if it can't be in this month."""
-        next_day = tomorrow.day
-        if next_day > today.day:
-            last_month = ((today.month - 2) % 12) + 1
-            last_year = today.year - 1
 
-            timestr = "%02d1651Z" % (next_day)
-            report =  Metar.Metar("KEWR " + timestr)
-            assert report.decode_completed
-            self.assertEqual( report.time.day, next_day )
-            self.assertEqual( report.time.month, last_month )
-            if today.month > 1:
-                self.assertEqual( report.time.year, today.year )
-            else:
-                self.assertEqual( report.time.year, last_year )
+def test_034_parseTime_auto_year():
+    """Check that year is adjusted if specified month is in the future."""
+    next_month = (today.month % 12) + 1
+    last_year = today.year - 1
 
-    def test_034_parseTime_auto_year(self):
-        """Check that year is adjusted correctly if specified month is in the future."""
-        next_month = (today.month % 12) + 1
+    report = Metar.Metar("KEWR 101651Z", month=next_month)
+    assert report.decode_completed
+    assert report.time.month == next_month
+    if next_month > 1:
+        assert report.time.year == last_year
+    else:
+        assert report.time.year == today.year
+
+
+def test_035_parseTime_suppress_auto_month():
+    """Check that explicit month suppresses automatic month rollback."""
+    next_day = tomorrow.day
+    if next_day > today.day:
         last_year = today.year - 1
 
-        report =  Metar.Metar("KEWR 101651Z", month=next_month)
+        timestr = "%02d1651Z" % (next_day)
+        report = Metar.Metar("KEWR " + timestr, month=1)
         assert report.decode_completed
-        self.assertEqual( report.time.month, next_month )
-        if next_month > 1:
-            self.assertEqual( report.time.year, last_year )
+        assert report.time.day == next_day
+        assert report.time.month == 1
+        if today.month > 1:
+            assert report.time.year == today.year
         else:
-            self.assertEqual( report.time.year, today.year )
-
-    def test_035_parseTime_suppress_auto_month(self):
-        """Check that explicit month suppresses automatic month rollback."""
-        next_day = tomorrow.day
-        if next_day > today.day:
-            last_month = ((today.month - 2) % 12) + 1
-            last_year = today.year - 1
-
-            timestr = "%02d1651Z" % (next_day)
-            report =  Metar.Metar("KEWR " + timestr, month=1)
-            assert report.decode_completed
-            self.assertEqual( report.time.day, next_day )
-            self.assertEqual( report.time.month, 1 )
-            if today.month > 1:
-                self.assertEqual( report.time.year, today.year )
-            else:
-                self.assertEqual( report.time.year, last_year )
-
-    def test_040_parseModifier_default(self):
-        """Check default 'modifier' value."""
-        self.assertEqual( Metar.Metar("KEWR").mod, "AUTO" )
-
-    def test_041_parseModifier(self):
-        """Check parsing of 'modifier' groups."""
-        self.assertEqual( Metar.Metar(sta_time+"AUTO").mod, "AUTO" )
-        self.assertEqual( Metar.Metar(sta_time+"COR").mod, "COR" )
-
-    def test_042_parseModifier_nonstd(self):
-        """Check parsing of nonstandard 'modifier' groups."""
-
-        def report(mod_group):
-            """(Macro) Return Metar object from parsing the given modifier group."""
-            return Metar.Metar(sta_time+mod_group)
-
-        self.assertEqual( report("RTD").mod, "RTD" )
-        self.assertEqual( report("TEST").mod, "TEST" )
-        self.assertEqual( report("CCA").mod, "CCA" )
-        self.assertEqual( report("CCB").mod, "CCB" )
-        self.assertEqual( report("CCC").mod, "CCC" )
-        self.assertEqual( report("CCD").mod, "CCD" )
-        self.assertEqual( report("CCE").mod, "CCE" )
-        self.assertEqual( report("CCF").mod, "CCF" )
-        self.assertEqual( report("CCG").mod, "CCG" )
-        self.assertEqual( report("CORR").mod, "COR" )
-        self.assertEqual( report("FINO").mod, "NO DATA" )
-        self.assertEqual( report("NIL").mod, "NO DATA" )
-
-    def test_043_parseModifier_illegal(self):
-        """Check rejection of illegal 'modifier' groups."""
-        self.raisesParserError( sta_time+"auto" )
-        self.raisesParserError( sta_time+"CCH" )
-        self.raisesParserError( sta_time+"MAN" )
-
-    def test_140_parseWind(self):
-        """Check parsing of wind groups."""
-        report = Metar.Metar(sta_time+"09010KT" )
-        assert report.decode_completed
-        self.assertEqual( report.wind_dir.value(), 90 )
-        self.assertEqual( report.wind_speed.value(), 10 )
-        self.assertEqual( report.wind_gust, None )
-        self.assertEqual( report.wind_dir_from, None )
-        self.assertEqual( report.wind_dir_from, None )
-        self.assertEqual( report.wind(), "E at 10 knots" )
-
-        report = Metar.Metar(sta_time+"09010MPS" )
-        assert report.decode_completed
-        self.assertEqual( report.wind_speed.value(), 10 )
-        self.assertEqual( report.wind_speed.value("KMH"), 36 )
-        self.assertEqual( report.wind(), "E at 19 knots" )
-        self.assertEqual( report.wind("MPS"), "E at 10 mps" )
-        self.assertEqual( report.wind("KMH"), "E at 36 km/h" )
-
-        report = Metar.Metar(sta_time+"09010KMH" )
-        assert report.decode_completed
-        self.assertEqual( report.wind_speed.value(), 10 )
-        self.assertEqual( report.wind(), "E at 5 knots" )
-        self.assertEqual( report.wind('KMH'), "E at 10 km/h" )
-
-        report = Metar.Metar(sta_time+"090010KT" )
-        assert report.decode_completed
-        self.assertEqual( report.wind_dir.value(), 90 )
-        self.assertEqual( report.wind_speed.value(), 10 )
-
-        report = Metar.Metar(sta_time+"000000KT" )
-        assert report.decode_completed
-        self.assertEqual( report.wind_dir.value(), 0 )
-        self.assertEqual( report.wind_speed.value(), 0 )
-        self.assertEqual( report.wind(), "calm" )
-
-        report = Metar.Metar(sta_time+"VRB03KT" )
-        assert report.decode_completed
-        self.assertEqual( report.wind_dir, None )
-        self.assertEqual( report.wind_speed.value(), 3 )
-        self.assertEqual( report.wind(), "variable at 3 knots" )
-
-        report = Metar.Metar(sta_time+"VRB00KT" )
-        assert report.decode_completed
-        self.assertEqual( report.wind(), "calm" )
-
-        report = Metar.Metar(sta_time+"VRB03G40KT" )
-        assert report.decode_completed
-        self.assertEqual( report.wind_dir, None )
-        self.assertEqual( report.wind_speed.value(), 3 )
-        self.assertEqual( report.wind_gust.value(), 40 )
-        self.assertEqual( report.wind_dir_from, None )
-        self.assertEqual( report.wind_dir_to, None )
-        self.assertEqual( report.wind(), "variable at 3 knots, gusting to 40 knots" )
-
-        report = Metar.Metar(sta_time+"21010G30KT" )
-        assert report.decode_completed
-        self.assertEqual( report.wind(), "SSW at 10 knots, gusting to 30 knots" )
-
-        report = Metar.Metar(sta_time+"21010KT 180V240" )
-        self.assertEqual( report.wind_dir.value(), 210 )
-        self.assertEqual( report.wind_speed.value(), 10 )
-        self.assertEqual( report.wind_gust, None )
-        self.assertEqual( report.wind_dir_from.value(), 180 )
-        self.assertEqual( report.wind_dir_to.value(), 240 )
-        self.assertEqual( report.wind(), "S to WSW at 10 knots" )
-
-    def test_141_parseWind_nonstd(self):
-        """Check parsing of nonstandard wind groups."""
-
-        def report(wind_group):
-            """(Macro) Return Metar object from parsing the given wind group."""
-            return Metar.Metar(sta_time+wind_group)
-
-        self.assertEqual( report("OOOOOKT").wind_speed.value(), 0 )
-        self.assertEqual( report("OOOOOKT").wind(), "calm" )
-
-        self.assertEqual( report("09010K").wind_speed.string(), "10 knots" )
-        self.assertEqual( report("09010T").wind_speed.string(), "10 knots" )
-        self.assertEqual( report("09010LT").wind_speed.string(), "10 knots" )
-        self.assertEqual( report("09010KTS").wind_speed.string(), "10 knots" )
-        self.assertEqual( report("09010").wind_speed.string(), "10 mps" )
-
-        self.assertEqual( report("VRBOOK").wind_speed.value(), 0 )
-        self.assertEqual( report("VRBOOK").wind(), "calm" )
-
-        self.assertEqual( report("///00KT").wind(), "calm" )
-        self.assertEqual( report("/////KT").wind(), "missing" )
-        self.assertEqual( report("000//KT").wind(), "missing" )
-        self.assertEqual( report("/////").wind(), "missing" )
-
-        self.assertEqual( report("09010G//KT").wind_gust, None )
-        self.assertEqual( report("09010GMKT").wind_gust, None )
-        self.assertEqual( report("09010GMMKT").wind_gust, None )
-        self.assertEqual( report("09010G7KT").wind_gust.value(), 7 )
-
-        self.assertEqual( report("MMM00KT").wind(), "calm" )
-        self.assertEqual( report("MMMMMKT").wind(), "missing" )
-        self.assertEqual( report("000MMKT").wind(), "missing" )
-        self.assertEqual( report("MMMMM").wind(), "missing" )
-        self.assertEqual( report("MMMMMGMMKT").wind(), "missing" )
-        self.assertEqual( report("MMMMMG01KT").wind(), "missing" )
-
-    def test_issue51_strict(self):
-        """Check that setting strict=False prevents a ParserError"""
-        with warnings.catch_warnings(record=True) as w:
-            report = Metar.Metar(sta_time+"90010KT", strict=False)
-        assert len(w) == 1
-        assert report.wind_speed is None
-
-    def test_142_parseWind_illegal(self):
-        """Check rejection of illegal wind groups."""
-        self.raisesParserError( sta_time+"90010KT" )
-        self.raisesParserError( sta_time+"9010KT" )
-        self.raisesParserError( sta_time+"09010 KT" )
-        self.raisesParserError( sta_time+"09010FPS" )
-        self.raisesParserError( sta_time+"09010MPH" )
-        self.raisesParserError( sta_time+"00///KT" )
-        self.raisesParserError( sta_time+"VAR10KT" )
-        self.raisesParserError( sta_time+"21010KT 180-240" )
-        self.raisesParserError( sta_time+"123UnME" )
-
-    def test_150_parseVisibility(self):
-        """Check parsing of visibility groups."""
-
-        def report(vis_group):
-            """(Macro) Return Metar object for a report containing the given visibility group."""
-            return Metar.Metar(sta_time+"09010KT "+vis_group)
-
-        def report_nowind(vis_group):
-            """(Macro) Return Metar object for a report containing the given
-            visibility group, without a preceeding wind group.
-            """
-            return Metar.Metar(sta_time+vis_group)
-
-        self.assertEqual( report("10SM").vis.value(), 10 )
-        self.assertEqual( report("10SM").vis_dir, None )
-        self.assertEqual( report("10SM").max_vis, None )
-        self.assertEqual( report("10SM").max_vis_dir, None )
-        self.assertEqual( report("10SM").visibility(), "10 miles" )
-
-        self.assertEqual( report("3/8SM").vis.value(), 0.375 )
-        self.assertEqual( report("3/8SM").vis_dir, None )
-        self.assertEqual( report("3/8SM").max_vis, None )
-        self.assertEqual( report("3/8SM").max_vis_dir, None )
-        self.assertEqual( report("3/8SM").visibility(), "3/8 miles" )
-
-        self.assertEqual( report("1 3/4SM").vis.value(), 1.75 )
-        self.assertEqual( report("1 3/4SM").vis_dir, None )
-        self.assertEqual( report("1 3/4SM").max_vis, None )
-        self.assertEqual( report("1 3/4SM").max_vis_dir, None )
-        self.assertEqual( report("1 3/4SM").visibility(), "1 3/4 miles" )
-
-        self.assertEqual( report("5000").vis.value(), 5000 )
-        self.assertEqual( report("5000").vis_dir, None )
-        self.assertEqual( report("5000").visibility(), "5000 meters" )
-        self.assertEqual( report("5000M").visibility(), "5000 meters" )
-
-        self.assertEqual( report_nowind("5000").vis.value(), 5000 )
-        self.assertEqual( report_nowind("1000W 3000").vis.value(), 1000 )
-        self.assertEqual( report_nowind("1000 3000NE").vis.value(), 1000 )
-
-        self.assertEqual( report("CAVOK").vis.value(), 10000 )
-        self.assertEqual( report("CAVOK").vis_dir, None )
-        self.assertEqual( report("CAVOK").max_vis, None )
-        self.assertEqual( report("CAVOK").max_vis_dir, None )
-        self.assertEqual( report("CAVOK").visibility(), "10000 meters" )
-
-        self.assertEqual( report("1000W 3000").vis.value(), 1000 )
-        self.assertEqual( report("1000W 3000").vis_dir.value(), 270 )
-        self.assertEqual( report("1000W 3000").max_vis.value(), 3000 )
-        self.assertEqual( report("1000W 3000").max_vis_dir, None )
-        self.assertEqual( report("1000W 3000").visibility(), "1000 meters to W; 3000 meters" )
-
-        self.assertEqual( report("1000 3000NE").vis.value(), 1000 )
-        self.assertEqual( report("1000 3000NE").vis_dir, None )
-        self.assertEqual( report("1000 3000NE").max_vis.value(), 3000 )
-        self.assertEqual( report("1000 3000NE").max_vis_dir.value(), 45 )
-        self.assertEqual( report("1000 3000NE").visibility(), "1000 meters; 3000 meters to NE" )
-
-        self.assertEqual( report("5KM").vis.value(), 5 )
-        self.assertEqual( report("5KM").vis_dir, None )
-        self.assertEqual( report("5KM").visibility(), "5.0 km" )
-
-        self.assertEqual( report("5000E").vis.value(), 5000 )
-        self.assertEqual( report("5000E").visibility(), "5000 meters to E" )
-
-        self.assertEqual( report("7000NDV").vis.value(), 7000 )
-        self.assertEqual( report("7000NDV").vis_dir, None )
-        self.assertEqual( report("7000NDV").visibility(), "7000 meters" )
-
-        self.assertEqual( report("M1000").vis.value(), 1000 )
-        self.assertEqual( report("M1000").visibility(), "less than 1000 meters" )
-
-        self.assertEqual( report("P6000").vis.value(), 6000 )
-        self.assertEqual( report("P6000").visibility(), "greater than 6000 meters" )
-
-    def test_151_parseVisibility_direction(self):
-        """Check parsing of compass headings visibility groups."""
-
-        def report(vis_group):
-            """(Macro) Return Metar object for a report containing the given visibility group."""
-            return Metar.Metar(sta_time+"09010KT "+vis_group)
-
-        self.assertEqual( report("5000N").vis_dir.compass(), "N" )
-        self.assertEqual( report("5000N").vis_dir.value(), 0 )
-        self.assertEqual( report("5000NE").vis_dir.compass(), "NE" )
-        self.assertEqual( report("5000NE").vis_dir.value(), 45 )
-        self.assertEqual( report("5000E").vis_dir.compass(), "E" )
-        self.assertEqual( report("5000E").vis_dir.value(), 90 )
-        self.assertEqual( report("5000SE").vis_dir.compass(), "SE" )
-        self.assertEqual( report("5000SE").vis_dir.value(), 135 )
-        self.assertEqual( report("5000S").vis_dir.compass(), "S" )
-        self.assertEqual( report("5000S").vis_dir.value(), 180 )
-        self.assertEqual( report("5000SW").vis_dir.compass(), "SW" )
-        self.assertEqual( report("5000SW").vis_dir.value(), 225 )
-        self.assertEqual( report("5000W").vis_dir.compass(), "W" )
-        self.assertEqual( report("5000W").vis_dir.value(), 270 )
-        self.assertEqual( report("5000NW").vis_dir.compass(), "NW" )
-        self.assertEqual( report("5000NW").vis_dir.value(), 315 )
-
-    def test_152_parseVisibility_with_following_temperature(self):
-        """Check parsing of visibility groups followed immediately by a temperature group."""
-
-        def report(vis_group):
-            """(Macro) Return Metar object for a report containing the given visibility group."""
-            return Metar.Metar(sta_time+"09010KT "+vis_group)
-
-        self.assertEqual( report("CAVOK 02/01").vis.value(), 10000 )
-        self.assertEqual( report("CAVOK 02/01").vis_dir, None )
-        self.assertEqual( report("CAVOK 02/01").max_vis, None )
-        self.assertEqual( report("CAVOK 02/01").temp.value(), 2.0 )
-        self.assertEqual( report("CAVOK 02/01").dewpt.value(), 1.0 )
-
-        self.assertEqual( report("5000 02/01").vis.value(), 5000 )
-        self.assertEqual( report("5000 02/01").vis_dir, None )
-        self.assertEqual( report("5000 02/01").max_vis, None )
-        self.assertEqual( report("5000 02/01").temp.value(), 2.0 )
-        self.assertEqual( report("5000 02/01").dewpt.value(), 1.0 )
-
-    def test_290_ranway_state(self):
-        """Check parsing of runway state groups."""
-
-        def report(runway_state):
-            """(Macro) Return Metar object for a report containing the given runway state group"""
-            sample_metar = 'EGNX 191250Z VRB03KT 9999 -RASN FEW008 SCT024 BKN046 M01/M03 Q0989 '
-            return Metar.Metar(sample_metar+' '+runway_state)
-
-        self.assertEqual( report('09690692 27550591').temp.value(), -1.0 )
-        self.assertEqual( report('09690692 27550591').remarks(), "" )
-
-        self.assertEqual( report('09SNOCLO').remarks(), "" )
-        self.assertEqual( report('09CLRD//').remarks(), "" )
-
-    def test_300_parseTrend(self):
-        """Check parsing of trend forecasts."""
-
-        def report(trend_group, remarks=""):
-            """(Macro)
-            Return Metar object for a report containing the given trend
-            forecast and remarks.
-            """
-            sample_metar = sta_time+"09010KT 10SM -SN OVC020 23/05 Q1001"
-            return Metar.Metar(sample_metar+' '+trend_group+' '+remarks)
-
-        self.assertEqual( report('TEMPO FM0306 BKN030CU').trend(), 'TEMPO FM0306 BKN030CU' )
-        self.assertEqual( report('TEMPO FM0306 BKN030CU').temp.value(), 23.0 )
-        self.assertEqual( report('TEMPO FM0306 BKN030CU').remarks(), "" )
-
-        self.assertEqual( report('BECMG 0306 VRB06KT').trend(), 'BECMG 0306 VRB06KT' )
-        self.assertEqual( report('FCST AT0327 +FC').trend(), 'FCST AT0327 +FC' )
-
-        self.assertEqual( report('TEMPO 0306 1/2SM').trend(), 'TEMPO 0306 1/2SM' )
-        self.assertEqual( report('TEMPO FM0306 TL0345 01030G50KT').trend(),
-                          'TEMPO FM0306 TL0345 01030G50KT')
-
-        self.assertEqual( report('TEMPO 0306 RMK 402500072').trend(), 'TEMPO 0306' )
-        self.assertEqual( report('TEMPO 0306 RMK 402500072').max_temp_24hr.value(), 25.0 )
-
-    def test_snowdepth(self):
-        """Check parsing of 4/ group snowdepth"""
-        sample_metar = ("KDOV 040558Z 23004KT 1 1/2SM R01/2800FT -SN BR "
-                        "OVC006 M01/M01 A3015 RMK AO2A SLP213 P0000 4/001 "
-                        "60010 T10071007 10017 "
-                        "21009 55016 VISNO RWY19 CHINO RWY19 $")
-        m = Metar.Metar(sample_metar)
-        self.assertEqual(m.snowdepth.value(), 1)
-
-    def test_310_parse_sky_conditions(self):
-        """Check parsing of sky conditions"""
-
-        def report(sky_conditions):
-            """(Macro) Return Metar object for a report containing the given sky conditions"""
-            sample_metar = "{} 14005KT 6000 {} M05/M10 Q1018".format(sta_time, sky_conditions)
-            return Metar.Metar(sample_metar)
-
-        self.assertEqual( report('SCT030').sky_conditions(), 'scattered clouds at 3000 feet' )
-        self.assertEqual( report('BKN001').sky_conditions(), 'broken clouds at 100 feet' )
-        self.assertEqual( report('OVC008').sky_conditions(), 'overcast at 800 feet' )
-        self.assertEqual(
-          report('OVC010CB').sky_conditions(), 'overcast cumulonimbus at 1000 feet'
+            assert report.time.year == last_year
+
+
+def test_040_parseModifier_default():
+    """Check default 'modifier' value."""
+    assert Metar.Metar("KEWR").mod == "AUTO"
+
+
+def test_041_parseModifier():
+    """Check parsing of 'modifier' groups."""
+    assert Metar.Metar(sta_time + "AUTO").mod == "AUTO"
+    assert Metar.Metar(sta_time + "COR").mod == "COR"
+
+
+def test_042_parseModifier_nonstd():
+    """Check parsing of nonstandard 'modifier' groups."""
+
+    def report(mod_group):
+        """(Macro) Return Metar object from parsing the modifier group."""
+        return Metar.Metar(sta_time+mod_group)
+
+    assert report("RTD").mod == "RTD"
+    assert report("TEST").mod == "TEST"
+    assert report("CCA").mod == "CCA"
+    assert report("CCB").mod == "CCB"
+    assert report("CCC").mod == "CCC"
+    assert report("CCD").mod == "CCD"
+    assert report("CCE").mod == "CCE"
+    assert report("CCF").mod == "CCF"
+    assert report("CCG").mod == "CCG"
+    assert report("CORR").mod == "COR"
+    assert report("FINO").mod == "NO DATA"
+    assert report("NIL").mod == "NO DATA"
+
+
+def test_043_parseModifier_illegal():
+    """Check rejection of illegal 'modifier' groups."""
+    raisesParserError(sta_time + "auto")
+    raisesParserError(sta_time + "CCH")
+    raisesParserError(sta_time + "MAN")
+
+
+def test_140_parseWind():
+    """Check parsing of wind groups."""
+    report = Metar.Metar(sta_time + "09010KT")
+    assert report.decode_completed
+    assert report.wind_dir.value() == 90
+    assert report.wind_speed.value() == 10
+    assert report.wind_gust is None
+    assert report.wind_dir_from is None
+    assert report.wind_dir_from is None
+    assert report.wind() == "E at 10 knots"
+
+    report = Metar.Metar(sta_time + "09010MPS")
+    assert report.decode_completed
+    assert report.wind_speed.value() == 10
+    assert report.wind_speed.value("KMH") == 36
+    assert report.wind() == "E at 19 knots"
+    assert report.wind("MPS") == "E at 10 mps"
+    assert report.wind("KMH") == "E at 36 km/h"
+
+    report = Metar.Metar(sta_time + "09010KMH")
+    assert report.decode_completed
+    assert report.wind_speed.value() == 10
+    assert report.wind() == "E at 5 knots"
+    assert report.wind('KMH') == "E at 10 km/h"
+
+    report = Metar.Metar(sta_time + "090010KT")
+    assert report.decode_completed
+    assert report.wind_dir.value() == 90
+    assert report.wind_speed.value() == 10
+
+    report = Metar.Metar(sta_time + "000000KT")
+    assert report.decode_completed
+    assert report.wind_dir.value() == 0
+    assert report.wind_speed.value() == 0
+    assert report.wind() == "calm"
+
+    report = Metar.Metar(sta_time + "VRB03KT")
+    assert report.decode_completed
+    assert report.wind_dir is None
+    assert report.wind_speed.value() == 3
+    assert report.wind() == "variable at 3 knots"
+
+    report = Metar.Metar(sta_time + "VRB00KT")
+    assert report.decode_completed
+    assert report.wind() == "calm"
+
+    report = Metar.Metar(sta_time + "VRB03G40KT")
+    assert report.decode_completed
+    assert report.wind_dir is None
+    assert report.wind_speed.value() == 3
+    assert report.wind_gust.value() == 40
+    assert report.wind_dir_from is None
+    assert report.wind_dir_to is None
+    assert report.wind() == "variable at 3 knots, gusting to 40 knots"
+
+    report = Metar.Metar(sta_time + "21010G30KT")
+    assert report.decode_completed
+    assert report.wind() == "SSW at 10 knots, gusting to 30 knots"
+
+    report = Metar.Metar(sta_time + "21010KT 180V240")
+    assert report.wind_dir.value() == 210
+    assert report.wind_speed.value() == 10
+    assert report.wind_gust is None
+    assert report.wind_dir_from.value() == 180
+    assert report.wind_dir_to.value() == 240
+    assert report.wind() == "S to WSW at 10 knots"
+
+
+def test_141_parseWind_nonstd():
+    """Check parsing of nonstandard wind groups."""
+
+    def report(wind_group):
+        """(Macro) Return Metar object from parsing the given wind group."""
+        return Metar.Metar(sta_time + wind_group)
+
+    assert report("OOOOOKT").wind_speed.value() == 0
+    assert report("OOOOOKT").wind() == "calm"
+
+    assert report("09010K").wind_speed.string() == "10 knots"
+    assert report("09010T").wind_speed.string() == "10 knots"
+    assert report("09010LT").wind_speed.string() == "10 knots"
+    assert report("09010KTS").wind_speed.string() == "10 knots"
+    assert report("09010").wind_speed.string() == "10 mps"
+
+    assert report("VRBOOK").wind_speed.value() == 0
+    assert report("VRBOOK").wind() == "calm"
+
+    assert report("///00KT").wind() == "calm"
+    assert report("/////KT").wind() == "missing"
+    assert report("000//KT").wind() == "missing"
+    assert report("/////").wind() == "missing"
+
+    assert report("09010G//KT").wind_gust is None
+    assert report("09010GMKT").wind_gust is None
+    assert report("09010GMMKT").wind_gust is None
+    assert report("09010G7KT").wind_gust.value() == 7
+
+    assert report("MMM00KT").wind() == "calm"
+    assert report("MMMMMKT").wind() == "missing"
+    assert report("000MMKT").wind() == "missing"
+    assert report("MMMMM").wind() == "missing"
+    assert report("MMMMMGMMKT").wind() == "missing"
+    assert report("MMMMMG01KT").wind() == "missing"
+
+
+def test_issue51_strict():
+    """Check that setting strict=False prevents a ParserError"""
+    with warnings.catch_warnings(record=True) as w:
+        report = Metar.Metar(sta_time + "90010KT", strict=False)
+    assert len(w) == 1
+    assert report.wind_speed is None
+
+
+def test_142_parseWind_illegal():
+    """Check rejection of illegal wind groups."""
+    raisesParserError(sta_time + "90010KT")
+    raisesParserError(sta_time + "9010KT")
+    raisesParserError(sta_time + "09010 KT")
+    raisesParserError(sta_time + "09010FPS")
+    raisesParserError(sta_time + "09010MPH")
+    raisesParserError(sta_time + "00///KT")
+    raisesParserError(sta_time + "VAR10KT")
+    raisesParserError(sta_time + "21010KT 180-240")
+    raisesParserError(sta_time + "123UnME")
+
+
+def test_150_parseVisibility():
+    """Check parsing of visibility groups."""
+
+    def report(vis_group):
+        """(Macro) Return Metar object for a report with the vis group."""
+        return Metar.Metar(sta_time + "09010KT "+vis_group)
+
+    def report_nowind(vis_group):
+        """(Macro) Return Metar object for a report containing the given
+        visibility group, without a preceeding wind group.
+        """
+        return Metar.Metar(sta_time+vis_group)
+
+    assert report("10SM").vis.value() == 10
+    assert report("10SM").vis_dir is None
+    assert report("10SM").max_vis is None
+    assert report("10SM").max_vis_dir is None
+    assert report("10SM").visibility() == "10 miles"
+
+    assert report("3/8SM").vis.value() == 0.375
+    assert report("3/8SM").vis_dir is None
+    assert report("3/8SM").max_vis is None
+    assert report("3/8SM").max_vis_dir is None
+    assert report("3/8SM").visibility() == "3/8 miles"
+
+    assert report("1 3/4SM").vis.value() == 1.75
+    assert report("1 3/4SM").vis_dir is None
+    assert report("1 3/4SM").max_vis is None
+    assert report("1 3/4SM").max_vis_dir is None
+    assert report("1 3/4SM").visibility() == "1 3/4 miles"
+
+    assert report("5000").vis.value() == 5000
+    assert report("5000").vis_dir is None
+    assert report("5000").visibility() == "5000 meters"
+    assert report("5000M").visibility() == "5000 meters"
+
+    assert report_nowind("5000").vis.value() == 5000
+    assert report_nowind("1000W 3000").vis.value() == 1000
+    assert report_nowind("1000 3000NE").vis.value() == 1000
+
+    assert report("CAVOK").vis.value() == 10000
+    assert report("CAVOK").vis_dir is None
+    assert report("CAVOK").max_vis is None
+    assert report("CAVOK").max_vis_dir is None
+    assert report("CAVOK").visibility(), "10000 meters"
+
+    assert report("1000W 3000").vis.value() == 1000
+    assert report("1000W 3000").vis_dir.value() == 270
+    assert report("1000W 3000").max_vis.value() == 3000
+    assert report("1000W 3000").max_vis_dir is None
+    assert report("1000W 3000").visibility() == "1000 meters to W; 3000 meters"
+
+    assert report("1000 3000NE").vis.value() == 1000
+    assert report("1000 3000NE").vis_dir is None
+    assert report("1000 3000NE").max_vis.value() == 3000
+    assert report("1000 3000NE").max_vis_dir.value() == 45
+    ans = "1000 meters; 3000 meters to NE"
+    assert report("1000 3000NE").visibility() == ans
+
+    assert report("5KM").vis.value() == 5
+    assert report("5KM").vis_dir is None
+    assert report("5KM").visibility() == "5.0 km"
+
+    assert report("5000E").vis.value() == 5000
+    assert report("5000E").visibility() == "5000 meters to E"
+
+    assert report("7000NDV").vis.value() == 7000
+    assert report("7000NDV").vis_dir is None
+    assert report("7000NDV").visibility() == "7000 meters"
+
+    assert report("M1000").vis.value() == 1000
+    assert report("M1000").visibility() == "less than 1000 meters"
+
+    assert report("P6000").vis.value() == 6000
+    assert report("P6000").visibility() == "greater than 6000 meters"
+
+
+def test_151_parseVisibility_direction():
+    """Check parsing of compass headings visibility groups."""
+
+    def report(vis_group):
+        """(Macro) Return Metar object for a report given vis group."""
+        return Metar.Metar(sta_time + "09010KT "+vis_group)
+
+    assert report("5000N").vis_dir.compass() == "N"
+    assert report("5000N").vis_dir.value() == 0
+    assert report("5000NE").vis_dir.compass() == "NE"
+    assert report("5000NE").vis_dir.value() == 45
+    assert report("5000E").vis_dir.compass() == "E"
+    assert report("5000E").vis_dir.value() == 90
+    assert report("5000SE").vis_dir.compass() == "SE"
+    assert report("5000SE").vis_dir.value() == 135
+    assert report("5000S").vis_dir.compass() == "S"
+    assert report("5000S").vis_dir.value() == 180
+    assert report("5000SW").vis_dir.compass() == "SW"
+    assert report("5000SW").vis_dir.value() == 225
+    assert report("5000W").vis_dir.compass() == "W"
+    assert report("5000W").vis_dir.value() == 270
+    assert report("5000NW").vis_dir.compass() == "NW"
+    assert report("5000NW").vis_dir.value() == 315
+
+
+def test_152_parseVisibility_with_following_temperature():
+    """Check parsing of visibility groups followed immediately by a group."""
+
+    def report(vis_group):
+        """(Macro) Return Metar object for a report given visibility group."""
+        return Metar.Metar(sta_time + "09010KT "+vis_group)
+
+    assert report("CAVOK 02/01").vis.value() == 10000
+    assert report("CAVOK 02/01").vis_dir is None
+    assert report("CAVOK 02/01").max_vis is None
+    assert report("CAVOK 02/01").temp.value() == 2.0
+    assert report("CAVOK 02/01").dewpt.value() == 1.0
+
+    assert report("5000 02/01").vis.value() == 5000
+    assert report("5000 02/01").vis_dir is None
+    assert report("5000 02/01").max_vis is None
+    assert report("5000 02/01").temp.value() == 2.0
+    assert report("5000 02/01").dewpt.value() == 1.0
+
+
+def test_290_ranway_state():
+    """Check parsing of runway state groups."""
+
+    def report(runway_state):
+        """(Macro) Return Metar object for  given runway state group"""
+        sample_metar = (
+            'EGNX 191250Z VRB03KT 9999 -RASN FEW008 SCT024 '
+            'BKN046 M01/M03 Q0989 '
         )
-        self.assertEqual( report('SCT020TCU').sky_conditions(), 'scattered towering cumulus at 2000 feet' )
-        self.assertEqual( report('BKN015CB').sky_conditions(), 'broken cumulonimbus at 1500 feet' )
-        self.assertEqual( report('FEW030').sky_conditions(), 'a few clouds at 3000 feet' )
-        self.assertEqual( report('VV001').sky_conditions(), 'indefinite ceiling, vertical visibility to 100 feet' )
-        self.assertEqual( report('SKC').sky_conditions(), 'clear' )
-        self.assertEqual( report('CLR').sky_conditions(), 'clear' )
-        self.assertEqual( report('NSC').sky_conditions(), 'clear' )
+        return Metar.Metar(sample_metar + ' ' + runway_state)
 
-    def test_not_strict_mode(self):
-        # This example metar has an extraneous 'M' in it, but the rest is fine
-        # Let's make sure that we can activate a non-strict mode, and flag that there
-        # are unparsed portions
-        code = 'K9L2 100958Z AUTO 33006KT 10SM CLR M A3007 RMK AO2 SLPNO FZRANO $'
-        self.raisesParserError(code)
+    assert report('09690692 27550591').temp.value() == -1.0
+    assert report('09690692 27550591').remarks() == ""
 
-        with warnings.catch_warnings(record=True) as w:
-            report = Metar.Metar(code, strict=False)
-        assert len(w) == 1
-
-        assert not report.decode_completed
-        self.assertEqual( report.cycle, 10 )
-        self.assertEqual( report.mod, 'AUTO' )
-        self.assertEqual( report.recent, [] )
-        self.assertEqual( report.station_id, 'K9L2' )
-        self.assertEqual( report.vis.value(), 10 )
-        self.assertEqual( report.sky_conditions(), 'clear' )
+    assert report('09SNOCLO').remarks() == ""
+    assert report('09CLRD//').remarks() == ""
 
 
-if __name__=='__main__':
-    unittest.main()
+def test_300_parseTrend():
+    """Check parsing of trend forecasts."""
+
+    def report(trend_group, remarks=""):
+        """(Macro)
+        Return Metar object for a report containing the given trend
+        forecast and remarks.
+        """
+        sample_metar = sta_time + "09010KT 10SM -SN OVC020 23/05 Q1001"
+        return Metar.Metar(sample_metar+' '+trend_group+' '+remarks)
+
+    assert report('TEMPO FM0306 BKN030CU').trend() == 'TEMPO FM0306 BKN030CU'
+    assert report('TEMPO FM0306 BKN030CU').temp.value() == 23.0
+    assert report('TEMPO FM0306 BKN030CU').remarks() == ""
+
+    assert report('BECMG 0306 VRB06KT').trend() == 'BECMG 0306 VRB06KT'
+    assert report('FCST AT0327 +FC').trend() == 'FCST AT0327 +FC'
+
+    assert report('TEMPO 0306 1/2SM').trend() == 'TEMPO 0306 1/2SM'
+    ans = 'TEMPO FM0306 TL0345 01030G50KT'
+    assert report(ans).trend() == ans
+
+    assert report('TEMPO 0306 RMK 402500072').trend() == 'TEMPO 0306'
+    assert report('TEMPO 0306 RMK 402500072').max_temp_24hr.value() == 25.0
+
+
+def test_snowdepth():
+    """Check parsing of 4/ group snowdepth"""
+    sample_metar = ("KDOV 040558Z 23004KT 1 1/2SM R01/2800FT -SN BR "
+                    "OVC006 M01/M01 A3015 RMK AO2A SLP213 P0000 4/001 "
+                    "60010 T10071007 10017 "
+                    "21009 55016 VISNO RWY19 CHINO RWY19 $")
+    m = Metar.Metar(sample_metar)
+    assert m.snowdepth.value() == 1
+
+
+def test_310_parse_sky_conditions():
+    """Check parsing of sky conditions."""
+
+    def report(sky_conditions):
+        """(Macro) Return Metar object for the given sky conditions."""
+        sample_metar = "{} 14005KT 6000 {} M05/M10 Q1018".format(
+            sta_time, sky_conditions
+        )
+        return Metar.Metar(sample_metar)
+
+    assert report('SCT030').sky_conditions() == 'scattered clouds at 3000 feet'
+    assert report('BKN001').sky_conditions() == 'broken clouds at 100 feet'
+    assert report('OVC008').sky_conditions() == 'overcast at 800 feet'
+    ans = 'overcast cumulonimbus at 1000 feet'
+    assert report('OVC010CB').sky_conditions() == ans
+    ans = 'scattered towering cumulus at 2000 feet'
+    assert report('SCT020TCU').sky_conditions() == ans
+    ans = 'broken cumulonimbus at 1500 feet'
+    assert report('BKN015CB').sky_conditions() == ans
+    ans = 'a few clouds at 3000 feet'
+    assert report('FEW030').sky_conditions() == ans
+    ans = 'indefinite ceiling, vertical visibility to 100 feet'
+    assert report('VV001').sky_conditions() == ans
+    assert report('SKC').sky_conditions() == 'clear'
+    assert report('CLR').sky_conditions() == 'clear'
+    assert report('NSC').sky_conditions() == 'clear'
+
+
+def test_not_strict_mode():
+    """Test the strict attribute on parsing."""
+    # This example metar has an extraneous 'M' in it, but the rest is fine
+    # Let's make sure that we can activate a non-strict mode, and flag that
+    # there are unparsed portions
+    code = 'K9L2 100958Z AUTO 33006KT 10SM CLR M A3007 RMK AO2 SLPNO FZRANO $'
+    raisesParserError(code)
+
+    with warnings.catch_warnings(record=True) as w:
+        report = Metar.Metar(code, strict=False)
+    assert len(w) == 1
+
+    assert not report.decode_completed
+    assert report.cycle == 10
+    assert report.mod == 'AUTO'
+    assert not report.recent
+    assert report.station_id == 'K9L2'
+    assert report.vis.value() == 10
+    assert report.sky_conditions() == 'clear'
