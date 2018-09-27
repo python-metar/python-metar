@@ -30,6 +30,15 @@ class MetarTest(unittest.TestCase):
         )
         self.assertEqual(res, ans)
 
+    def test_issue67_precip_text(self):
+        """Check that precip_text is properly defined in present_weather."""
+        report = Metar.Metar(
+            "METAR FSIA 220100Z AUTO 14014KT 120V180 9999 ///////// "
+            "27/23 Q1010"
+        )
+        res = report.present_weather()
+        self.assertEqual(res, "/////////")
+
     def test_issue40_runwayunits(self):
         """Check reported units on runway visual range."""
         report = Metar.Metar(
