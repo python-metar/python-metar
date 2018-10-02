@@ -1033,7 +1033,7 @@ class Metar(object):
         """
         Return a textual description of the report type.
         """
-        if self.type == None:
+        if self.type is None:
             text = "unknown report type"
         elif self.type in REPORT_TYPE:
             text  = REPORT_TYPE[self.type]
@@ -1056,7 +1056,7 @@ class Metar(object):
 
         Units may be specified as "MPS", "KT", "KMH", or "MPH".
         """
-        if self.wind_speed == None:
+        if self.wind_speed is None:
             return "missing"
         elif self.wind_speed.value() == 0.0:
             text = "calm"
@@ -1079,7 +1079,7 @@ class Metar(object):
 
         Units may be specified as "MPS", "KT", "KMH", or "MPH".
         """
-        if self.wind_speed_peak == None:
+        if self.wind_speed_peak is None:
             return "missing"
         elif self.wind_speed_peak.value() == 0.0:
             text = "calm"
@@ -1089,7 +1089,7 @@ class Metar(object):
                 text = wind_speed
             else:
                 text = "%s at %s" % (self.wind_dir_peak.compass(), wind_speed)
-                if not self.peak_wind_time == None:
+                if not self.peak_wind_time is None:
                     text += " at %s" % self.peak_wind_time.strftime('%H:%M')
         return text
 
@@ -1099,7 +1099,7 @@ class Metar(object):
 
         Units may be specified as "MPS", "KT", "KMH", or "MPH".
         """
-        if self.wind_shift_time == None:
+        if self.wind_shift_time is None:
             return "missing"
         else:
             return self.wind_shift_time.strftime('%H:%M')
@@ -1110,7 +1110,7 @@ class Metar(object):
 
         Units may be statute miles ("SM") or meters ("M").
         """
-        if self.vis == None:
+        if self.vis is None:
             return "missing"
         if self.vis_dir:
             text = "%s to %s" % (self.vis.string(units), self.vis_dir.compass())

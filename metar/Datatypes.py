@@ -40,7 +40,7 @@ class temperature(object):
 
     def value( self, units=None ):
         """Return the temperature in the specified units."""
-        if units == None:
+        if units is None:
             return self._value
         else:
             if not units.upper() in temperature.legal_units:
@@ -61,7 +61,7 @@ class temperature(object):
 
     def string( self, units=None ):
         """Return a string representation of the temperature, using the given units."""
-        if units == None:
+        if units is None:
             units = self._units
         else:
             if not units.upper() in temperature.legal_units:
@@ -90,7 +90,7 @@ class pressure(object):
 
     def value( self, units=None ):
         """Return the pressure in the specified units."""
-        if units == None:
+        if units is None:
             return self._value
         else:
             if not units.upper() in pressure.legal_units:
