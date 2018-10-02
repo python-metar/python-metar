@@ -13,16 +13,16 @@ import logging
 from metar import __version__, __author__, __email__, __LICENSE__
 from metar.Datatypes import *
 
-## logger
+# logger
 _logger = logging.getLogger(__name__)
 
-## Exceptions
+# Exceptions
 
 class ParserError(Exception):
     """Exception raised when an unparseable group is found in body of the report."""
     pass
 
-## regular expressions to decode various groups of the METAR code
+# regular expressions to decode various groups of the METAR code
 
 MISSING_RE = re.compile(r"^[M/]+$")
 
@@ -93,7 +93,7 @@ TRENDTIME_RE = re.compile(r"(?P<when>(FM|TL|AT))(?P<hour>\d\d)(?P<min>\d\d)\s+")
 
 REMARK_RE = re.compile(r"^(RMKS?|NOSPECI|NOSIG)\s+")
 
-## regular expressions for remark groups
+# regular expressions for remark groups
 
 AUTO_RE = re.compile(r"^AO(?P<type>\d)\s+")
 SEALVL_PRESS_RE = re.compile(r"^SLP(?P<press>\d\d\d)\s+")
@@ -143,7 +143,7 @@ TS_LOC_RE = re.compile(r"""TS(\s+(?P<loc>( OHD | VC | DSNT\s+ | \s+AND\s+ |
                            re.VERBOSE)
 SNOWDEPTH_RE = re.compile(r"""^4/(?P<snowdepth>\d\d\d)\s+""")
 
-## translation of weather location codes
+# translation of weather location codes
 
 loc_terms = [ ("OHD", "overhead"),
               ("DSNT", "distant"),
@@ -156,7 +156,7 @@ def xlate_loc( loc ):
         loc = loc.replace(code,english)
     return loc
 
-## translation of the sky-condition codes into english
+# translation of the sky-condition codes into english
 
 SKY_COVER = { "SKC":"clear",
               "CLR":"clear",
@@ -189,7 +189,7 @@ CLOUD_TYPE = {
     "TCU": "towering cumulus",
 }
 
-## translation of the present-weather codes into english
+# translation of the present-weather codes into english
 
 WEATHER_INT = { "-":"light",
                 "+":"heavy",
@@ -234,7 +234,7 @@ COLOR = { "BLU":"blue",
           "GRN":"green",
           "WHT":"white" }
 
-## translation of various remark codes into English
+# translation of various remark codes into English
 
 PRESSURE_TENDENCY = { "0":"increasing, then decreasing",
                       "1":"increasing more slowly",
@@ -259,7 +259,7 @@ REPORT_TYPE = { "METAR":"routine report",
                 "AUTO":"automatic report",
                 "COR":"manually corrected report" }
 
-## Helper functions
+# Helper functions
 
 def _report_match(handler, match):
     """Report success or failure of the given handler function. (DEBUG)"""
@@ -275,7 +275,7 @@ def _unparsedGroup( self, d ):
     """
     self._unparsed_groups.append(d['group'])
 
-## METAR report objects
+# METAR report objects
 
 debug = False
 
@@ -925,7 +925,7 @@ class Metar(object):
         """
         self._unparsed_remarks.append(d['group'])
 
-    ## the list of handler functions to use (in order) to process a METAR report
+    # the list of handler functions to use (in order) to process a METAR report
 
     handlers = [ (TYPE_RE, _handleType, False),
                  (COR_RE, _handleCorrection, False),
@@ -953,8 +953,8 @@ class Metar(object):
                        (SKY_RE, _handleTrend, True),
                        (COLOR_RE, _handleTrend, True)]
 
-    ## the list of patterns for the various remark groups,
-    ## paired with the handler functions to use to record the decoded remark.
+    # the list of patterns for the various remark groups,
+    # paired with the handler functions to use to record the decoded remark.
 
     remark_handlers = [ (AUTO_RE,         _handleAutoRemark),
                         (SEALVL_PRESS_RE, _handleSealvlPressRemark),
@@ -971,7 +971,7 @@ class Metar(object):
                         (SNOWDEPTH_RE,    _handleSnowDepthRemark),
                         (UNPARSED_RE,     _unparsedRemark) ]
 
-    ## functions that return text representations of conditions for output
+    # functions that return text representations of conditions for output
 
     def string( self ):
         """

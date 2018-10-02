@@ -6,18 +6,18 @@
 import re
 from math import sin, cos, atan2, sqrt
 
-## exceptions
+# exceptions
 
 class UnitsError(Exception):
     """Exception raised when unrecognized units are used."""
     pass
 
-## regexp to match fractions (used by distance class)
-## [Note: numerator of fraction must be single digit.]
+# regexp to match fractions (used by distance class)
+# [Note: numerator of fraction must be single digit.]
 
 FRACTION_RE = re.compile(r"^((?P<int>\d+)\s*)?(?P<num>\d)/(?P<den>\d+)$")
 
-## classes representing dimensioned values in METAR reports
+# classes representing dimensioned values in METAR reports
 
 class temperature(object):
     """A class representing a temperature value."""
