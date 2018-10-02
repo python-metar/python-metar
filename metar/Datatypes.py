@@ -1,8 +1,8 @@
-#
-#  Python classes to represent dimensioned quantities used in weather reports
-#
-#  Copyright 2004  Tom Pollard
-#
+# Copyright (c) 2004,2018 Python-Metar Developers.
+# Distributed under the terms of the BSD 2-Clause License.
+# SPDX-License-Identifier: BSD-2-Clause
+"""Python classes to represent dimensioned quantities used in weather reports.
+"""
 import re
 from math import sin, cos, atan2, sqrt
 
