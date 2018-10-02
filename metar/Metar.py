@@ -11,7 +11,9 @@ import warnings
 import logging
 
 from metar import __version__, __author__, __email__, __LICENSE__
-from metar.Datatypes import *
+from metar.Datatypes import (
+    temperature, pressure, speed, distance, direction, precipitation
+)
 
 # logger
 _logger = logging.getLogger(__name__)
