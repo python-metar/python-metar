@@ -62,9 +62,9 @@ Install this package in the usual way,
 
     python setup.py install
 
-There's a small, inadequate test suite that can be run by saying
+The test suite can be run by:
 
-    python test/all_tests.py
+    python setup.py test
 
 There are a couple of sample scripts, described briefly below.
 
@@ -89,7 +89,6 @@ sample.py | a simple script showing how the decoded data can be accessed. (see m
 sample.metar | a sample METAR report (longer than most).  Try feeding this to the parse_metar.py script...
 metar/Metar.py | the implementation of the Metar class.  This class parses and represents a single METAR report.
 metar/Datatypes.py | a support module that defines classes representing different types of meteorological data, including temperature, pressure, speed, distance, direction and position.
-test/all_tests.py | a master test driver, which invokes all of the unit tests
 test/test_*.py | individual test modules
 setup.py  | installation script
 

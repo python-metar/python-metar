@@ -38,6 +38,9 @@ setup(
     packages=["metar"],
     package_data={'metar': ['nsd_cccc.txt', ]},
     platforms="Python 2.5 and later.",
+    extras_require={
+        'test': ['pytest', ],
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: BSD License",
