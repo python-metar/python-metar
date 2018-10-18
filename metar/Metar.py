@@ -145,21 +145,24 @@ TS_LOC_RE = re.compile(r"""TS(\s+(?P<loc>( OHD | VC | DSNT\s+ | \s+AND\s+ |
                            re.VERBOSE)
 SNOWDEPTH_RE = re.compile(r"""^4/(?P<snowdepth>\d\d\d)\s+""")
 
+
 # translation of weather location codes
+loc_terms = [
+    ("OHD", "overhead"),
+    ("DSNT", "distant"),
+    ("AND", "and"),
+    ("VC", "nearby")
+]
 
-loc_terms = [ ("OHD", "overhead"),
-              ("DSNT", "distant"),
-              ("AND", "and"),
-              ("VC", "nearby") ]
 
-def xlate_loc( loc ):
+def xlate_loc(loc):
     """Substitute English terms for the location codes in the given string."""
     for code, english in loc_terms:
-        loc = loc.replace(code,english)
+        loc = loc.replace(code, english)
     return loc
 
-# translation of the sky-condition codes into english
 
+# translation of the sky-condition codes into english
 SKY_COVER = { "SKC":"clear",
               "CLR":"clear",
               "NSC":"clear",
