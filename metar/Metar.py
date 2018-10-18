@@ -1,68 +1,30 @@
-#!/usr/bin/env python
-#
-#  A python package for interpreting METAR and SPECI weather reports.
-#
-#  US conventions for METAR/SPECI reports are described in chapter 12 of
-#  the Federal Meteorological Handbook No.1. (FMH-1 1995), issued by NOAA.
-#  See <http://metar.noaa.gov/>
-#
-#  International conventions for the METAR and SPECI codes are specified in
-#  the WMO Manual on Codes, vol I.1, Part A (WMO-306 I.i.A).
-#
-#  This module handles a reports that follow the US conventions, as well
-#  the more general encodings in the WMO spec.  Other regional conventions
-#  are not supported at present.
-#
-#  The current METAR report for a given station is available at the URL
-#  http://weather.noaa.gov/pub/data/observations/metar/stations/<station>.TXT
-#  where <station> is the four-letter ICAO station code.
-#
-#  The METAR reports for all reporting stations for any "cycle" (i.e., hour)
-#  in the last 24 hours is available in a single file at the URL
-#  http://weather.noaa.gov/pub/data/observations/metar/cycles/<cycle>Z.TXT
-#  where <cycle> is a 2-digit cycle number (e.g., "00", "05" or "23").
-#
-#  Copyright 2004  Tom Pollard
-#
+# Copyright (c) 2004,2018 Python-Metar Developers.
+# Distributed under the terms of the BSD 2-Clause License.
+# SPDX-License-Identifier: BSD-2-Clause
+"""This module defines the Metar class.
+
+A Metar object represents the weather report encoded by a single METAR code.
 """
-This module defines the Metar class.  A Metar object represents the weather report encoded by a single METAR code.
-"""
-
-__author__ = "Tom Pollard"
-
-__email__ = "pollard@alum.mit.edu"
-
-__LICENSE__ = """
-Copyright (c) 2004-2016, %s
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-""" % __author__
-
 import re
 import datetime
 import warnings
 import logging
 
-from metar import __version__
-from metar.Datatypes import *
+from metar import __version__, __author__, __email__, __LICENSE__
+from metar.Datatypes import (
+    temperature, pressure, speed, distance, direction, precipitation
+)
 
-## logger
+# logger
 _logger = logging.getLogger(__name__)
 
-## Exceptions
+# Exceptions
 
 class ParserError(Exception):
     """Exception raised when an unparseable group is found in body of the report."""
     pass
 
-## regular expressions to decode various groups of the METAR code
+# regular expressions to decode various groups of the METAR code
 
 MISSING_RE = re.compile(r"^[M/]+$")
 
@@ -133,7 +95,7 @@ TRENDTIME_RE = re.compile(r"(?P<when>(FM|TL|AT))(?P<hour>\d\d)(?P<min>\d\d)\s+")
 
 REMARK_RE = re.compile(r"^(RMKS?|NOSPECI|NOSIG)\s+")
 
-## regular expressions for remark groups
+# regular expressions for remark groups
 
 AUTO_RE = re.compile(r"^AO(?P<type>\d)\s+")
 SEALVL_PRESS_RE = re.compile(r"^SLP(?P<press>\d\d\d)\s+")
@@ -183,7 +145,7 @@ TS_LOC_RE = re.compile(r"""TS(\s+(?P<loc>( OHD | VC | DSNT\s+ | \s+AND\s+ |
                            re.VERBOSE)
 SNOWDEPTH_RE = re.compile(r"""^4/(?P<snowdepth>\d\d\d)\s+""")
 
-## translation of weather location codes
+# translation of weather location codes
 
 loc_terms = [ ("OHD", "overhead"),
               ("DSNT", "distant"),
@@ -196,7 +158,7 @@ def xlate_loc( loc ):
         loc = loc.replace(code,english)
     return loc
 
-## translation of the sky-condition codes into english
+# translation of the sky-condition codes into english
 
 SKY_COVER = { "SKC":"clear",
               "CLR":"clear",
@@ -229,7 +191,7 @@ CLOUD_TYPE = {
     "TCU": "towering cumulus",
 }
 
-## translation of the present-weather codes into english
+# translation of the present-weather codes into english
 
 WEATHER_INT = { "-":"light",
                 "+":"heavy",
@@ -274,7 +236,7 @@ COLOR = { "BLU":"blue",
           "GRN":"green",
           "WHT":"white" }
 
-## translation of various remark codes into English
+# translation of various remark codes into English
 
 PRESSURE_TENDENCY = { "0":"increasing, then decreasing",
                       "1":"increasing more slowly",
@@ -299,7 +261,7 @@ REPORT_TYPE = { "METAR":"routine report",
                 "AUTO":"automatic report",
                 "COR":"manually corrected report" }
 
-## Helper functions
+# Helper functions
 
 def _report_match(handler, match):
     """Report success or failure of the given handler function. (DEBUG)"""
@@ -315,7 +277,7 @@ def _unparsedGroup( self, d ):
     """
     self._unparsed_groups.append(d['group'])
 
-## METAR report objects
+# METAR report objects
 
 debug = False
 
@@ -965,7 +927,7 @@ class Metar(object):
         """
         self._unparsed_remarks.append(d['group'])
 
-    ## the list of handler functions to use (in order) to process a METAR report
+    # the list of handler functions to use (in order) to process a METAR report
 
     handlers = [ (TYPE_RE, _handleType, False),
                  (COR_RE, _handleCorrection, False),
@@ -993,8 +955,8 @@ class Metar(object):
                        (SKY_RE, _handleTrend, True),
                        (COLOR_RE, _handleTrend, True)]
 
-    ## the list of patterns for the various remark groups,
-    ## paired with the handler functions to use to record the decoded remark.
+    # the list of patterns for the various remark groups,
+    # paired with the handler functions to use to record the decoded remark.
 
     remark_handlers = [ (AUTO_RE,         _handleAutoRemark),
                         (SEALVL_PRESS_RE, _handleSealvlPressRemark),
@@ -1011,7 +973,7 @@ class Metar(object):
                         (SNOWDEPTH_RE,    _handleSnowDepthRemark),
                         (UNPARSED_RE,     _unparsedRemark) ]
 
-    ## functions that return text representations of conditions for output
+    # functions that return text representations of conditions for output
 
     def string( self ):
         """
@@ -1073,7 +1035,7 @@ class Metar(object):
         """
         Return a textual description of the report type.
         """
-        if self.type == None:
+        if self.type is None:
             text = "unknown report type"
         elif self.type in REPORT_TYPE:
             text  = REPORT_TYPE[self.type]
@@ -1096,7 +1058,7 @@ class Metar(object):
 
         Units may be specified as "MPS", "KT", "KMH", or "MPH".
         """
-        if self.wind_speed == None:
+        if self.wind_speed is None:
             return "missing"
         elif self.wind_speed.value() == 0.0:
             text = "calm"
@@ -1119,7 +1081,7 @@ class Metar(object):
 
         Units may be specified as "MPS", "KT", "KMH", or "MPH".
         """
-        if self.wind_speed_peak == None:
+        if self.wind_speed_peak is None:
             return "missing"
         elif self.wind_speed_peak.value() == 0.0:
             text = "calm"
@@ -1129,7 +1091,7 @@ class Metar(object):
                 text = wind_speed
             else:
                 text = "%s at %s" % (self.wind_dir_peak.compass(), wind_speed)
-                if not self.peak_wind_time == None:
+                if not self.peak_wind_time is None:
                     text += " at %s" % self.peak_wind_time.strftime('%H:%M')
         return text
 
@@ -1139,7 +1101,7 @@ class Metar(object):
 
         Units may be specified as "MPS", "KT", "KMH", or "MPH".
         """
-        if self.wind_shift_time == None:
+        if self.wind_shift_time is None:
             return "missing"
         else:
             return self.wind_shift_time.strftime('%H:%M')
@@ -1150,7 +1112,7 @@ class Metar(object):
 
         Units may be statute miles ("SM") or meters ("M").
         """
-        if self.vis == None:
+        if self.vis is None:
             return "missing"
         if self.vis_dir:
             text = "%s to %s" % (self.vis.string(units), self.vis_dir.compass())

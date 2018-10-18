@@ -1,12 +1,10 @@
-#!/usr/bin/python
-#
-#  Python module to provide station information from the ICAO identifiers
-#
-#  Copyright 2004  Tom Pollard
-#
+# Copyright (c) 2004,2018 Python-Metar Developers.
+# Distributed under the terms of the BSD 2-Clause License.
+# SPDX-License-Identifier: BSD-2-Clause
+"""Python module to provide station information from the ICAO identifiers."""
 import os
-from math import sin, cos, atan2, sqrt
-from metar.Datatypes import position, distance, direction
+from metar.Datatypes import position
+
 
 class station:
     """An object representing a weather station."""
@@ -21,6 +19,7 @@ class station:
             self.name = "%s, %s" % (self.city, self.state)
         else:
             self.name = self.city
+
 
 current_dir = os.path.dirname(__file__)
 station_file_name = os.path.join(current_dir, "nsd_cccc.txt")

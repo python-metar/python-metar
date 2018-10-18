@@ -1,23 +1,23 @@
-#
-#  Python classes to represent dimensioned quantities used in weather reports
-#
-#  Copyright 2004  Tom Pollard
-#
+# Copyright (c) 2004,2018 Python-Metar Developers.
+# Distributed under the terms of the BSD 2-Clause License.
+# SPDX-License-Identifier: BSD-2-Clause
+"""Python classes to represent dimensioned quantities used in weather reports.
+"""
 import re
 from math import sin, cos, atan2, sqrt
 
-## exceptions
+# exceptions
 
 class UnitsError(Exception):
     """Exception raised when unrecognized units are used."""
     pass
 
-## regexp to match fractions (used by distance class)
-## [Note: numerator of fraction must be single digit.]
+# regexp to match fractions (used by distance class)
+# [Note: numerator of fraction must be single digit.]
 
 FRACTION_RE = re.compile(r"^((?P<int>\d+)\s*)?(?P<num>\d)/(?P<den>\d+)$")
 
-## classes representing dimensioned values in METAR reports
+# classes representing dimensioned values in METAR reports
 
 class temperature(object):
     """A class representing a temperature value."""
@@ -40,7 +40,7 @@ class temperature(object):
 
     def value( self, units=None ):
         """Return the temperature in the specified units."""
-        if units == None:
+        if units is None:
             return self._value
         else:
             if not units.upper() in temperature.legal_units:
@@ -61,7 +61,7 @@ class temperature(object):
 
     def string( self, units=None ):
         """Return a string representation of the temperature, using the given units."""
-        if units == None:
+        if units is None:
             units = self._units
         else:
             if not units.upper() in temperature.legal_units:
@@ -90,7 +90,7 @@ class pressure(object):
 
     def value( self, units=None ):
         """Return the pressure in the specified units."""
-        if units == None:
+        if units is None:
             return self._value
         else:
             if not units.upper() in pressure.legal_units:

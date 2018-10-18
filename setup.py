@@ -47,8 +47,6 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Intended Audience :: Science/Research",
-        # "Topic :: Formats and Protocols :: Data Formats",
-        # "Topic :: Scientific/Engineering :: Earth Sciences",
-        # "Topic :: Software Development :: Libraries :: Python Modules"
+        "Topic :: Software Development :: Libraries :: Python Modules"
         ]
     )
