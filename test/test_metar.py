@@ -21,6 +21,19 @@ def raisesParserError(code):
         Metar.Metar(code)
 
 
+def test_xlate_loc():
+    """Test that xlate_loc does the right thing."""
+    Metar.debug = True
+    report = Metar.Metar(
+        "METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 "
+        "BKN040CB BKN065 OVC200 22/22 A2987 RMK AO2 PK WND 29028/1817 WSHFT "
+        "1812 TSB05RAB22 SLP114 FRQ LTGICCCCG TS OHD AND NW-N-E MOV NE "
+        "P0013 T02270215"
+    )
+    mstring = str(report)
+    assert mstring.find("thunderstorm overhead") > -1
+
+
 def test_module():
     """Test that module level things are defined."""
     assert hasattr(metar, "__version__")
