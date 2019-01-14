@@ -376,8 +376,8 @@ class precipitation(object):
             raise ValueError("unrecognized greater-than/less-than symbol: '"+gtlt+"'")
         self._gtlt = gtlt
         self._value = float(value)
-        # In METAR world, a string of four zeros denotes trace
-        self._istrace = (value == "0000")
+        # In METAR world, a string of just four or three zeros denotes trace
+        self._istrace = (value in ["0000", "000"])
 
     def __str__(self):
         return self.string()

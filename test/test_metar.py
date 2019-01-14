@@ -39,6 +39,18 @@ def test_module():
     assert hasattr(metar, "__version__")
 
 
+@pytest.mark.parametrize("hours", [1, 3, 6])
+def test_issue77_ice_accretion(hours):
+    """Metar parser supports ice accretion data."""
+    report = Metar.Metar(
+        ("KABI 031752Z 30010KT 6SM BR FEW009 OVC036 02/01 A3003 RMK AO2 "
+         "SLP176 60001 I%i003 T00170006 10017 21006 56017") % (hours, )
+    )
+    myattr = "ice_accretion_%ihr" % (hours, )
+    assert abs(getattr(report, myattr).value('IN') - 0.03) < 0.001
+    assert str(report).find("Ice Accretion") > 0
+
+
 def test_issue64_cloudkeyerror():
     """Lookup on CLOUD_TYPE should not keyerror."""
     report = Metar.Metar(
