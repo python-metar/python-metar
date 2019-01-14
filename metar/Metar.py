@@ -144,6 +144,9 @@ TS_LOC_RE = re.compile(r"""TS(\s+(?P<loc>( OHD | VC | DSNT\s+ | \s+AND\s+ |
                                           ( \s+MOV\s+(?P<dir>[NSEW][EW]?) )?\s+""",
                            re.VERBOSE)
 SNOWDEPTH_RE = re.compile(r"""^4/(?P<snowdepth>\d\d\d)\s+""")
+ICE_ACCRETION_RE = re.compile(
+    r"^I(?P<ice_accretion_hours>[136])(?P<ice_accretion_depth>\d\d\d)\s+"
+)
 
 
 # translation of weather location codes
@@ -345,6 +348,9 @@ class Metar(object):
         self.precip_6hr = None             # precipitation over the last 6 hours
         self.precip_24hr = None            # precipitation over the last 24 hours
         self.snowdepth = None              # snow depth (distance)
+        self.ice_accretion_1hr = None      # ice accretion over the past hour
+        self.ice_accretion_3hr = None      # ice accretion over the past 3 hours
+        self.ice_accretion_6hr = None      # ice accretion over the past 6 hours
         self._trend = False                # trend groups present (bool)
         self._trend_groups = []            # trend forecast groups
         self._remarks = []                 # remarks (list of strings)
@@ -924,6 +930,14 @@ class Metar(object):
         self.snowdepth = distance(float(d['snowdepth']), 'IN')
         self._remarks.append(" snowdepth %s" % (self.snowdepth, ))
 
+    def _handleIceAccretionRemark(self, d):
+        """
+        Parse the I/ group ice accretion report.
+        """
+        myattr = "ice_accretion_%shr" % (d['ice_accretion_hours'], )
+        value = precipitation(float(d['ice_accretion_depth']) / 100., 'IN')
+        setattr(self, myattr, value)
+
     def _unparsedRemark( self, d ):
         """
         Handle otherwise unparseable remark groups.
@@ -974,6 +988,7 @@ class Metar(object):
                         (TEMP_6HR_RE,     _handleTemp6hrRemark),
                         (TEMP_24HR_RE,    _handleTemp24hrRemark),
                         (SNOWDEPTH_RE,    _handleSnowDepthRemark),
+                        (ICE_ACCRETION_RE, _handleIceAccretionRemark),
                         (UNPARSED_RE,     _unparsedRemark) ]
 
     # functions that return text representations of conditions for output
@@ -1026,6 +1041,12 @@ class Metar(object):
             lines.append("6-hour precipitation: %s" % str(self.precip_6hr))
         if self.precip_24hr:
             lines.append("24-hour precipitation: %s" % str(self.precip_24hr))
+        if self.ice_accretion_1hr:
+            lines.append("1-hour Ice Accretion: %s" % str(self.ice_accretion_1hr, ))
+        if self.ice_accretion_3hr:
+            lines.append("3-hour Ice Accretion: %s" % str(self.ice_accretion_3hr, ))
+        if self.ice_accretion_6hr:
+            lines.append("6-hour Ice Accretion: %s" % str(self.ice_accretion_6hr, ))
         if self._remarks:
             lines.append("remarks:")
             lines.append("- "+self.remarks("\n- "))
