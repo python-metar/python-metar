@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+metar-1.7.0 (15 January 2019)
+-----------------------------
+
+This release is a bug fix and enhancement release with no known API breakages. The highlights include:
+
+- [#77](https://github.com/python-metar/python-metar/issues/77) Support was added for I-group (ice accretion), see new `Metar` attributes `ice_accretion_1hr`, `ice_accretion_3hr`, and `ice_accretion_6hr`.
+- [#70](https://github.com/python-metar/python-metar/issues/70) Code tests were migrated to pytest.
+- [#64](https://github.com/python-metar/python-metar/issues/64) Cloud type `AC` is now supported.
+- A number of pull requests were merged that improved the PEP8 and code style. The project's LICENSE was also clarifed as BSD.
+
+
 metar-1.6.0 (20 August 2018)
 ----------------------------
 
