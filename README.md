@@ -1,3 +1,4 @@
+[![PyPI version](https://badge.fury.io/py/metar.svg)](https://badge.fury.io/py/metar)
 [![Build Status](https://travis-ci.org/python-metar/python-metar.png?branch=master)](https://travis-ci.org/python-metar/python-metar)
 [![Coverage Status](https://img.shields.io/coveralls/python-metar/python-metar.svg)](https://coveralls.io/r/python-metar/python-metar?branch=master)
 [![Codecov Status](https://codecov.io/gh/python-metar/python-metar/branch/master/graph/badge.svg)](https://codecov.io/gh/python-metar/python-metar)
