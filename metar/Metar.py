@@ -269,6 +269,13 @@ REPORT_TYPE = { "METAR":"routine report",
 
 # Helper functions
 
+def _sanitize(code):
+    """Some string prep to improve parsing fidelity."""
+    # Remove extraneous whitespace, any trailing =, then add trailing
+    # whitespace as regex matches need that.
+    return "%s " % (code.strip().rstrip("="), )
+
+
 def _report_match(handler, match):
     """Report success or failure of the given handler function. (DEBUG)"""
     if match:
@@ -366,7 +373,8 @@ class Metar(object):
         self._month = month
         self._year = year
 
-        code = self.code+" "    # (the regexps all expect trailing spaces...)
+        # Do some string prep before parsing
+        code = _sanitize(self.code)
         try:
             ngroup = len(self.handlers)
             igroup = 0

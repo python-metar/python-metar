@@ -39,6 +39,16 @@ def test_module():
     assert hasattr(metar, "__version__")
 
 
+@pytest.mark.parametrize("trailstr", ["", "=", "=  "])
+def test_issue84_trimequals(trailstr):
+    """A trailing = in METAR should not trip up the ingest."""
+    code = (
+        "KABI 031752Z 30010KT 6SM BR FEW009 OVC036 02/01 A3003 RMK AO2 "
+        "SLP176 60001 I%i003 T00170006 10017 21006 56017"
+    )
+    assert Metar.Metar("%s%s" % (code, trailstr)).decode_completed
+
+
 @pytest.mark.parametrize("hours", [1, 3, 6])
 def test_issue77_ice_accretion(hours):
     """Metar parser supports ice accretion data."""
