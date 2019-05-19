@@ -146,7 +146,7 @@ class speed(object):
         return self.string()
 
     def value( self, units=None ):
-        """Return the pressure in the specified units."""
+        """Return the speed in the specified units."""
         if not units:
             return self._value
         else:
