@@ -998,6 +998,68 @@ class Metar(object):
                         (SNOWDEPTH_RE,    _handleSnowDepthRemark),
                         (ICE_ACCRETION_RE, _handleIceAccretionRemark),
                         (UNPARSED_RE,     _unparsedRemark) ]
+    def to_dict(self):
+        """
+        Return a key-value version of the decoded report.
+        """
+        d = {}
+        d['station'] = self.station_id
+        if self.type:
+            d['type'] = self.report_type()
+        if self.time:
+           d['time'] = self.time.isoformat()
+        if self.temp:
+            d['temperature'] = self.temp.value("C")
+        if self.dewpt:
+            d['dewpoint'] = self.dewpt.value("C")
+        if self.wind_speed:
+            d['wind_speed'] = self.wind_speed.value()
+        if self.wind_dir:
+            d['wind_direction'] = self.wind_dir.value()
+        if self.wind_speed_peak:
+            d['peak_wind'] = self.peak_wind(units='MPS')
+        if self.wind_shift_time:
+            d['wind_shift'] = self.wind_shift()
+        if self.vis:
+            d['visibility'] = self.visibility('M')
+        if self.runway:
+            d['visual_range'] = self.runway_visual_range()
+        if self.press:
+            d['pressure'] = self.press.value("mb")
+        if self.weather:
+            d['weather'] = self.present_weather()
+        if self.sky:
+            d['sky'] = self.sky_conditions("\n     ")
+        if self.press_sea_level:
+            d['press_sea_level'] = self.press_sea_level.value("mb")
+        if self.max_temp_6hr:
+            d['6-hour_max_temp'] = str(self.max_temp_6hr)
+        if self.max_temp_6hr:
+            d['6-min_temp_6hr'] = str(self.min_temp_6hr)
+        if self.max_temp_24hr:
+            d['max_temp_24hr'] = str(self.max_temp_24hr)
+        if self.max_temp_24hr:
+            d['min_temp_24hr'] = str(self.min_temp_24hr)
+        if self.precip_1hr:
+            d['precip_1hr'] = self.precip_1hr.value('CM')
+        if self.precip_3hr:
+            d['precip_3hr'] = self.precip_3hr.value('CM')
+        if self.precip_6hr:
+            d['precip_6hr'] = self.precip_6hr.value('CM')
+        if self.precip_24hr:
+            d['precip_24hr'] = self.precip_24hr.value('CM')
+        if self.ice_accretion_1hr:
+            d['ice_accretion_1hr'] = self.ice_accretion_1hr.value('CM')
+        if self.ice_accretion_3hr:
+            d['ice_accretion_3hr'] = self.ice_accretion_3hr.value('CM')
+        if self.ice_accretion_6hr:
+            d['ice_accretion_6hr'] = self.ice_accretion_6hr.value('CM')
+        if self._remarks:
+            d['remarks'] = self.remarks("\n")
+        if self._unparsed_remarks:
+            d['unparsed_remarks'] = ' '.join(self._unparsed_remarks)
+        d["METAR"] = self.code
+        return d
 
     # functions that return text representations of conditions for output
 
