@@ -79,5 +79,4 @@ def test_conversions():
     assert distance("1/4", "SM").string("FT") == "1320 feet"
     assert distance("1/4", "SM", "<").string("SM") == "less than 1/4 miles"
     assert distance("5280", "FT").string("KM") == "1.6 km"
-    assert distance(
-        "10000", "M", ">").string("M") == "greater than 10000 meters"
+    assert distance("10000", "M", ">").string("M") == "greater than 10000 meters"

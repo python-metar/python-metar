@@ -34,9 +34,14 @@ __doc__ = """metar v%s (c) 2009, %s
 
 Metar is a python package that interprets coded METAR and SPECI weather reports.
 
-Please e-mail bug reports to: %s""" % (__version__, __author__, __email__)
+Please e-mail bug reports to: %s""" % (
+    __version__,
+    __author__,
+    __email__,
+)
 
-__LICENSE__ = """
+__LICENSE__ = (
+    """
 Copyright (c) 2009, %s
 All rights reserved.
 
@@ -57,4 +62,6 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
-""" % __author__
+"""
+    % __author__
+)
