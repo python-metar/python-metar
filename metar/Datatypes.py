@@ -121,7 +121,7 @@ class pressure(object):
         if not units:
             units = self._units
         else:
-            if not units.upper() in pressure.legal_units:
+            if units.upper() not in pressure.legal_units:
                 raise UnitsError("unrecognized pressure unit: '" + units + "'")
             units = units.upper()
         val = self.value(units)
@@ -143,10 +143,10 @@ class speed(object):
         if not units:
             self._units = "MPS"
         else:
-            if not units.upper() in speed.legal_units:
+            if units.upper() not in speed.legal_units:
                 raise UnitsError("unrecognized speed unit: '" + units + "'")
             self._units = units.upper()
-        if gtlt and not gtlt in speed.legal_gtlt:
+        if gtlt and gtlt not in speed.legal_gtlt:
             raise ValueError(
                 "unrecognized greater-than/less-than symbol: '" + gtlt + "'"
             )
@@ -188,7 +188,7 @@ class speed(object):
         if not units:
             units = self._units
         else:
-            if not units.upper() in speed.legal_units:
+            if units.upper() not in speed.legal_units:
                 raise UnitsError("unrecognized speed unit: '" + units + "'")
             units = units.upper()
         val = self.value(units)
@@ -217,7 +217,7 @@ class distance(object):
         if not units:
             self._units = "M"
         else:
-            if not units.upper() in distance.legal_units:
+            if units.upper() not in distance.legal_units:
                 raise UnitsError("unrecognized distance unit: '" + units + "'")
             self._units = units.upper()
 
@@ -230,7 +230,7 @@ class distance(object):
                 gtlt = ">"
         except:
             pass
-        if gtlt and not gtlt in distance.legal_gtlt:
+        if gtlt and gtlt not in distance.legal_gtlt:
             raise ValueError(
                 "unrecognized greater-than/less-than symbol: '" + gtlt + "'"
             )
@@ -401,7 +401,7 @@ class precipitation(object):
                 gtlt = ">"
         except:
             pass
-        if gtlt and not gtlt in precipitation.legal_gtlt:
+        if gtlt and gtlt not in precipitation.legal_gtlt:
             raise ValueError(
                 "unrecognized greater-than/less-than symbol: '" + gtlt + "'"
             )

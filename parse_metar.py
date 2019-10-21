@@ -4,11 +4,13 @@
 #
 from __future__ import print_function
 
-import sys, os
+import sys
+import os
 from metar import Metar
 import string
 import getopt
-import profile, pstats
+import profile
+import pstats
 
 
 def usage():
