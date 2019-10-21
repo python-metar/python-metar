@@ -36,17 +36,15 @@ setup(
     long_description=LONG_DESCRIPTION,
     license="BSD",
     packages=["metar"],
-    package_data={'metar': ['nsd_cccc.txt', ]},
+    package_data={"metar": ["nsd_cccc.txt"]},
     platforms="Python 2.5 and later.",
-    extras_require={
-        'test': ['pytest', ],
-    },
+    extras_require={"test": ["pytest"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Intended Audience :: Science/Research",
-        "Topic :: Software Development :: Libraries :: Python Modules"
-        ]
-    )
+        "Topic :: Software Development :: Libraries :: Python Modules",
+    ],
+)

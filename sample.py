@@ -82,10 +82,15 @@ from __future__ import print_function
 from metar import Metar
 
 # A sample METAR report
-code = "METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040CB BKN065 OVC200 22/22 A2987 RMK AO2 PK WND 29028/1817 WSHFT 1812 TSB05RAB22 SLP114 FRQ LTGICCCCG TS OHD AND NW-N-E MOV NE P0013 T02270215"
+code = (
+    "METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 "
+    "BKN040CB BKN065 OVC200 22/22 A2987 RMK AO2 PK WND 29028/1817 WSHFT "
+    "1812 TSB05RAB22 SLP114 FRQ LTGICCCCG TS OHD AND NW-N-E MOV NE P0013 "
+    "T02270215"
+)
 
 print("-----------------------------------------------------------------------")
-print("METAR: ",code)
+print("METAR: ", code)
 print("-----------------------------------------------------------------------")
 
 # Initialize a Metar object with the coded report
@@ -149,6 +154,6 @@ print("sky: %s" % obs.sky_conditions("\n     "))
 # attributes and won't be listed here.
 if obs._remarks:
     print("remarks:")
-    print("- "+obs.remarks("\n- "))
+    print("- " + obs.remarks("\n- "))
 
 print("-----------------------------------------------------------------------\n")

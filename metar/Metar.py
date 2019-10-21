@@ -23,6 +23,7 @@ from metar.Datatypes import (
 # logger
 _logger = logging.getLogger(__name__)
 
+
 # Exceptions
 class ParserError(Exception):
     """Exception raised when an unparseable group is found in body of the report."""
@@ -318,6 +319,7 @@ REPORT_TYPE = {
     "COR": "manually corrected report",
 }
 
+
 # Helper functions
 def _sanitize(code):
     """Some string prep to improve parsing fidelity."""
@@ -439,7 +441,7 @@ class Metar(object):
                     if debug:
                         _report_match(handler, m.group())
                     handler(self, m.groupdict())
-                    code = code[m.end() :]
+                    code = code[m.end():]
                     if self._trend:
                         code = self._do_trend_handlers(code)
                     if not repeatable:
@@ -459,7 +461,7 @@ class Metar(object):
                     if debug:
                         _report_match(handler, m.group())
                     handler(self, m.groupdict())
-                    code = code[m.end() :]
+                    code = code[m.end():]
                     igroup = ifailed
                     ifailed = -2  # if it's still -2 when we run out of main-body
                     #  groups, we'll try parsing this group as a remark
@@ -515,7 +517,7 @@ class Metar(object):
                     _report_match(handler, m.group())
                 self._trend_groups.append(m.group().strip())
                 handler(self, m.groupdict())
-                code = code[m.end() :]
+                code = code[m.end():]
                 if not repeatable:
                     break
                 m = pattern.match(code)
@@ -855,12 +857,7 @@ class Metar(object):
         """
         value = float(d["precip"]) / 100.0
         if d["type"] == "6":
-            if (
-                self.cycle == 3
-                or self.cycle == 9
-                or self.cycle == 15
-                or self.cycle == 21
-            ):
+            if self.cycle in [3, 9, 15, 21]:
                 self.precip_3hr = precipitation(value, "IN")
             else:
                 self.precip_6hr = precipitation(value, "IN")
@@ -1209,7 +1206,7 @@ class Metar(object):
                 text = wind_speed
             else:
                 text = "%s at %s" % (self.wind_dir_peak.compass(), wind_speed)
-                if not self.peak_wind_time is None:
+                if self.peak_wind_time is not None:
                     text += " at %s" % self.peak_wind_time.strftime("%H:%M")
         return text
 

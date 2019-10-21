@@ -17,7 +17,7 @@ matrix:
     - python: 3.6
     - python: 3.7
       env:
-        - CONDA_PACKAGES="pip six pytest pytest-runner pytest-cov"
+        - CONDA_PACKAGES="pip six pytest pytest-runner pytest-cov pytest-pep8"
         - COVERAGE=true
 
 before_install:
@@ -31,15 +31,11 @@ install:
   - conda create --name testenv --yes python=$TRAVIS_PYTHON_VERSION $CONDA_PACKAGES
   - source activate testenv
   - pip install $PIP_PACKAGES
-  # Ugly python3.3 issue
-  - if [ ${TRAVIS_PYTHON_VERSION} == 3.3 ]; then
-      pip install --upgrade --ignore-installed setuptools==27.3;
-    fi
   - pip install .
 
 script:
   - if [ ${COVERAGE} = true ]; then
-      python setup.py test --addopts " --cov=metar ";
+      python setup.py test --addopts " --cov=metar --pep8";
     else
       python setup.py test;
     fi;
