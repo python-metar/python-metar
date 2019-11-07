@@ -5,7 +5,7 @@
 
 US conventions for METAR/SPECI reports are described in chapter 12 of
 the Federal Meteorological Handbook No.1. (FMH-1 1995), issued by NOAA.
-See <http://metar.noaa.gov/>
+See http://www.ofcm.gov/publications/fmh/FMH1/FMH1.pdf
 
 International conventions for the METAR and SPECI codes are specified in
 the WMO Manual on Codes, vol I.1, Part A (WMO-306 I.i.A).
