@@ -14,8 +14,8 @@ METAR is an international format for reporting weather observations.
 The standard specification for the METAR and SPECI codes is given
 in the WMO Manual on Codes, vol I.1, Part A (WMO-306 I.i.A).  US
 conventions for METAR/SPECI reports are described in chapter 12 of
-the Federal Meteorological Handbook No.1. (FMH-1 1995), issued by
-NOAA.  See http://www.ncdc.noaa.gov/oa/wdc/metar/
+the Federal Meteorological Handbook No.1. (FMC-H1-2017), issued by
+NOAA.  See http://www.ofcm.gov/publications/fmh/FMH1/FMH1.pdf
 
 This module extracts the data recorded in the main-body groups of
 reports that follow the WMO spec or the US conventions, except for
