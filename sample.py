@@ -47,20 +47,22 @@
 #                        cloud   [string]
 #    windshear        runways w/ wind shear [list of strings]
 #
-#    press_sea_level  sea-level pressure [pressure]
-#    wind_speed_peak  peak wind speed in last hour [speed]
-#    wind_dir_peak    direction of peak wind speed in last hour [direction]
-#    max_temp_6hr     max temp in last 6 hours [temperature]
-#    min_temp_6hr     min temp in last 6 hours [temperature]
-#    max_temp_24hr    max temp in last 24 hours [temperature]
-#    min_temp_24hr    min temp in last 24 hours [temperature]
-#    precip_1hr       precipitation over the last hour [precipitation]
-#    precip_3hr       precipitation over the last 3 hours [precipitation]
-#    precip_6hr       precipitation over the last 6 hours [precipitation]
-#    precip_24hr      precipitation over the last 24 hours [precipitation]
+#    press_sea_level    sea-level pressure [pressure]
+#    wind_speed_peak    peak wind speed in last hour [speed]
+#    wind_dir_peak      direction of peak wind speed in last hour [direction]
+#    max_temp_6hr       max temp in last 6 hours [temperature]
+#    min_temp_6hr       min temp in last 6 hours [temperature]
+#    max_temp_24hr      max temp in last 24 hours [temperature]
+#    min_temp_24hr      min temp in last 24 hours [temperature]
+#    precip_1hr         precipitation over the last hour [precipitation]
+#    precip_3hr         precipitation over the last 3 hours [precipitation]
+#    precip_6hr         precipitation over the last 6 hours [precipitation]
+#    precip_24hr        precipitation over the last 24 hours [precipitation]
 #
-#    _remarks         remarks [list of strings]
-#    _unparsed        unparsed remarks [list of strings]
+#    _remarks           remarks [list of strings]
+#    _unparsed_groups   unparsed groups [list of strings]
+#    _unparsed_remarks  unparsed remarks [list of strings]
+
 #
 #  The metar.Datatypes classes (temperature, pressure, precipitation,
 #  speed, direction) describe an observation and its units.  They provide
