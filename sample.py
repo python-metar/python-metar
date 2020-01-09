@@ -10,8 +10,8 @@
 #  Here's a summary, adapted from the comments in the Metar.Metar.__init__()
 #  method:
 #
-#    Attribute       Comments [data type]
-#    --------------  --------------------
+#    Attribute          Comments [data type]
+#    ----------------   ------------------------------------------
 #    code               original METAR code [string]
 #    type               METAR (routine) or SPECI (special) [string]
 #    mod                AUTO (automatic) or COR (corrected) [string]
