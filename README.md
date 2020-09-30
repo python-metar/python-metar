@@ -6,7 +6,7 @@
 Python-Metar
 ============
 
-Python-metar is a python package for interpreting METAR and SPECI coded
+Python-metar(an amazing project) is a python package for interpreting METAR and SPECI coded
 weather reports. 
 
 METAR and SPECI are coded aviation weather reports.  The official
