@@ -3,10 +3,10 @@
 [![Coverage Status](https://img.shields.io/coveralls/python-metar/python-metar.svg)](https://coveralls.io/r/python-metar/python-metar?branch=master)
 [![Codecov Status](https://codecov.io/gh/python-metar/python-metar/branch/master/graph/badge.svg)](https://codecov.io/gh/python-metar/python-metar)
 
-Python-Metar
-============
+Python-Metar (Package)
+======================
 
-Python-metar is a python package for interpreting METAR and SPECI coded
+Python-Metar is a Python package for interpreting METAR and SPECI coded
 weather reports. 
 
 METAR and SPECI are coded aviation weather reports.  The official
@@ -18,7 +18,7 @@ Handbook No.1. (FMH-1 1995), issued by the National Oceanic and
 Atmospheric Administration (NOAA).  General information about the
 use and history of the METAR standard can be found [here](https://www.ncdc.noaa.gov/wdc/metar/).
 
-This module extracts the data recorded in the main-body groups of
+This Module extracts the data recorded in the main-body groups of
 reports that follow the WMO spec or the US conventions, except for
 the runway state and trend groups, which are parsed but ignored.
 The most useful remark groups defined in the US spec are parsed,
@@ -32,8 +32,7 @@ Current METAR reports
 
 Current and historical METAR data can be obtained from various places.
 The current METAR report for a given airport is available at the URL
-
-    http://tgftp.nws.noaa.gov/data/observations/metar/stations/<station>.TXT
+    ~ http://tgftp.nws.noaa.gov/data/observations/metar/stations/<station>.TXT
 
 where `station` is the four-letter ICAO airport station code.  The 
 accompanying script get_report.py will download and decode the
@@ -41,8 +40,7 @@ current report for any specified station.
 
 The METAR reports for all stations (worldwide) for any "cycle" (i.e., hour) 
 in the last 24 hours are available in a single file at the URL
-
-    http://tgftp.nws.noaa.gov/data/observations/metar/cycles/<cycle>Z.TXT
+    ~ http://tgftp.nws.noaa.gov/data/observations/metar/cycles/<cycle>Z.TXT
 
 where `cycle` is a 2-digit cycle number (`00` thru `23`).  
 
@@ -69,21 +67,20 @@ The test suite can be run by:
 
 There are a couple of sample scripts, described briefly below.
 
-There's no real documentation to speak of, yet, but feel free to
-contact me with any questions you might have about how to use this package.
+There's No real Documentation to speak of, yet, but feel free to
+Contact Me with any questions you might have about how to use this package.
 
 Current sources
 ---------------
 You can always obtain the most recent version of this package using git, via
-
-    git clone https://github.com/python-metar/python-metar.git
+    ~ git clone https://github.com/python-metar/python-metar.git
 
 Contents
 ------------------------------------------------------------------------
 
 File | Description
---- | ---
-README | this file
+---- | ----
+| README | This file |
 parse_metar.py | a simple commandline driver for the METAR parser
 get_report.py | a script to download and decode the current reports for one or more stations.
 sample.py | a simple script showing how the decoded data can be accessed. (see metar/*.py sources and the test/test_*.py scripts for more examples.)
