@@ -3,7 +3,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/python-metar/python-metar.svg)](https://coveralls.io/r/python-metar/python-metar?branch=master)
 [![Codecov Status](https://codecov.io/gh/python-metar/python-metar/branch/master/graph/badge.svg)](https://codecov.io/gh/python-metar/python-metar)
 
-Python-Metar
+Python-Metar(Weather Report Interpreter)
 ============
 
 Python-metar is a python package for interpreting METAR and SPECI coded
