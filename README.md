@@ -31,16 +31,18 @@ Current METAR reports
 ---------------------
 
 Current and historical METAR data can be obtained from various places.
-The current METAR report for a given airport is available at the URL
-    ~ http://tgftp.nws.noaa.gov/data/observations/metar/stations/<station>.TXT
+The current METAR report for a given airport is available at the URL ~
+
+    http://tgftp.nws.noaa.gov/data/observations/metar/stations/<station>.TXT
 
 where `station` is the four-letter ICAO airport station code.  The 
 accompanying script get_report.py will download and decode the
 current report for any specified station.  
 
 The METAR reports for all stations (worldwide) for any "cycle" (i.e., hour) 
-in the last 24 hours are available in a single file at the URL
-    ~ http://tgftp.nws.noaa.gov/data/observations/metar/cycles/<cycle>Z.TXT
+in the last 24 hours are available in a single file at the URL ~
+    
+    http://tgftp.nws.noaa.gov/data/observations/metar/cycles/<cycle>Z.TXT
 
 where `cycle` is a 2-digit cycle number (`00` thru `23`).  
 
@@ -72,8 +74,9 @@ Contact Me with any questions you might have about how to use this package.
 
 Current sources
 ---------------
-You can always obtain the most recent version of this package using git, via
-    ~ git clone https://github.com/python-metar/python-metar.git
+You can always obtain the most recent version of this package using git, via ~
+    
+    git clone https://github.com/python-metar/python-metar.git
 
 Contents
 ------------------------------------------------------------------------
