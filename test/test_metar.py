@@ -46,7 +46,11 @@ def test_issue114_multiplebecominggroups():
         "BECMG FM0920 TL0930 3000 TSRA "
         "BECMG FM1000 TL1020 6000 NSW"
     )
-    assert Metar.Metar(code).decode_completed
+
+    metar = Metar.Metar(code)
+    assert metar.decode_completed
+    assert len(metar._trend_groups) == 10
+    assert metar.trend() == "BECMG FM0920 TL0930 3000 TSRA BECMG FM1000 TL1020 6000 NSW"
 
 
 @pytest.mark.parametrize("trailstr", ["", "=", "=  "])
