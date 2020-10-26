@@ -56,7 +56,7 @@ Author
 
 The `python-metar` library was orignally authored by [Tom Pollard](https://github.com/tomp) in January 2005, and is now maintained by contributers on Github.
 
-Installation
+Installation Process
 ------------------------------------------------------------------------
 
 Install this package in the usual way,
