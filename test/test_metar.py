@@ -38,6 +38,14 @@ def test_module():
     """Test that module level things are defined."""
     assert hasattr(metar, "__version__")
 
+def test_issue119_r_snoclo():
+    """There is no runway designator in the R/SNOCLO special group"""
+    code_right = "METAR EDDC 032220Z 31005KT 5000 -SN BKN008 M01/M01 Q1020 R/SNOCLO"
+    code_wrong = "METAR EDDC 032220Z 31005KT 5000 -SN BKN008 M01/M01 Q1020 R04/SNOCLO"
+
+    assert Metar.Metar(code_right).decode_completed
+    assert not Metar.Metar(code_wrong, strict=False).decode_completed
+
 
 def test_issue114_multiplebecominggroups():
     """multiple BECMG (becoming) groups should be possible"""
@@ -553,8 +561,8 @@ def test_290_ranway_state():
     assert report("09690692 27550591").temp.value() == -1.0
     assert report("09690692 27550591").remarks() == ""
 
-    assert report("09SNOCLO").remarks() == ""
-    assert report("09CLRD//").remarks() == ""
+    assert report("R/SNOCLO").remarks() == ""
+    assert report("R09/CLRD//").remarks() == ""
 
 
 def test_300_parseTrend():

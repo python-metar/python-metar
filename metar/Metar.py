@@ -109,12 +109,13 @@ COLOR_RE = re.compile(
     re.VERBOSE,
 )
 RUNWAYSTATE_RE = re.compile(
-    r"""((?P<name>\d\d) | R(?P<namenew>\d\d)(RR?|LL?|C)?/?)
-        ((?P<special> SNOCLO|CLRD(\d\d|//)) |
+    r"""((?P<snoclo>R/SNOCLO) |
+        ((?P<name>\d\d) | R(?P<namenew>\d\d)?(RR?|LL?|C)?/?)
+        ((?P<special>CLRD(\d\d|//)) |
         (?P<deposit>(\d|/))
         (?P<extent>(\d|/))
         (?P<depth>(\d\d|//))
-        (?P<friction>(\d\d|//)))\s+""",
+        (?P<friction>(\d\d|//))))\s+""",
     re.VERBOSE,
 )
 TREND_RE = re.compile(r"^(?P<trend>TEMPO|BECMG|FCST|NOSIG)\s+")
