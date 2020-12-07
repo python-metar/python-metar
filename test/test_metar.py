@@ -603,10 +603,13 @@ def test_not_strict_mode():
     assert report.vis.value() == 10
     assert report.sky_conditions() == "clear"
 
-def test_cor_auto_mod():
-    code = """METAR KADW 252356Z COR AUTO 10008KT 10SM CLR 19/11 A2986
-    RMK AO2 SLP117 T01880111 10230 20188 50004 $ COR
-    0007="""
-    m=Metar.Metar(code,year=2019)
 
-    assert m.mod=='COR AUTO'
+def test_cor_auto_mod():
+    """Test parsing of a COR AUTO Metar."""
+    code = (
+        "METAR KADW 252356Z COR AUTO 10008KT 10SM CLR 19/11 A2986 "
+        "RMK AO2 SLP117 T01880111 10230 20188 50004 $ COR 0007="
+    )
+    m = Metar.Metar(code, year=2019)
+
+    assert m.mod == 'COR AUTO'
