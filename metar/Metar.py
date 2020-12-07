@@ -43,7 +43,7 @@ TIME_RE = re.compile(
         (?P<min>\d\d)Z?\s+""",
     re.VERBOSE,
 )
-MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|FINO|NIL|TEST|CORR?|RTD|CC[A-G])\s+")
+MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR AUTO|FINO|NIL|TEST|CORR?|RTD|CC[A-G])\s+")
 WIND_RE = re.compile(
     r"""^(?P<dir>[\dO]{3}|[0O]|///|MMM|VRB)
         (?P<speed>P?[\dO]{2,3}|[/M]{2,3})
