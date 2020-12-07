@@ -1045,7 +1045,7 @@ class Metar(object):
         (WINDSHEAR_RE, _handleWindShear, True),
         (COLOR_RE, _handleColor, True),
         (RUNWAYSTATE_RE, _handleRunwayState, True),
-        (TREND_RE, _handleTrend, False),
+        (TREND_RE, _handleTrend, True),
         (REMARK_RE, _startRemarks, False),
     ]
 

@@ -39,6 +39,20 @@ def test_module():
     assert hasattr(metar, "__version__")
 
 
+def test_issue114_multiplebecominggroups():
+    """multiple BECMG (becoming) groups should be possible"""
+    code = (
+        "METAR WSSS 280900Z 26009KT 180V350 0600 R20R/1900D R20C/1600D +TSRA FEW008 SCT013CB FEW015TCU 24/23 Q1010 "
+        "BECMG FM0920 TL0930 3000 TSRA "
+        "BECMG FM1000 TL1020 6000 NSW"
+    )
+
+    metar = Metar.Metar(code)
+    assert metar.decode_completed
+    assert len(metar._trend_groups) == 10
+    assert metar.trend() == "BECMG FM0920 TL0930 3000 TSRA BECMG FM1000 TL1020 6000 NSW"
+
+
 @pytest.mark.parametrize("trailstr", ["", "=", "=  "])
 def test_issue84_trimequals(trailstr):
     """A trailing = in METAR should not trip up the ingest."""
