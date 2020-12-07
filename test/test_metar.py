@@ -114,6 +114,16 @@ def test_issue40_runwayunits():
     res = report.runway_visual_range("M")
     assert res == "on runway 28L, 792 meters"
 
+def test_issue107_runwayunits():
+    """Check reported units on runway visual range defaulting to meters."""
+    report = Metar.Metar(
+        "METAR KPIT 091955Z COR 22015G25KT 3/4SM R28L/1500 TSRA OVC010CB "
+        "18/16 A2992 RMK SLP045 T01820159"
+    )
+    res = report.runway_visual_range()
+    assert res == "on runway 28L, 1500 meters"
+    res = report.runway_visual_range("FT")
+    assert res == "on runway 28L, 4921 feet"
 
 def test_010_parseType_default():
     """Check default value of the report type."""

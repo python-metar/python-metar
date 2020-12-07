@@ -682,7 +682,7 @@ class Metar(object):
         """
         if d["name"] is None:
             return
-        unit = d["unit"] if d["unit"] is not None else "FT"
+        unit = d["unit"] if d["unit"] is not None else "M"
         low = distance(d["low"], unit)
         if d["high"] is None:
             high = low
