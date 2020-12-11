@@ -684,7 +684,7 @@ class Metar(object):
             return
         unit = d["unit"] if d["unit"] is not None else "M"
         if d["low"] == "////":
-            low = distance(-999, unit)
+            return
         else:
             low = distance(d["low"], unit)
         if d["high"] is None:
