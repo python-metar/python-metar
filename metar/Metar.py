@@ -64,7 +64,7 @@ VISIBILITY_RE = re.compile(
 RUNWAY_RE = re.compile(
     r"""^(RVRNO |
         R(?P<name>\d\d(RR?|LL?|C)?)/
-        (?P<low>(M|P)?\d\d\d\d)
+        (?P<low>(M|P)?(\d\d\d\d|/{4}))
         (V(?P<high>(M|P)?\d\d\d\d))?
         (?P<unit>FT)?[/NDU]*)\s+""",
     re.VERBOSE,
@@ -683,7 +683,10 @@ class Metar(object):
         if d["name"] is None:
             return
         unit = d["unit"] if d["unit"] is not None else "M"
-        low = distance(d["low"], unit)
+        if d["low"] == "////":
+            return
+        else:
+            low = distance(d["low"], unit)
         if d["high"] is None:
             high = low
         else:

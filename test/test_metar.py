@@ -125,6 +125,15 @@ def test_issue107_runwayunits():
     res = report.runway_visual_range("FT")
     assert res == "on runway 28L, 4921 feet"
 
+@pytest.mark.parametrize("RVR", ["R28L/////", "R28L/////FT", "R28L//////", "R28L/////N"])
+def test_issue26_runway_slashes(RVR):
+    """Check RVR with slashes decoding."""
+    report = Metar.Metar(
+        "METAR KPIT 091955Z COR 22015G25KT 3/4SM R28L/2600FT {} TSRA OVC010CB "
+        "18/16 A2992 RMK SLP045 T1820160".format(RVR)
+    )
+    assert len(report.runway) == 1
+
 def test_010_parseType_default():
     """Check default value of the report type."""
     assert Metar.Metar("KEWR").type == "METAR"
