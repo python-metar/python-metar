@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+metar-1.8.0 (28 December 2020)
+------------------------------
+
+This release is a bug fix and enhancement release with no known API breakages. The highlights include:
+
+- [#84](https://github.com/python-metar/python-metar/issues/84) handle METAR strings that end with `=`.
+- [#121](https://github.com/python-metar/python-metar/issues/121) allow METAR with `COR AUTO` to be parsed.
+- [#114](https://github.com/python-metar/python-metar/issues/114) parse METARs with multiple BECOMING groups.
+- [#107](https://github.com/python-metar/python-metar/issues/107) correct the default units for runway visual range.
+- [#26](https://github.com/python-metar/python-metar/issues/26) fix parsing of `////` in runway visual.
+
+Unrelated to library improvements, numerous improvements to the build infrasture and code formatting were made.
+
 metar-1.7.0 (15 January 2019)
 -----------------------------
 
