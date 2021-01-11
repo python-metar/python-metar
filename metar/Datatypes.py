@@ -4,7 +4,7 @@
 """Python classes to represent dimensioned quantities used in weather reports.
 """
 import re
-from math import sin, cos, atan2, sqrt
+from math import sin, cos, atan2, sqrt, pi
 
 # exceptions
 
@@ -475,15 +475,14 @@ class position(object):
         formula.  See <http://www.movable-type.co.uk/scripts/LatLong.html>
         and <http://mathforum.org/library/drmath/sets/select/dm_lat_long.html>
         """
-        earth_radius = 637100.0
-        lat1 = self.latitude
-        long1 = self.longitude
-        lat2 = position2.latitude
-        long2 = position2.longitude
-        a = (sin(0.5(lat2 - lat1))) ** 2 + cos(lat1) * cos(lat2) * (sin(
-            0.5 * (long2 - long1)) ** 2
-        )
-        c = 2.0 * atan(sqrt(a) * sqrt(1.0 - a))
+        earth_radius = 6371.e3 # meters
+        lat1 = self.latitude * pi / 180.0
+        long1 = self.longitude * pi / 180.0
+        lat2 = position2.latitude * pi / 180.0
+        long2 = position2.longitude * pi / 180.0
+        a = ( sin(0.5 * (lat2 - lat1)) ** 2 + cos(lat1) * cos(lat2) *
+              sin(0.5 * (long2 - long1)) ** 2 )
+        c = 2.0 * atan2(sqrt(a),  sqrt(1.0 - a))
         d = distance(earth_radius * c, "M")
         return d
 
