@@ -20,7 +20,7 @@ def test_get_station_distance():
                           longitude=-73.78) # in degrees East
     distance = st1.position.getdistance(st2.position)
     distance_vallue_in_m = distance.value()
-    print("distance New-York to Amsterdam is: ", distance)
+    # print("distance New-York to Amsterdam is: ", distance)
     # Distance should be about: 5847 km
 
     expected_distance_in_m = 5847.e3 # meters
