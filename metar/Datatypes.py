@@ -475,7 +475,7 @@ class position(object):
         formula.  See <http://www.movable-type.co.uk/scripts/LatLong.html>
         and <http://mathforum.org/library/drmath/sets/select/dm_lat_long.html>
         """
-        earth_radius = 637100.0
+        earth_radius = 6371000.0
         lat1 = self.latitude
         long1 = self.longitude
         lat2 = position2.latitude
