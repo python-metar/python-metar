@@ -4,7 +4,7 @@
 """Python classes to represent dimensioned quantities used in weather reports.
 """
 import re
-from math import sin, cos, atan2, sqrt
+from math import sin, cos, atan2, sqrt, radians, degrees
 
 # exceptions
 
@@ -463,8 +463,8 @@ class position(object):
     """A class representing a location on the earth's surface."""
 
     def __init__(self, latitude=None, longitude=None):
-        self.latitude = latitude
-        self.longitude = longitude
+        self.latitude = radians(latitude)
+        self.longitude = radians(longitude)
 
     def __str__(self):
         return self.string()
@@ -480,10 +480,10 @@ class position(object):
         long1 = self.longitude
         lat2 = position2.latitude
         long2 = position2.longitude
-        a = (sin(0.5(lat2 - lat1))) ** 2 + cos(lat1) * cos(lat2) * (sin(
+        a = (sin(0.5 * (lat2 - lat1))) ** 2 + cos(lat1) * cos(lat2) * (sin(
             0.5 * (long2 - long1)) ** 2
         )
-        c = 2.0 * atan(sqrt(a) * sqrt(1.0 - a))
+        c = 2.0 * atan2(sqrt(a), sqrt(1.0 - a))
         d = distance(earth_radius * c, "M")
         return d
 
@@ -499,7 +499,7 @@ class position(object):
         long2 = position2.longitude
         s = -sin(long1 - long2) * cos(lat2)
         c = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(long1 - long2)
-        d = atan2(s, c) * 180.0 / math.pi
+        d = degrees(atan2(s, c))
         if d < 0.0:
             d += 360.0
         return direction(d)
