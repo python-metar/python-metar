@@ -367,7 +367,8 @@ def test_141_parseWind_nonstd():
     assert report("09010T").wind_speed.string() == "10 knots"
     assert report("09010LT").wind_speed.string() == "10 knots"
     assert report("09010KTS").wind_speed.string() == "10 knots"
-    assert report("09010").wind_speed.string() == "10 mps"
+    # Default wind speed units are knots since US station_id is used
+    assert report("09010").wind_speed.string() == "10 knots"
 
     assert report("VRBOOK").wind_speed.value() == 0
     assert report("VRBOOK").wind() == "calm"
@@ -388,6 +389,12 @@ def test_141_parseWind_nonstd():
     assert report("MMMMM").wind() == "missing"
     assert report("MMMMMGMMKT").wind() == "missing"
     assert report("MMMMMG01KT").wind() == "missing"
+
+
+def test_issue139_no_wind_unit():
+    """Check the default wind speed units for international sites."""
+    report = Metar.Metar("CXXX 101651Z 09010G20")
+    assert report.wind_speed.string() == "10 mps"
 
 
 def test_issue51_strict():
