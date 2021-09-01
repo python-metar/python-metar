@@ -618,6 +618,14 @@ class Metar(object):
             self.wind_dir = direction(wind_dir)
         wind_speed = d["speed"].replace("O", "0")
         units = d["units"]
+        # Ambiguous METAR when no wind speed units are provided
+        if units is None and self.station_id is not None:
+            # Assume US METAR sites are reporting in KT
+            if len(self.station_id) == 3 or self.station_id.startswith("K"):
+                units = "KT"
+        # If units are still None, default to MPS
+        if units is None:
+            units = "MPS"
         if units == "KTS" or units == "K" or units == "T" or units == "LT":
             units = "KT"
         if wind_speed.startswith("P"):
