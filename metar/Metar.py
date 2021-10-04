@@ -85,8 +85,8 @@ SKY_RE = re.compile(
     re.VERBOSE,
 )
 TEMP_RE = re.compile(
-    r"""^(?P<temp>(M|-)?\d+|//|XX|MM)/
-        (?P<dewpt>(M|-)?\d+|//|XX|MM)?\s+""",
+    r"""^(?P<temp>(M|-)?\d{1,2}|//|XX|MM)/
+        (?P<dewpt>(M|-)?\d{1,2}|//|XX|MM)?\s+""",
     re.VERBOSE,
 )
 PRESS_RE = re.compile(
