@@ -102,7 +102,7 @@ RECENT_RE = re.compile(
         (?P<other>PO|SQ|FC|SS|DS)?\s+""",
     re.VERBOSE,
 )
-WINDSHEAR_RE = re.compile(r"^(WS\s+)?(ALL\s+RWY|RWY(?P<name>\d\d(RR?|L?|C)?))\s+")
+WINDSHEAR_RE = re.compile(r"^(WS\s+)?(ALL\s+RWY|R(WY)?(?P<name>\d\d(RR?|L?|C)?))\s+")
 COLOR_RE = re.compile(
     r"""^(BLACK)?(BLU|GRN|WHT|RED)\+?
                         (/?(BLACK)?(BLU|GRN|WHT|RED)\+?)*\s*""",
