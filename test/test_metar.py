@@ -667,3 +667,6 @@ def test_wind_after_sky():
 
     assert m.wind_dir.value() == 90
     assert m.wind_speed.value() == 8
+
+def test_issue136_temperature():
+    raisesParserError("METAR EDDM 022150Z 26006KT CAVOK 201/16")
