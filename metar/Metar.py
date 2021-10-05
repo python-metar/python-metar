@@ -1054,6 +1054,7 @@ class Metar(object):
         (VISIBILITY_RE, _handleVisibility, True),
         (TEMP_RE, _handleTemp, False),
         (PRESS_RE, _handlePressure, True),
+        (SEALVL_PRESS_RE, _handleSealvlPressRemark, False),
         (RECENT_RE, _handleRecent, True),
         (WINDSHEAR_RE, _handleWindShear, True),
         (COLOR_RE, _handleColor, True),

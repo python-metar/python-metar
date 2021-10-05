@@ -654,6 +654,19 @@ def test_cor_auto_mod():
 
     assert m.mod == 'COR AUTO'
 
+def test_slp_outside_remarks():
+    """
+    Test parsing of a METAR that lists sea level pressure after the altimeter
+    setting instead of in the remarks.
+    """
+
+    code = (
+        "METAR KCOF 191855Z 18015G22KT 7SM FEW049 SCT300 28/18 A3001 SLP162 "
+        "RMK WND DATA ESTMD"
+    )
+    m = Metar.Metar(code, year=2007)
+    m.press_sea_level.value() == 1016.2
+
 def test_wind_after_sky():
     """
     Test parsing of a METAR that lists wind after the sky groups
