@@ -653,3 +653,7 @@ def test_cor_auto_mod():
     m = Metar.Metar(code, year=2019)
 
     assert m.mod == 'COR AUTO'
+
+
+def test_issue136_temperature():
+    raisesParserError("METAR EDDM 022150Z 26006KT CAVOK 201/16")
