@@ -1050,6 +1050,8 @@ class Metar(object):
         (RUNWAY_RE, _handleRunway, True),
         (WEATHER_RE, _handleWeather, True),
         (SKY_RE, _handleSky, True),
+        (WIND_RE, _handleWind, False),
+        (VISIBILITY_RE, _handleVisibility, True),
         (TEMP_RE, _handleTemp, False),
         (PRESS_RE, _handlePressure, True),
         (RECENT_RE, _handleRecent, True),
