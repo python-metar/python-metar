@@ -666,3 +666,20 @@ def test_slp_outside_remarks():
     )
     m = Metar.Metar(code, year=2007)
     m.press_sea_level.value() == 1016.2
+
+def test_wind_after_sky():
+    """
+    Test parsing of a METAR that lists wind after the sky groups
+    """
+
+    code = (
+        "METAR KCOF 281855Z FEW029TCU FEW040 SCT250 09008KT 7SM 32/25 A3008 "
+        "RMK VIRGA E TCU NE AND DSNT ALQDS SLP186"
+    )
+    m = Metar.Metar(code, year=2007)
+
+    assert m.wind_dir.value() == 90
+    assert m.wind_speed.value() == 8
+
+def test_issue136_temperature():
+    raisesParserError("METAR EDDM 022150Z 26006KT CAVOK 201/16")

@@ -85,8 +85,8 @@ SKY_RE = re.compile(
     re.VERBOSE,
 )
 TEMP_RE = re.compile(
-    r"""^(?P<temp>(M|-)?\d+|//|XX|MM)/
-        (?P<dewpt>(M|-)?\d+|//|XX|MM)?\s+""",
+    r"""^(?P<temp>(M|-)?\d{1,2}|//|XX|MM)/
+        (?P<dewpt>(M|-)?\d{1,2}|//|XX|MM)?\s+""",
     re.VERBOSE,
 )
 PRESS_RE = re.compile(
@@ -1050,6 +1050,8 @@ class Metar(object):
         (RUNWAY_RE, _handleRunway, True),
         (WEATHER_RE, _handleWeather, True),
         (SKY_RE, _handleSky, True),
+        (WIND_RE, _handleWind, False),
+        (VISIBILITY_RE, _handleVisibility, True),
         (TEMP_RE, _handleTemp, False),
         (PRESS_RE, _handlePressure, True),
         (SEALVL_PRESS_RE, _handleSealvlPressRemark, False),
