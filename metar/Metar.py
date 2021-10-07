@@ -110,8 +110,8 @@ COLOR_RE = re.compile(
 )
 RUNWAYSTATE_RE = re.compile(
     r"""((?P<snoclo>R/SNOCLO) |
-        ((?P<name>\d\d) | R(?P<namenew>\d\d)?(RR?|LL?|C)?/?)
-        ((?P<special>CLRD(\d\d|//)) |
+        ((?P<name>\d\d) | R(?P<namenew>\d\d)(RR?|LL?|C)?/?)
+        ((?P<special> SNOCLO|CLRD(\d\d|//)) |
         (?P<deposit>(\d|/))
         (?P<extent>(\d|/))
         (?P<depth>(\d\d|//))
