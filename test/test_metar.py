@@ -654,6 +654,7 @@ def test_cor_auto_mod():
 
     assert m.mod == 'COR AUTO'
 
+
 def test_slp_outside_remarks():
     """
     Test parsing of a METAR that lists sea level pressure after the altimeter
@@ -683,3 +684,16 @@ def test_wind_after_sky():
 
 def test_issue136_temperature():
     raisesParserError("METAR EDDM 022150Z 26006KT CAVOK 201/16")
+
+
+def test_windshear_runway_identifier():
+    code = "METAR EDDH 300720Z WS R23"
+    m = Metar.Metar(code)
+    assert len(m.windshear) == 1
+    assert m.windshear[0] == "23"
+
+    code = "METAR EFHK 151350Z WS RWY22L"
+    m = Metar.Metar(code)
+    assert len(m.windshear) == 1
+    assert m.windshear[0] == "22L"
+
