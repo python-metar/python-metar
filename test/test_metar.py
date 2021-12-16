@@ -556,6 +556,11 @@ def test_290_ranway_state():
     assert report("09SNOCLO").remarks() == ""
     assert report("09CLRD//").remarks() == ""
 
+    assert report("R/SNOCLO").remarks() == ""
+    assert report("R09/CLRD//").remarks() == ""
+
+    assert report("R01R/SNOCLO ").remarks() == ""
+
 
 def test_300_parseTrend():
     """Check parsing of trend forecasts."""
