@@ -469,24 +469,6 @@ class position(object):
     def __str__(self):
         return self.string()
 
-    def getdistance(self, position2):
-        """
-        Calculate the great-circle distance to another location using the Haversine
-        formula.  See <http://www.movable-type.co.uk/scripts/LatLong.html>
-        and <http://mathforum.org/library/drmath/sets/select/dm_lat_long.html>
-        """
-        earth_radius = 637100.0
-        lat1 = self.latitude
-        long1 = self.longitude
-        lat2 = position2.latitude
-        long2 = position2.longitude
-        a = (sin(0.5(lat2 - lat1))) ** 2 + cos(lat1) * cos(lat2) * (sin(
-            0.5 * (long2 - long1)) ** 2
-        )
-        c = 2.0 * atan(sqrt(a) * sqrt(1.0 - a))
-        d = distance(earth_radius * c, "M")
-        return d
-
     def getdirection(self, position2):
         """
         Calculate the initial direction to another location.  (The direction
