@@ -6,19 +6,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["2.7", "3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v2
 
     - name: Monolith Workflow
       run: |
-        wget -q http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-        bash miniconda.sh -b -p $HOME/miniconda
-        export PATH=$HOME/miniconda/bin:$PATH
-        conda update conda --yes
+        wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh -O miniforge.sh
+        bash miniforge.sh -f -b -p $HOME/miniconda
+        . $HOME/miniconda/etc/profile.d/conda.sh
+        conda config --set quiet True --set always_yes yes --set changeps1 no
         conda create --name testenv --yes python=${{ matrix.python-version }} pip six pytest pytest-runner pytest-cov pytest-runner
-        source activate testenv
-        pip install .
+        conda activate testenv
+        python -m pip install .
         python setup.py test --addopts " --cov=metar"
         if [[ ${{ matrix.python-version }} == "3.8" ]]; then
           pip install codecov
