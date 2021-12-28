@@ -85,8 +85,8 @@ SKY_RE = re.compile(
     re.VERBOSE,
 )
 TEMP_RE = re.compile(
-    r"""^(?P<temp>(M|-)?\d+|//|XX|MM)/
-        (?P<dewpt>(M|-)?\d+|//|XX|MM)?\s+""",
+    r"""^(?P<temp>(M|-)?\d{1,2}|//|XX|MM)/
+        (?P<dewpt>(M|-)?\d{1,2}|//|XX|MM)?\s+""",
     re.VERBOSE,
 )
 PRESS_RE = re.compile(
@@ -102,19 +102,20 @@ RECENT_RE = re.compile(
         (?P<other>PO|SQ|FC|SS|DS)?\s+""",
     re.VERBOSE,
 )
-WINDSHEAR_RE = re.compile(r"^(WS\s+)?(ALL\s+RWY|RWY(?P<name>\d\d(RR?|L?|C)?))\s+")
+WINDSHEAR_RE = re.compile(r"^(WS\s+)?(ALL\s+RWY|R(WY)?(?P<name>\d\d(RR?|L?|C)?))\s+")
 COLOR_RE = re.compile(
     r"""^(BLACK)?(BLU|GRN|WHT|RED)\+?
                         (/?(BLACK)?(BLU|GRN|WHT|RED)\+?)*\s*""",
     re.VERBOSE,
 )
 RUNWAYSTATE_RE = re.compile(
-    r"""((?P<name>\d\d) | R(?P<namenew>\d\d)(RR?|LL?|C)?/?)
+    r"""((?P<snoclo>R/SNOCLO) |
+        ((?P<name>\d\d) | R(?P<namenew>\d\d)(RR?|LL?|C)?/?)
         ((?P<special> SNOCLO|CLRD(\d\d|//)) |
         (?P<deposit>(\d|/))
         (?P<extent>(\d|/))
         (?P<depth>(\d\d|//))
-        (?P<friction>(\d\d|//)))\s+""",
+        (?P<friction>(\d\d|//))))\s+""",
     re.VERBOSE,
 )
 TREND_RE = re.compile(r"^(?P<trend>TEMPO|BECMG|FCST|NOSIG)\s+")
@@ -618,6 +619,14 @@ class Metar(object):
             self.wind_dir = direction(wind_dir)
         wind_speed = d["speed"].replace("O", "0")
         units = d["units"]
+        # Ambiguous METAR when no wind speed units are provided
+        if units is None and self.station_id is not None:
+            # Assume US METAR sites are reporting in KT
+            if len(self.station_id) == 3 or self.station_id.startswith("K"):
+                units = "KT"
+        # If units are still None, default to MPS
+        if units is None:
+            units = "MPS"
         if units == "KTS" or units == "K" or units == "T" or units == "LT":
             units = "KT"
         if wind_speed.startswith("P"):
@@ -1042,8 +1051,11 @@ class Metar(object):
         (RUNWAY_RE, _handleRunway, True),
         (WEATHER_RE, _handleWeather, True),
         (SKY_RE, _handleSky, True),
+        (WIND_RE, _handleWind, False),
+        (VISIBILITY_RE, _handleVisibility, True),
         (TEMP_RE, _handleTemp, False),
         (PRESS_RE, _handlePressure, True),
+        (SEALVL_PRESS_RE, _handleSealvlPressRemark, False),
         (RECENT_RE, _handleRecent, True),
         (WINDSHEAR_RE, _handleWindShear, True),
         (COLOR_RE, _handleColor, True),

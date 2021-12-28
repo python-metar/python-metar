@@ -134,8 +134,7 @@ METAR: METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040
 Tests
 ------------------------------------------------------------------------
 
-The library is tested against Python 2.6, Python 2.7, Python 3.2, Python 3.3,
-Python 3.4, Python 3.5, and Python 3.6. A [tox](https://tox.readthedocs.io/en/latest/)
+The library is tested against Python 3.7-3.10. A [tox](https://tox.readthedocs.io/en/latest/)
 configuration file is included to easily run tests against each of these
 environments. To run tests against all environments, install tox and run:
 

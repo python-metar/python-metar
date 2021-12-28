@@ -367,7 +367,8 @@ def test_141_parseWind_nonstd():
     assert report("09010T").wind_speed.string() == "10 knots"
     assert report("09010LT").wind_speed.string() == "10 knots"
     assert report("09010KTS").wind_speed.string() == "10 knots"
-    assert report("09010").wind_speed.string() == "10 mps"
+    # Default wind speed units are knots since US station_id is used
+    assert report("09010").wind_speed.string() == "10 knots"
 
     assert report("VRBOOK").wind_speed.value() == 0
     assert report("VRBOOK").wind() == "calm"
@@ -388,6 +389,12 @@ def test_141_parseWind_nonstd():
     assert report("MMMMM").wind() == "missing"
     assert report("MMMMMGMMKT").wind() == "missing"
     assert report("MMMMMG01KT").wind() == "missing"
+
+
+def test_issue139_no_wind_unit():
+    """Check the default wind speed units for international sites."""
+    report = Metar.Metar("CXXX 101651Z 09010G20")
+    assert report.wind_speed.string() == "10 mps"
 
 
 def test_issue51_strict():
@@ -549,6 +556,11 @@ def test_290_ranway_state():
     assert report("09SNOCLO").remarks() == ""
     assert report("09CLRD//").remarks() == ""
 
+    assert report("R/SNOCLO").remarks() == ""
+    assert report("R09/CLRD//").remarks() == ""
+
+    assert report("R01R/SNOCLO ").remarks() == ""
+
 
 def test_300_parseTrend():
     """Check parsing of trend forecasts."""
@@ -646,3 +658,47 @@ def test_cor_auto_mod():
     m = Metar.Metar(code, year=2019)
 
     assert m.mod == 'COR AUTO'
+
+
+def test_slp_outside_remarks():
+    """
+    Test parsing of a METAR that lists sea level pressure after the altimeter
+    setting instead of in the remarks.
+    """
+
+    code = (
+        "METAR KCOF 191855Z 18015G22KT 7SM FEW049 SCT300 28/18 A3001 SLP162 "
+        "RMK WND DATA ESTMD"
+    )
+    m = Metar.Metar(code, year=2007)
+    m.press_sea_level.value() == 1016.2
+
+def test_wind_after_sky():
+    """
+    Test parsing of a METAR that lists wind after the sky groups
+    """
+
+    code = (
+        "METAR KCOF 281855Z FEW029TCU FEW040 SCT250 09008KT 7SM 32/25 A3008 "
+        "RMK VIRGA E TCU NE AND DSNT ALQDS SLP186"
+    )
+    m = Metar.Metar(code, year=2007)
+
+    assert m.wind_dir.value() == 90
+    assert m.wind_speed.value() == 8
+
+def test_issue136_temperature():
+    raisesParserError("METAR EDDM 022150Z 26006KT CAVOK 201/16")
+
+
+def test_windshear_runway_identifier():
+    code = "METAR EDDH 300720Z WS R23"
+    m = Metar.Metar(code)
+    assert len(m.windshear) == 1
+    assert m.windshear[0] == "23"
+
+    code = "METAR EFHK 151350Z WS RWY22L"
+    m = Metar.Metar(code)
+    assert len(m.windshear) == 1
+    assert m.windshear[0] == "22L"
+
