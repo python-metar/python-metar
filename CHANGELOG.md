@@ -1,6 +1,27 @@
 Change Log
 ==========
 
+metar-1.9.0 (2 January 2022)
+
+This release is mostly a maintanence release with one small API break that
+was unused within this library.
+
+- [#110](https://github.com/python-metar/python-metar/issues/110) *API Break*,
+Remove unused/broken position.getdistance API.
+- [#139](https://github.com/python-metar/python-metar/issues/139) Defaults wind
+speed units to knots for sites with US identifiers and meters per second for
+all others.
+- [#147](https://github.com/python-metar/python-metar/issues/147) Allow parsing
+of METARs with wind and visibility after the sky condition group.
+- [#148](https://github.com/python-metar/python-metar/issues/148) Parse sea
+level pressure (SLP) when found after the altimeter value.
+- [#24](https://github.com/python-metar/python-metar/issues/24) Fix parsing
+of runway identifier in windshear group.
+- [#136](https://github.com/python-metar/python-metar/issues/136) Allow for
+one digit temperatures.
+- [#156](https://github.com/python-metar/python-metar/issues/156) Rename
+`master` branch to `main`.
+
 metar-1.8.0 (28 December 2020)
 ------------------------------
 
