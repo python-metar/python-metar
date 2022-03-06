@@ -693,7 +693,7 @@ def test_issue136_temperature():
 
 def test_windshear_runway_identifier():
     code = "METAR EDDH 300720Z WS R23"
-    m = Metar.Metar(code)
+    m = Metar.Metar(code, month=1, year=2022)
     assert len(m.windshear) == 1
     assert m.windshear[0] == "23"
 
