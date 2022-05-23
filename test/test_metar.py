@@ -199,20 +199,17 @@ def test_032_parseTime_specify_month():
 
 def test_033_parseTime_auto_month():
     """Test assignment of time to previous month."""
-    next_day = tomorrow.day
-    if next_day > today.day:
-        last_month = ((today.month - 2) % 12) + 1
-        last_year = today.year - 1
+    # To test this, we need a date last month that is with a greater day
+    # than today, which does not always exist!
+    last_month = today.replace(day=1) - timedelta(days=1)
+    if last_month.day <= today.day:
+        return
 
-        timestr = "%02d1651Z" % (next_day)
-        report = Metar.Metar("KEWR " + timestr)
-        assert report.decode_completed
-        assert report.time.day == next_day
-        assert report.time.month == last_month
-        if today.month > 1:
-            assert report.time.year == today.year
-        else:
-            assert report.time.year == last_year
+    report = Metar.Metar(f"KEWR {last_month.day:02.0f}1651Z")
+    assert report.decode_completed
+    assert report.time.day == last_month.day
+    assert report.time.month == last_month.month
+    assert report.time.year == last_month.year
 
 
 def test_034_parseTime_auto_year():
