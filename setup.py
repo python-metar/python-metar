@@ -36,7 +36,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     license="BSD",
     packages=["metar"],
-    package_data={"metar": ["nsd_cccc.txt"]},
+    package_data={"metar": ["nsd_cccc.txt", "py.typed", "*.pyi"]},
     platforms="Python 2.5 and later.",
     extras_require={"test": ["pytest"]},
     classifiers=[
