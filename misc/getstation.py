@@ -31,7 +31,7 @@ def usage():
     sys.exit(1)
 
 
-today = datetime.datetime.utcnow()
+today = datetime.datetime.now(datetime.timezone.utc)
 
 stations = []
 pipe = False

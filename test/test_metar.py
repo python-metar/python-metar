@@ -1,6 +1,6 @@
 """Test the main Metar Library."""
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 import metar
@@ -11,7 +11,7 @@ sta_time = "KEWR 101651Z "
 sta_time_mod = "KEWR 101651Z AUTO "
 sta_time_wind = "KEWR 101651Z 00000KT "
 
-today = datetime.utcnow()
+today = datetime.now(timezone.utc)
 tomorrow = today + timedelta(days=1)
 
 

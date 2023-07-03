@@ -417,7 +417,7 @@ class Metar(object):
         self._unparsed_groups = []
         self._unparsed_remarks = []
 
-        self._now = datetime.datetime.utcnow()
+        self._now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
         if utcdelta:
             self._utcdelta = utcdelta
         else:
