@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+metar-1.11.0 (5 July 2023)
+
+This release adds a missing type hint and supports Python 3.12.
+
+- [#174](https://github.com/python-metar/python-metar/pull/174) Fix Type Hints.
+- [#176](https://github.com/python-metar/python-metar/pull/176) Python 3.12.
+
 metar-1.10.0 (18 May 2023)
 
 This release adds type hints and supports Python 3.11.
