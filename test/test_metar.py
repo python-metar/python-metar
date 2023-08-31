@@ -699,3 +699,34 @@ def test_windshear_runway_identifier():
     assert len(m.windshear) == 1
     assert m.windshear[0] == "22L"
 
+
+def test_present_weather_others():
+    # PO, sand whirls
+    code = "VEIM 301200Z 16007KT 7000 PO SCT018 31/27 Q1007 NOSIG"
+    m = Metar.Metar(code, month=8, year=2023)
+    assert m.present_weather() == 'sand whirls'
+
+    # SQ, squalls
+    code = "VEIM 301200Z 16007KT 7000 SQ SCT018 31/27 Q1007 NOSIG"
+    m = Metar.Metar(code, month=8, year=2023)
+    assert m.present_weather() == 'squalls'
+
+    # FC, funnel cloud
+    code = "VEIM 301200Z 16007KT 7000 FC SCT018 31/27 Q1007 NOSIG"
+    m = Metar.Metar(code, month=8, year=2023)
+    assert m.present_weather() == 'funnel cloud'
+
+    # SS, sandstorm
+    code = "VEIM 301200Z 16007KT 7000 SS SCT018 31/27 Q1007 NOSIG"
+    m = Metar.Metar(code, month=8, year=2023)
+    assert m.present_weather() == 'sandstorm'
+
+    # DS, dust storm
+    code = "VEIM 301200Z 16007KT 7000 DS SCT018 31/27 Q1007 NOSIG"
+    m = Metar.Metar(code, month=8, year=2023)
+    assert m.present_weather() == 'dust storm'
+
+    # NSW, No significant weather
+    code = "VEIM 301200Z 16007KT 7000 NSW SCT018 31/27 Q1007 NOSIG"
+    m = Metar.Metar(code, month=8, year=2023)
+    assert m.present_weather() == 'no significant weather'

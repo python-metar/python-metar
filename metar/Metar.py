@@ -286,6 +286,7 @@ WEATHER_OTHER = {
     "FC": "funnel cloud",
     "SS": "sandstorm",
     "DS": "dust storm",
+    "NSW": "no significant weather",
 }
 
 WEATHER_SPECIAL = {"+FC": "tornado"}
