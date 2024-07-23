@@ -153,7 +153,7 @@ PRESS_3HR_RE = re.compile(
 (?P<press>\d\d\d)\s+""",
     re.VERBOSE,
 )
-TEMP_1HR_RE = re.compile(
+TEMP_TGROUP_RE = re.compile(
     r"""^T(?P<tsign>0|1)
         (?P<temp>\d\d\d)
         ((?P<dsign>0|1)
@@ -882,7 +882,7 @@ class Metar(object):
         value = float(d["precip"]) / 100.0
         self.precip_1hr = precipitation(value, "IN")
 
-    def _handleTemp1hrRemark(self, d):
+    def _handleTempTgroupRemark(self, d):
         """
         Parse a temperature & dewpoint remark group.
 
@@ -1084,7 +1084,7 @@ class Metar(object):
         (WIND_SHIFT_RE, _handleWindShiftRemark),
         (LIGHTNING_RE, _handleLightningRemark),
         (TS_LOC_RE, _handleTSLocRemark),
-        (TEMP_1HR_RE, _handleTemp1hrRemark),
+        (TEMP_TGROUP_RE, _handleTempTgroupRemark),
         (PRECIP_1HR_RE, _handlePrecip1hrRemark),
         (PRECIP_24HR_RE, _handlePrecip24hrRemark),
         (PRESS_3HR_RE, _handlePress3hrRemark),
