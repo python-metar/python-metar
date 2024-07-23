@@ -888,14 +888,27 @@ class Metar(object):
 
         These values replace the temp and dewpt from the body of the report.
         """
+        def _checkT(current, newvalue, label):
+            """Helper."""
+            if current and abs(newvalue - current.value()) > 1:
+                raise ValueError(
+                    f"{label} from T group ({newvalue:.1f}) does not "
+                    "agree with previously parsed value of "
+                    f"{current.value():.0f}"
+                )
+
         value = float(d["temp"]) / 10.0
         if d["tsign"] == "1":
             value = -value
+        # Ensure that Tgroup value rounds to integer provided temperature
+        _checkT(self.temp, value, "Temperature")
         self.temp = temperature(value)
         if d["dewpt"]:
             value2 = float(d["dewpt"]) / 10.0
             if d["dsign"] == "1":
                 value2 = -value2
+            # Ensure that Tgroup value rounds to integer provided dewpoint
+            _checkT(self.dewpt, value2, "Dew Point")
             self.dewpt = temperature(value2)
 
     def _handleTemp6hrRemark(self, d):
