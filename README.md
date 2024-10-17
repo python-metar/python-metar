@@ -134,7 +134,7 @@ METAR: METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040
 Tests
 ------------------------------------------------------------------------
 
-The library is tested against Python 3.7-3.10. A [tox](https://tox.readthedocs.io/en/latest/)
+The library is tested against Python 3.9-3.13. A [tox](https://tox.readthedocs.io/en/latest/)
 configuration file is included to easily run tests against each of these
 environments. To run tests against all environments, install tox and run:
 
@@ -142,4 +142,4 @@ environments. To run tests against all environments, install tox and run:
 
 To run against a specific environment, use the `-e` flag:
 
-    >>> tox -e py35
+    >>> tox -e py310
