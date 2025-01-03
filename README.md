@@ -7,7 +7,7 @@ Python-Metar
 ============
 
 Python-metar is a python package for interpreting METAR and SPECI coded
-weather reports. 
+weather reports.
 
 METAR and SPECI are coded aviation weather reports.  The official
 coding schemes are specified in the World Meteorological Organization
@@ -35,16 +35,16 @@ The current METAR report for a given airport is available at the URL
 
     http://tgftp.nws.noaa.gov/data/observations/metar/stations/<station>.TXT
 
-where `station` is the four-letter ICAO airport station code.  The 
+where `station` is the four-letter ICAO airport station code.  The
 accompanying script get_report.py will download and decode the
-current report for any specified station.  
+current report for any specified station.
 
-The METAR reports for all stations (worldwide) for any "cycle" (i.e., hour) 
+The METAR reports for all stations (worldwide) for any "cycle" (i.e., hour)
 in the last 24 hours are available in a single file at the URL
 
     http://tgftp.nws.noaa.gov/data/observations/metar/cycles/<cycle>Z.TXT
 
-where `cycle` is a 2-digit cycle number (`00` thru `23`).  
+where `cycle` is a 2-digit cycle number (`00` thru `23`).
 
 METAR specifications
 --------------------
@@ -134,7 +134,9 @@ METAR: METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040
 Tests
 ------------------------------------------------------------------------
 
-The library is tested against Python 3.7-3.10. A [tox](https://tox.readthedocs.io/en/latest/)
+The library is tested against Python 3.8-3.13.
+
+A [tox](https://tox.readthedocs.io/en/latest/)
 configuration file is included to easily run tests against each of these
 environments. To run tests against all environments, install tox and run:
 
