@@ -173,6 +173,8 @@ def test_030_parseTime_legal():
     assert report.time.day == 10
     assert report.time.hour == 16
     assert report.time.minute == 51
+    assert report.time.tzinfo == timezone.utc
+    assert report._zulu == True
     if today.day > 10 or (today.hour > 16 and today.day == 10):
         assert report.time.month == today.month
     if today.month > 1 or today.day > 10:
@@ -241,6 +243,15 @@ def test_035_parseTime_suppress_auto_month():
             assert report.time.year == today.year
         else:
             assert report.time.year == last_year
+
+def test_036_parseTime_timezone_naive_times():
+    """Check that timestamps without a trailing Z has zulu member set to false"""
+
+    report = Metar.Metar("KEWR 101651")
+    assert report.time.day == 10
+    assert report.time.hour == 16
+    assert report.time.minute == 51
+    assert report._zulu == False
 
 
 def test_040_parseModifier_default():

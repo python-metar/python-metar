@@ -6,7 +6,7 @@
 A Metar object represents the weather report encoded by a single METAR code.
 """
 import re
-import datetime
+from datetime import datetime, timezone, timedelta
 import warnings
 import logging
 
@@ -40,7 +40,7 @@ STATION_RE = re.compile(r"^(?P<station>[A-Z][A-Z0-9]{3})\s+")
 TIME_RE = re.compile(
     r"""^(?P<day>\d\d)
         (?P<hour>\d\d)
-        (?P<min>\d\d)Z?\s+""",
+        (?P<min>\d\d)(?P<zulu>Z?)\s+""",
     re.VERBOSE,
 )
 MODIFIER_RE = re.compile(r"^(?P<mod>AUTO|COR AUTO|FINO|NIL|TEST|CORR?|RTD|CC[A-G])\s+")
@@ -362,8 +362,8 @@ class Metar(object):
         month, year : int, optional
           Date values to be used when parsing a non-current METAR code. If not
           provided, then the month and year are guessed from the current date.
-        utcdelta : int or datetime.timedelta, optional
-          An int of hours or a timedelta object used to specify the timezone.
+        utcdelta : any
+          Deprecated, not currently nor previously in use
         strict : bool (default is True)
           This option determines if a ``ParserError`` is raised when
           unparsable groups are found or an unexpected exception is encountered.
@@ -418,11 +418,7 @@ class Metar(object):
         self._unparsed_groups = []
         self._unparsed_remarks = []
 
-        self._now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-        if utcdelta:
-            self._utcdelta = utcdelta
-        else:
-            self._utcdelta = datetime.datetime.now() - self._now
+        self._now = datetime.now(timezone.utc)
 
         self._month = month
         self._year = year
@@ -579,6 +575,7 @@ class Metar(object):
             _day   [int]
             _hour  [int]
             _min   [int]
+            _zulu  [bool]
         """
         self._day = int(d["day"])
         if not self._month:
@@ -596,8 +593,14 @@ class Metar(object):
                 self._year = self._year - 1
         self._hour = int(d["hour"])
         self._min = int(d["min"])
-        self.time = datetime.datetime(
-            self._year, self._month, self._day, self._hour, self._min
+        self._zulu = bool(d["zulu"])
+        self.time = datetime(
+            year = self._year,
+            month = self._month,
+            day = self._day,
+            hour = self._hour,
+            minute = self._min,
+            tzinfo = timezone.utc,
         )
         if self._min < 45:
             self.cycle = self._hour
@@ -944,14 +947,14 @@ class Metar(object):
             peak_hour = int(d["hour"])
         else:
             peak_hour = self._hour
-        self.peak_wind_time = datetime.datetime(
-            self._year, self._month, self._day, peak_hour, peak_min
+        self.peak_wind_time = datetime(
+            self._year, self._month, self._day, peak_hour, peak_min, tzinfo=self.time.tzinfo
         )
         if self.peak_wind_time > self.time:
             if peak_hour > self._hour:
-                self.peak_wind_time -= datetime.timedelta(hours=24)
+                self.peak_wind_time -= timedelta(hours=24)
             else:
-                self.peak_wind_time -= datetime.timedelta(hours=1)
+                self.peak_wind_time -= timedelta(hours=1)
         self._remarks.append(
             "peak wind %dkt from %d degrees at %d:%02d"
             % (peak_speed, peak_dir, peak_hour, peak_min)
@@ -966,14 +969,14 @@ class Metar(object):
         else:
             wshft_hour = self._hour
         wshft_min = int(d["min"])
-        self.wind_shift_time = datetime.datetime(
-            self._year, self._month, self._day, wshft_hour, wshft_min
+        self.wind_shift_time = datetime(
+            self._year, self._month, self._day, wshft_hour, wshft_min, tzinfo=self.time.tzinfo
         )
         if self.wind_shift_time > self.time:
             if wshft_hour > self._hour:
-                self.wind_shift_time -= datetime.timedelta(hours=24)
+                self.wind_shift_time -= timedelta(hours=24)
             else:
-                self.wind_shift_time -= datetime.timedelta(hours=1)
+                self.wind_shift_time -= timedelta(hours=1)
         text = "wind shift at %d:%02d" % (wshft_hour, wshft_min)
         if d["front"]:
             text += " (front)"
