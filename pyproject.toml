@@ -1,0 +1,48 @@
+[project]
+name = "python-metar"
+version = "1.11.0"
+description = "Metar - a package to parse METAR-coded weather reports"
+
+authors = [
+    {"name"="Tom Pollard", email="pollard@alum.mit.edu"}
+]
+license = {file = "LICENSE"}
+
+requires-python = ">= 3.8"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Intended Audience :: Science/Research",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = []
+
+[tool.setuptools]
+packages = ["metar"]
+
+[tool.setuptools.package-data]
+metar =  ["nsd_cccc.txt", "py.typed", "*.pyi"]
+
+[project.urls]
+Repository = "https://github.com/python-metar/python-metar/"
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+tests = [
+    "pytest"
+]
+codecov = [
+    "pytest-cov",
+    "pytest",
+    "codecov",
+]
+typing = [
+    "mypy==1.3.0"
+]
