@@ -61,11 +61,14 @@ Installation
 
 Install this package in the usual way,
 
-    python setup.py install
+    python -m pip install .
+
+    # to install test packages
+    python -m pip install '.[test]'
 
 The test suite can be run by:
 
-    python setup.py test
+    pytest
 
 There are a couple of sample scripts, described briefly below.
 
