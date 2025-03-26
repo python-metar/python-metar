@@ -20,7 +20,7 @@ where <station> is the four-letter ICAO station code.
 
 The METAR reports for all reporting stations for any "cycle" (i.e., hour)
 in the last 24 hours is available in a single file at the URL
-http://weather.noaa.gov/pub/data/observations/metar/cycles/<cycle>Z.TXT
+https://tgftp.nws.noaa.gov/data/observations/metar/cycles/<cycle>Z.TXT
 where <cycle> is a 2-digit cycle number (e.g., "00", "05" or "23").
 """
 

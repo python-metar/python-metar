@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-BASE_URL="http://weather.noaa.gov/pub/data/observations/metar/stations"
+BASE_URL="https://tgftp.nws.noaa.gov/data/observations/metar/stations"
 
 usage () {
   echo "Usage:  $0 [-p] <station> [ <station> ... ]"

@@ -13,7 +13,7 @@ except:
     from urllib.request import urlopen
 from metar import Metar
 
-BASE_URL = "http://tgftp.nws.noaa.gov/data/observations/metar/stations"
+BASE_URL = "https://tgftp.nws.noaa.gov/data/observations/metar/stations"
 
 
 def usage():
