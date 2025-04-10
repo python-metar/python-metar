@@ -1,6 +1,7 @@
 *.pyc
 *.swp
 .tox/
+.venv
 htmlcov/
 .coverage
 /build/
