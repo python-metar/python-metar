@@ -1,10 +1,9 @@
 # Copyright (c) 2004,2018 Python-Metar Developers.
 # Distributed under the terms of the BSD 2-Clause License.
 # SPDX-License-Identifier: BSD-2-Clause
-"""Python classes to represent dimensioned quantities used in weather reports.
-"""
+"""Python classes to represent dimensioned quantities used in weather reports."""
 import re
-from math import sin, cos, atan2, sqrt
+from math import pi, sin, cos, atan2
 
 # exceptions
 
@@ -481,7 +480,7 @@ class position(object):
         long2 = position2.longitude
         s = -sin(long1 - long2) * cos(lat2)
         c = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(long1 - long2)
-        d = atan2(s, c) * 180.0 / math.pi
+        d = atan2(s, c) * 180.0 / pi
         if d < 0.0:
             d += 360.0
         return direction(d)

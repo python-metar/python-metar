@@ -352,7 +352,7 @@ debug = False
 class Metar(object):
     """METAR (aviation meteorology report)"""
 
-    def __init__(self, metarcode, month=None, year=None, utcdelta=None, strict=True):
+    def __init__(self, metarcode, month=None, year=None, strict=True):
         """
         Parse raw METAR code.
 
@@ -362,8 +362,6 @@ class Metar(object):
         month, year : int, optional
           Date values to be used when parsing a non-current METAR code. If not
           provided, then the month and year are guessed from the current date.
-        utcdelta : int or datetime.timedelta, optional
-          An int of hours or a timedelta object used to specify the timezone.
         strict : bool (default is True)
           This option determines if a ``ParserError`` is raised when
           unparsable groups are found or an unexpected exception is encountered.
@@ -419,10 +417,6 @@ class Metar(object):
         self._unparsed_remarks = []
 
         self._now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
-        if utcdelta:
-            self._utcdelta = utcdelta
-        else:
-            self._utcdelta = datetime.datetime.now() - self._now
 
         self._month = month
         self._year = year

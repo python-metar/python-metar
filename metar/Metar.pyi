@@ -74,7 +74,6 @@ class Metar:
         metarcode: str,
         month: Optional[int] = ...,
         year: Optional[int] = ...,
-        utcdelta: Union[int, timedelta, None] = ...,
         strict: bool = ...,
     ): ...
     @property
