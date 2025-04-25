@@ -12,7 +12,7 @@ except ImportError:
     from urllib2 import urlopen
 
 
-BASE_URL = "http://tgftp.nws.noaa.gov/data/observations/metar/stations"
+BASE_URL = "https://tgftp.nws.noaa.gov/data/observations/metar/stations"
 
 
 def usage():
