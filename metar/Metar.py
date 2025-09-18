@@ -153,7 +153,7 @@ PRESS_3HR_RE = re.compile(
 (?P<press>\d\d\d)\s+""",
     re.VERBOSE,
 )
-TEMP_1HR_RE = re.compile(
+TEMP_TGROUP_RE = re.compile(
     r"""^T(?P<tsign>0|1)
         (?P<temp>\d\d\d)
         ((?P<dsign>0|1)
@@ -876,20 +876,33 @@ class Metar(object):
         value = float(d["precip"]) / 100.0
         self.precip_1hr = precipitation(value, "IN")
 
-    def _handleTemp1hrRemark(self, d):
+    def _handleTempTgroupRemark(self, d):
         """
         Parse a temperature & dewpoint remark group.
 
         These values replace the temp and dewpt from the body of the report.
         """
+        def _checkT(current, newvalue, label):
+            """Helper."""
+            if current and abs(newvalue - current.value()) > 1:
+                raise ValueError(
+                    f"{label} from T group ({newvalue:.1f}) does not "
+                    "agree with previously parsed value of "
+                    f"{current.value():.0f}"
+                )
+
         value = float(d["temp"]) / 10.0
         if d["tsign"] == "1":
             value = -value
+        # Ensure that Tgroup value rounds to integer provided temperature
+        _checkT(self.temp, value, "Temperature")
         self.temp = temperature(value)
         if d["dewpt"]:
             value2 = float(d["dewpt"]) / 10.0
             if d["dsign"] == "1":
                 value2 = -value2
+            # Ensure that Tgroup value rounds to integer provided dewpoint
+            _checkT(self.dewpt, value2, "Dew Point")
             self.dewpt = temperature(value2)
 
     def _handleTemp6hrRemark(self, d):
@@ -1078,7 +1091,7 @@ class Metar(object):
         (WIND_SHIFT_RE, _handleWindShiftRemark),
         (LIGHTNING_RE, _handleLightningRemark),
         (TS_LOC_RE, _handleTSLocRemark),
-        (TEMP_1HR_RE, _handleTemp1hrRemark),
+        (TEMP_TGROUP_RE, _handleTempTgroupRemark),
         (PRECIP_1HR_RE, _handlePrecip1hrRemark),
         (PRECIP_24HR_RE, _handlePrecip24hrRemark),
         (PRESS_3HR_RE, _handlePress3hrRemark),
