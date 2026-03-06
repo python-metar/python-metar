@@ -11,7 +11,7 @@ def test_defaults():
     assert pressure("30", "in").value() == 30.0
     assert pressure("30", "in").string() == "30.00 inches"
     assert pressure("1000").value("MB") == 1000
-    assert pressure("1000").string() == "1000.0 mb"
+    assert pressure("1000").string() == "1000.0 hPa"
     assert pressure("1000", "HPA").string() == "1000.0 hPa"
 
 
