@@ -115,13 +115,13 @@ wind: variable at 3 knots, gusting to 19 knots
 peak wind: WNW at 28 knots
 visibility: 2 miles
 visual range: runway 04R: 3000 meters to greater than 6000 meters feet
-pressure: 1011.5 mb
+pressure: 1011.5 hPa
 weather: thunderstorm with rain; mist
 sky: a few clouds at 1500 feet
      broken cumulonimbus at 4000 feet
      broken clouds at 6500 feet
      overcast at 20000 feet
-sea-level pressure: 1011.4 mb
+sea-level pressure: 1011.4 hPa
 1-hour precipitation: 0.13in
 remarks:
 - Automated station (type 2)
