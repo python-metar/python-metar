@@ -777,14 +777,14 @@ class Metar(object):
                         press = press / 10 + 1000
                     else:
                         press = press / 10 + 900
-                    self.press = pressure(press, "MB")
+                    self.press = pressure(press, "HPA")
                     self._remarks.append("sea-level pressure %.1fhPa" % press)
                 else:
-                    self.press = pressure(press, "MB")
+                    self.press = pressure(press, "HPA")
             elif press > 2500:
                 self.press = pressure(press / 100, "IN")
             else:
-                self.press = pressure(press, "MB")
+                self.press = pressure(press, "HPA")
 
     def _handleRecent(self, d):
         """
@@ -856,7 +856,7 @@ class Metar(object):
             value += 1000
         else:
             value += 900
-        self.press_sea_level = pressure(value, "MB")
+        self.press_sea_level = pressure(value, "HPA")
 
     def _handlePrecip24hrRemark(self, d):
         """
@@ -1116,13 +1116,13 @@ class Metar(object):
         if self.runway:
             lines.append("visual range: %s" % self.runway_visual_range())
         if self.press:
-            lines.append("pressure: %s" % self.press.string("mb"))
+            lines.append("pressure: %s" % self.press.string("hPa"))
         if self.weather:
             lines.append("weather: %s" % self.present_weather())
         if self.sky:
             lines.append("sky: %s" % self.sky_conditions("\n     "))
         if self.press_sea_level:
-            lines.append("sea-level pressure: %s" % self.press_sea_level.string("mb"))
+            lines.append("sea-level pressure: %s" % self.press_sea_level.string("hPa"))
         if self.max_temp_6hr:
             lines.append("6-hour max temp: %s" % str(self.max_temp_6hr))
         if self.max_temp_6hr:

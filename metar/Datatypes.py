@@ -85,7 +85,7 @@ class pressure(object):
 
     legal_units = ["MB", "HPA", "IN"]
 
-    def __init__(self, value, units="MB"):
+    def __init__(self, value, units="HPA"):
         if not units.upper() in pressure.legal_units:
             raise UnitsError("unrecognized pressure unit: '" + units + "'")
         self._value = float(value)
@@ -105,13 +105,13 @@ class pressure(object):
         if units == self._units:
             return self._value
         if self._units == "IN":
-            mb_value = self._value * 33.86398
+            hpa_value = self._value * 33.86398
         else:
-            mb_value = self._value
-        if units == "MB" or units == "HPA":
-            return mb_value
+            hpa_value = self._value
+        if units == "HPA" or units == "MB":
+            return hpa_value
         elif units == "IN":
-            return mb_value / 33.86398
+            return hpa_value / 33.86398
         else:
             raise UnitsError("unrecognized pressure unit: '" + units + "'")
 
@@ -124,10 +124,10 @@ class pressure(object):
                 raise UnitsError("unrecognized pressure unit: '" + units + "'")
             units = units.upper()
         val = self.value(units)
-        if units == "MB":
-            return "%.1f mb" % val
-        elif units == "HPA":
+        if units == "HPA":
             return "%.1f hPa" % val
+        elif units == "MB":
+            return "%.1f mb" % val
         elif units == "IN":
             return "%.2f inches" % val
 
