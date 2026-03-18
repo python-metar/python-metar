@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+metar-2.0.0 (18 March 2026)
+
+This release rolls up fixes and updates made by the community. The version number
+is bumped to 2.0.0 due to the dropping of `utcdelta` with the `Metar` constructor.
+
+
+- [#178](https://github.com/python-metar/python-metar/pull/178) Support No Significant Weather NSW
+- [#187](https://github.com/python-metar/python-metar/pull/187) Fixup pyproject.toml
+- [#189](https://github.com/python-metar/python-metar/pull/189) Update README with install/testing steps
+- [#190](https://github.com/python-metar/python-metar/pull/190) Update noaa.gov URLs used.
+- [#191](https://github.com/python-metar/python-metar/pull/191) Remove unused utcdelta in `Metar` constructor.
+- [#195](https://github.com/python-metar/python-metar/pull/195) Support Python 3.10 through 3.14.
+- [#197](https://github.com/python-metar/python-metar/pull/197) Display pressure as hPa.
+
 metar-1.11.0 (5 July 2023)
 
 This release adds a missing type hint and supports Python 3.12.
