@@ -6,5 +6,4 @@ htmlcov/
 /.venv/
 /build/
 /dist/
-/python_metar.egg-info/
 /metar.egg-info/

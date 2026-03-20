@@ -1,5 +1,5 @@
 [project]
-name = "python-metar"
+name = "metar"
 version = "2.0.0"
 description = "Metar - a package to parse METAR-coded weather reports"
 
