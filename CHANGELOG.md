@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-metar-2.0.1 (TBD)
+metar-2.0.1 (20 March 2026)
 
 Over the years, this package has gone by the name `metar` and `python-metar`. We are
 settling on `metar` going forward, which matches the most recent pypi and conda-forge
