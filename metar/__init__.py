@@ -28,7 +28,16 @@ __author__ = "Tom Pollard"
 
 __email__ = "pollard@alum.mit.edu"
 
-__version__ = "2.0.0"
+__version__ = "0.0.0"  # Default
+try:
+    # Exists after installation via scm write_to
+    from ._version import version as __version__
+except ImportError:
+    from importlib.metadata import version, PackageNotFoundError
+    try:
+        __version__ = version("metar")
+    except PackageNotFoundError:
+        pass
 
 __doc__ = """metar v%s (c) 2009, %s
 

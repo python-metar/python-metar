@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 3.14 not ready for mymy
+        # 3.14 not ready for mypy
         python-version: ["3.13"]
     steps:
     - uses: actions/checkout@v6
