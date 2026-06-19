@@ -13,7 +13,7 @@ jobs:
           - '3.13'
           - '3.14'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
@@ -40,7 +40,7 @@ jobs:
         # 3.14 not ready for mypy
         python-version: ["3.13"]
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
