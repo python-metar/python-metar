@@ -730,3 +730,54 @@ def test_present_weather_others():
     code = "VEIM 301200Z 16007KT 7000 NSW SCT018 31/27 Q1007 NOSIG"
     m = Metar.Metar(code, month=8, year=2023)
     assert m.present_weather() == 'no significant weather'
+
+
+def test_issue167_day_not_in_previous_month(monkeypatch):
+    """A METAR only carries the day, so the month is inferred.
+
+    Stepping back exactly one month can land on a date that does not exist:
+    a report for the 31st, read on March 5th, became February 31st and raised
+    ``day is out of range for month``. The month should walk back to the most
+    recent one that actually has that day.
+    """
+    import types
+
+    class _FixedNow(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 3, 5, 12, 0, tzinfo=tz)
+
+    monkeypatch.setattr(
+        Metar, "datetime", types.SimpleNamespace(datetime=_FixedNow, timezone=timezone)
+    )
+
+    code = "KUAO {}0053Z AUTO 31009KT 10SM -RA FEW046 BKN055 OVC070 05/00 A2980"
+
+    # The 31st: February has none, so the report is January's.
+    assert Metar.Metar(code.format(31)).time == datetime(2026, 1, 31, 0, 53)
+    # The 30th: same reasoning, February 2026 has 28 days.
+    assert Metar.Metar(code.format(30)).time == datetime(2026, 1, 30, 0, 53)
+    # The 28th exists in February, which is still the nearest past match.
+    assert Metar.Metar(code.format(28)).time == datetime(2026, 2, 28, 0, 53)
+    # A day already past this month is unaffected.
+    assert Metar.Metar(code.format("04")).time == datetime(2026, 3, 4, 0, 53)
+
+
+def test_issue167_explicit_month_still_raises(monkeypatch):
+    """An explicit month is the caller's assertion, so a bad date stays an error."""
+    import types
+
+    class _FixedNow(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 3, 5, 12, 0, tzinfo=tz)
+
+    monkeypatch.setattr(
+        Metar, "datetime", types.SimpleNamespace(datetime=_FixedNow, timezone=timezone)
+    )
+    with pytest.raises(Metar.ParserError):
+        Metar.Metar(
+            "KUAO 310053Z AUTO 31009KT 10SM -RA FEW046 BKN055 OVC070 05/00 A2980",
+            month=2,
+            year=2026,
+        )
