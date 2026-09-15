@@ -577,7 +577,6 @@ class Metar(object):
         """
         self._day = int(d["day"])
         month_was_given = bool(self._month)
-        year_was_given = bool(self._year)
         if not self._month:
             self._month = self._now.month
             if self._day > self._now.day:
@@ -591,22 +590,19 @@ class Metar(object):
                 self._year = self._year - 1
             elif self._month == self._now.month and self._day > self._now.day:
                 self._year = self._year - 1
-        if not month_was_given:
-            # A METAR carries only the day of the month, so the month picked
-            # above is a guess: this month, or last month if the day is still
-            # ahead of us. Last month may simply not have that day -- parsing a
-            # 31st report on March 5th lands on February 31st -- so step back to
-            # the most recent month that does. A caller who passed an explicit
-            # month is left alone: for them an impossible date is a real error.
-            for _ in range(12):
-                if self._day <= calendar.monthrange(self._year, self._month)[1]:
-                    break
-                if self._month > 1:
-                    self._month -= 1
-                elif year_was_given:
-                    break  # the caller pinned the year; let the date raise
-                else:
-                    self._month, self._year = 12, self._year - 1
+        # A METAR carries only the day of the month, so the month above is a
+        # guess: this month, or last month if the day is still ahead of us.
+        # Last month may simply not have that day -- a 31st report read on
+        # March 5th lands on February 31st -- so step back one more. One step
+        # is always enough: every 30-day month and February is preceded by a
+        # 31-day month. A caller who passed an explicit month is left alone,
+        # because for them an impossible date is an error rather than a guess.
+        if (
+            not month_was_given
+            and self._month > 1
+            and self._day > calendar.monthrange(self._year, self._month)[1]
+        ):
+            self._month -= 1
         self._hour = int(d["hour"])
         self._min = int(d["min"])
         self.time = datetime.datetime(
