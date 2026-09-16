@@ -730,3 +730,72 @@ def test_present_weather_others():
     code = "VEIM 301200Z 16007KT 7000 NSW SCT018 31/27 Q1007 NOSIG"
     m = Metar.Metar(code, month=8, year=2023)
     assert m.present_weather() == 'no significant weather'
+
+
+def _fixed_now(monkeypatch, when):
+    """Pin Metar's clock so date inference does not depend on the run date."""
+    import types
+
+    class _FixedNow(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return when.replace(tzinfo=tz)
+
+    monkeypatch.setattr(
+        Metar, "datetime", types.SimpleNamespace(datetime=_FixedNow, timezone=timezone)
+    )
+
+
+def test_issue167_day_not_in_previous_month(monkeypatch):
+    """A METAR carries only the day, so the month is inferred.
+
+    Stepping back exactly one month can land on a date that does not exist: a
+    report for the 31st, read on March 5th, became February 31st and raised
+    ``day is out of range for month``.
+    """
+    _fixed_now(monkeypatch, datetime(2026, 3, 5, 12, 0))
+    code = "KUAO {}0053Z AUTO 31009KT 10SM -RA FEW046 BKN055 OVC070 05/00 A2980"
+
+    # February has no 31st or 30th, so these reports are January's.
+    assert Metar.Metar(code.format(31)).time == datetime(2026, 1, 31, 0, 53)
+    assert Metar.Metar(code.format(30)).time == datetime(2026, 1, 30, 0, 53)
+    # The 28th exists in February, still the nearest past match.
+    assert Metar.Metar(code.format(28)).time == datetime(2026, 2, 28, 0, 53)
+    # A day already past in the current month is untouched.
+    assert Metar.Metar(code.format("04")).time == datetime(2026, 3, 4, 0, 53)
+
+
+def test_issue167_one_step_back_is_always_enough(monkeypatch):
+    """Every day of every month resolves to a real date within one step.
+
+    Every 30-day month and February is preceded by a 31-day month, so the
+    inferred month never needs to walk back further than once. This checks the
+    claim rather than asserting it: 2024 is a leap year, 2026 is not.
+    """
+    code = "KUAO {:02d}0053Z AUTO 31009KT 10SM -RA FEW046 BKN055 OVC070 05/00 A2980"
+    for year in (2024, 2026):
+        for month in range(1, 13):
+            for now_day in (1, 15, 28):
+                _fixed_now(monkeypatch, datetime(year, month, now_day, 12, 0))
+                for day in range(1, 32):
+                    observed = Metar.Metar(code.format(day)).time
+                    assert observed.day == day
+                    assert observed <= datetime(year, month, now_day, 12, 0)
+
+
+def test_issue167_explicit_month_still_raises(monkeypatch):
+    """An explicit month is the caller's assertion, so a bad date stays an error."""
+    _fixed_now(monkeypatch, datetime(2026, 3, 5, 12, 0))
+    with pytest.raises(Metar.ParserError):
+        Metar.Metar(
+            "KUAO 310053Z AUTO 31009KT 10SM -RA FEW046 BKN055 OVC070 05/00 A2980",
+            month=2,
+            year=2026,
+        )
+
+
+def test_issue167_impossible_day_still_raises(monkeypatch):
+    """A day of 32 is not a calendar problem to solve; it is bad input."""
+    _fixed_now(monkeypatch, datetime(2026, 1, 15, 12, 0))
+    with pytest.raises(Metar.ParserError):
+        Metar.Metar("KUAO 320053Z AUTO 31009KT 10SM -RA FEW046 BKN055 OVC070 05/00")
