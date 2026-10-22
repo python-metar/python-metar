@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Unreleased
+
+- Retain reported runway visual range tendencies in `runway_tendencies` and
+  include them in `runway_visual_range()` output without changing the existing
+  range record format (#196).
+
 metar-2.0.1 (20 March 2026)
 
 Over the years, this package has gone by the name `metar` and `python-metar`. We are

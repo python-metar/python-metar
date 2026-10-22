@@ -99,6 +99,13 @@ setup.py  | installation script
 Example
 ------------------------------------------------------------------------
 
+`obs.runway` retains its four-element records (name, low, high, units).
+`obs.runway_tendencies` has one entry for each of those records, in the same
+order: `"U"` for increasing, `"D"` for decreasing, `"N"` for no distinct
+tendency, or `None` when no unambiguous tendency was reported. These describe
+the reported past tendency; no trend is inferred from the range values.
+`obs.runway_visual_range()` includes the tendency when available.
+
 See the sample.py script for an annonated demonstration of the use
 of this code.  Just as an appetizer, here's an interactive example...
 
