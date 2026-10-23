@@ -1,11 +1,14 @@
 Change Log
 ==========
 
-Unreleased
+metar-2.0.2 (23 October 2026)
 
+- Infer a month when METAR day is ambiguous and day of the month does not
+  exist for the prior month (#167).
 - Retain reported runway visual range tendencies in `runway_tendencies` and
   include them in `runway_visual_range()` output without changing the existing
   range record format (#196).
+- Support Python 3.11-3.15.
 
 metar-2.0.1 (20 March 2026)
 
