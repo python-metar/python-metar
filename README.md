@@ -144,7 +144,7 @@ METAR: METAR KEWR 111851Z VRB03G19KT 2SM R04R/3000VP6000FT TSRA BR FEW015 BKN040
 Tests
 ------------------------------------------------------------------------
 
-The library is tested against Python 3.10-3.14.
+The library is tested against Python 3.11-3.15.
 
 A [tox](https://tox.readthedocs.io/en/latest/)
 configuration file is included to easily run tests against each of these
