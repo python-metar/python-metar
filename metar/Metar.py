@@ -67,7 +67,7 @@ RUNWAY_RE = re.compile(
         R(?P<name>\d\d(RR?|LL?|C)?)/
         (?P<low>(M|P)?(\d\d\d\d|/{4}))
         (V(?P<high>(M|P)?\d\d\d\d))?
-        (?P<unit>FT)?[/NDU]*)\s+""",
+        (?P<unit>FT)?(?P<tendency>[/NDU]*))\s+""",
     re.VERBOSE,
 )
 WEATHER_RE = re.compile(
@@ -390,6 +390,7 @@ class Metar(object):
         self.dewpt = None  # dew point (C) [temperature]
         self.press = None  # barometric pressure [pressure]
         self.runway = []  # runway visibility (list of tuples)
+        self.runway_tendencies = []  # U, D, N or None, in the same order as runway
         self.weather = []  # present weather (list of tuples)
         self.recent = []  # recent weather (list of tuples)
         self.sky = []  # sky conditions (list of tuples)
@@ -698,6 +699,7 @@ class Metar(object):
             . low   [distance]
             . high  [distance]
             . unit  [string]
+            runway_tendencies [list of U, D, N or None, aligned with runway]
         """
         if d["name"] is None:
             return
@@ -711,6 +713,8 @@ class Metar(object):
         else:
             high = distance(d["high"], unit)
         self.runway.append([d["name"], low, high, unit])
+        tendency = d["tendency"].strip("/")
+        self.runway_tendencies.append(tendency if tendency in ("U", "D", "N") else None)
 
     def _handleWeather(self, d):
         """
@@ -1273,7 +1277,8 @@ class Metar(object):
         Return a textual description of the runway visual range.
         """
         lines = []
-        for name, low, high, unit in self.runway:
+        tendency_text = {"U": "increasing", "D": "decreasing", "N": "no distinct tendency"}
+        for index, (name, low, high, unit) in enumerate(self.runway):
             reportunits = unit if units is None else units
             if low != high:
                 lines.append(
@@ -1282,6 +1287,10 @@ class Metar(object):
                 )
             else:
                 lines.append("on runway %s, %s" % (name, low.string(reportunits)))
+            if index < len(self.runway_tendencies):
+                tendency = self.runway_tendencies[index]
+                if tendency is not None:
+                    lines[-1] += ", " + tendency_text[tendency]
         return "; ".join(lines)
 
     def present_weather(self):

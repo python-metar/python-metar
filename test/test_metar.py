@@ -125,6 +125,55 @@ def test_issue107_runwayunits():
     res = report.runway_visual_range("FT")
     assert res == "on runway 28L, 4921 feet"
 
+
+@pytest.mark.parametrize(
+    "suffix, text",
+    [("U", "increasing"), ("D", "decreasing"), ("N", "no distinct tendency")],
+)
+@pytest.mark.parametrize("rvr", ["R28L/1500", "R28L/1500V1800", "R28L/2600FT"])
+def test_issue196_runway_tendency(suffix, text, rvr):
+    """Retain reported RVR tendencies without changing the range record shape."""
+    report = Metar.Metar("METAR KPIT 091955Z 22015KT 1200 " + rvr + suffix)
+    assert report.runway_tendencies == [suffix]
+    assert len(report.runway[0]) == 4
+    assert report.runway_visual_range().endswith(", " + text)
+    assert report.runway_visual_range("M").endswith(", " + text)
+
+
+def test_issue196_multiple_runway_tendencies():
+    """Keep each runway's reported tendency distinct from absent information."""
+    report = Metar.Metar(
+        "SPECI EFHK 171037Z 18011KT 1200 "
+        "R04L/1700N R15/1800 R22L/1800U R22R/1600D -SG BR OVC002 M03/M03 Q1031"
+    )
+    assert report.runway_tendencies == ["N", None, "U", "D"]
+    assert report.runway_visual_range() == (
+        "on runway 04L, 1700 meters, no distinct tendency; "
+        "on runway 15, 1800 meters; on runway 22L, 1800 meters, increasing; "
+        "on runway 22R, 1600 meters, decreasing"
+    )
+
+
+@pytest.mark.parametrize("suffix", ["", "/", "//", "UD"])
+def test_runway_tendency_not_reported(suffix):
+    """Do not infer a tendency from missing or ambiguous legacy suffixes."""
+    report = Metar.Metar("METAR KPIT 091955Z 22015KT 1200 R28L/1500" + suffix)
+    assert report.runway_tendencies == [None]
+    assert report.runway_visual_range() == "on runway 28L, 1500 meters"
+
+
+def test_runway_tendency_alignment():
+    """Ignored missing ranges and repeated runway names must not mix tendencies."""
+    report = Metar.Metar(
+        "METAR KPIT 091955Z 22015KT 1200 RVRNO R28L/////N "
+        "R28L/1500U R28L/1600D R28L/1700"
+    )
+    assert report.runway_tendencies == ["U", "D", None]
+    assert report.runway_visual_range() == (
+        "on runway 28L, 1500 meters, increasing; "
+        "on runway 28L, 1600 meters, decreasing; on runway 28L, 1700 meters"
+    )
+
 @pytest.mark.parametrize("RVR", ["R28L/////", "R28L/////FT", "R28L//////", "R28L/////N"])
 def test_issue26_runway_slashes(RVR):
     """Check RVR with slashes decoding."""

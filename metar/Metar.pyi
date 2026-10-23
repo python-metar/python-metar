@@ -39,6 +39,7 @@ class Metar:
     dewpt: Optional[temperature]
     press: Optional[pressure]
     runway: List[list]
+    runway_tendencies: List[Optional[Literal["U", "D", "N"]]]
     weather: List[Tuple[str, str, str, str, str]]
     recent: List[Tuple[str, str, str, str, str]]
     sky: List[Tuple[str, Optional[distance], str]]
