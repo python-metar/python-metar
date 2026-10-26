@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-metar-2.0.2 (23 October 2026)
+metar-2.0.2 (26 October 2026)
 
 - Infer a month when METAR day is ambiguous and day of the month does not
   exist for the prior month (#167).
