@@ -39,6 +39,19 @@ def test_module():
     assert hasattr(metar, "__version__")
 
 
+def test_issue182_conflicting_temperatures():
+    """Test that a T-group with conflicting temperatures raises an error."""
+    # IRL
+    code = (
+        "KRDU 081851Z 33003KT 10SM SCT030 SCT120 BKN200 "
+        "35/24 A3004 RMK T03440339"
+    )
+    with pytest.raises(Metar.ParserError):
+        Metar.Metar(code, 7, 2024, strict=True)
+    mtr = Metar.Metar(code, 7, 2024, strict=False)
+    assert mtr.dewpt.value() == 24.0
+
+
 def test_issue114_multiplebecominggroups():
     """multiple BECMG (becoming) groups should be possible"""
     code = (
