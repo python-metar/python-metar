@@ -737,6 +737,51 @@ def test_issue136_temperature():
     raisesParserError("METAR EDDM 022150Z 26006KT CAVOK 201/16")
 
 
+@pytest.mark.parametrize(
+    ("temperature_group", "expected_temp", "expected_dewpt"),
+    [
+        # A bare M means missing; M followed by digits remains a negative value.
+        ("32/M", 32.0, None),
+        ("M/32", None, 32.0),
+        ("M/M", None, None),
+        ("M05/M02", -5.0, -2.0),
+        ("M05/M", -5.0, None),
+        ("M/M02", None, -2.0),
+        ("M///", None, None),
+        ("///M", None, None),
+        ("MM/XX", None, None),
+    ],
+)
+def test_issue146_m_missing(temperature_group, expected_temp, expected_dewpt):
+    report = Metar.Metar(
+        "METAR KSMF 270400Z 18005KT 50SM CLR %s A2968" % temperature_group
+    )
+    assert report.decode_completed
+    assert (
+        report.temp.value() if report.temp is not None else None
+    ) == expected_temp
+    assert (
+        report.dewpt.value() if report.dewpt is not None else None
+    ) == expected_dewpt
+
+
+def test_issue146_original_report():
+    report = Metar.Metar(
+        "KSMF 270400Z 18005KT 50SM CLR 32/M A2968 RMK SLPNO T0322////"
+    )
+    assert report.decode_completed
+    assert report.temp.value() == 32.0
+    assert report.dewpt is None
+
+
+@pytest.mark.parametrize("temperature_group", ["M//", "//M"])
+def test_issue146_m_missing_rejects_incomplete_groups(temperature_group):
+    # Truncated missing markers should not be accepted as complete groups.
+    raisesParserError(
+        "METAR KSMF 270400Z 18005KT 50SM CLR %s A2968" % temperature_group
+    )
+
+
 def test_windshear_runway_identifier():
     code = "METAR EDDH 300720Z WS R23"
     m = Metar.Metar(code, month=1, year=2022)

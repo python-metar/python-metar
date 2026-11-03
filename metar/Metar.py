@@ -86,8 +86,9 @@ SKY_RE = re.compile(
     re.VERBOSE,
 )
 TEMP_RE = re.compile(
-    r"""^(?P<temp>(M|-)?\d{1,2}|//|XX|MM)/
-        (?P<dewpt>(M|-)?\d{1,2}|//|XX|MM)?\s+""",
+    # Standalone M is a legacy missing marker; M before digits remains negative.
+    r"""^(?P<temp>(M|-)?\d{1,2}|//|XX|MM|M)/
+        (?P<dewpt>(M|-)?\d{1,2}|//|XX|MM|M)?\s+""",
     re.VERBOSE,
 )
 PRESS_RE = re.compile(
@@ -773,9 +774,9 @@ class Metar(object):
         """
         temp = d["temp"]
         dewpt = d["dewpt"]
-        if temp and temp != "//" and temp != "XX" and temp != "MM":
+        if temp and temp not in ("//", "XX", "MM", "M"):
             self.temp = temperature(temp)
-        if dewpt and dewpt != "//" and dewpt != "XX" and dewpt != "MM":
+        if dewpt and dewpt not in ("//", "XX", "MM", "M"):
             self.dewpt = temperature(dewpt)
 
     def _handlePressure(self, d):
