@@ -541,6 +541,21 @@ def test_150_parseVisibility():
     assert report("P6000").visibility() == "greater than 6000 meters"
 
 
+def test_issue212_missing_visibility():
+    """Check that a missing visibility group (////) is not read as 10000 meters."""
+
+    def report(vis_group):
+        """(Macro) Return Metar object for a report with the vis group."""
+        return Metar.Metar("LIMY 151255Z AUTO VRB02KT " + vis_group + " 21/14 Q1012")
+
+    assert report("////").vis is None
+    assert report("////").visibility() == "missing"
+    assert report("////NDV").vis is None
+    assert report("1000 ////").vis.value() == 1000
+    assert report("1000 ////").max_vis is None
+    assert report("9999").visibility() == "greater than 10000 meters"
+
+
 def test_151_parseVisibility_direction():
     """Check parsing of compass headings visibility groups."""
 
