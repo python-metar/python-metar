@@ -665,6 +665,9 @@ class Metar(object):
             max_vis      [distance]
             max_vis_dir  [direction]
         """
+        if d["dist"] == "////":
+            # Missing visibility: leave the attributes unset rather than 10000 m.
+            return        
         vis = d["vis"]
         vis_less = None
         vis_dir = None
